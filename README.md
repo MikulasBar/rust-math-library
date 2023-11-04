@@ -1,7 +1,7 @@
 # HorizonSphere
 
-math engine with graphical plotting 
-in c++
+math engine with graphical plotting <br>
+in c++ <br>
 Qt for GUI
 
 ## plotting types:
