@@ -1,15 +1,15 @@
 # HorizonSphere
 
-math engine with graphical plotting <br>
-in c++ <br>
-Qt for GUI
+ - math engine with graphical plotting
+ - in c++
+ - Qt for GUI
 
 ## plotting types:
 
-### primary 
+### primary:
   - 2D
 
-### secondary
+### secondary:
   - 3D
   - Complex
   - maybe quaternions
