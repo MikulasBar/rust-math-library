@@ -3,6 +3,9 @@
  - math engine with graphical plotting
  - in c++
  - Qt for GUI
+ - maybe ANTLR
+ <br>
+ - check out GiNac, GSL
 
 ## plotting types:
 
