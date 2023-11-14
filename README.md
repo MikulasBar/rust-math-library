@@ -2,6 +2,7 @@
 
  - math engine with graphical plotting
  - in c++
+ - QML
  - Qt for GUI [https://www.qt.io/download-qt-installer]
  - maybe ANTLR
  <br>
