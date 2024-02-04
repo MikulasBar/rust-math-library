@@ -4,13 +4,13 @@ pub mod utilities {
     /// Use it for functions that have `variable` field
     #[macro_export]
     macro_rules! impl_variable_func {
-        ($func_type:ty, $field:ident) => {
+        ($func_type:ty, $($fields:ident),* ) => {
             impl $func_type {
                 /// Initialise new function with no child
-                pub fn new($field: f32, variable: impl Into<String>) -> Self {
+                pub fn new($($fields),*: f32, variable: impl Into<String>) -> Self {
                     Self {
+                        $($fields: $fields),* ,
                         variable: variable.into(),
-                        $field: $field,
                         child: None,
                     }
                 }
@@ -19,7 +19,7 @@ pub mod utilities {
                     self.child = Some(child);
                 }
         
-                pub fn remove_child(&mut self, variable: String) {
+                pub fn remove_child(&mut self) {
                     self.child = None;
                 }
         

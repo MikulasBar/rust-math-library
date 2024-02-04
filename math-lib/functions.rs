@@ -6,7 +6,6 @@ pub mod functions {
     use std::{collections::HashMap};
     use crate::{impl_sequence_func, impl_variable_func};
 
-    //use super::super::utilities::*;
 
     pub const PI: f32 = 3.1415927;
     pub const E: f32 = 2.7182818;
@@ -30,22 +29,22 @@ pub mod functions {
     }
 
     pub struct PowFunc {
-        pub variable: String,
         pub power: f32,
+        pub variable: String,
 
         child: Option<BoxedFunc>
     }
 
     pub struct ExpFunc {
-        pub variable: String,
         pub base: f32,
+        pub variable: String,
 
         child: Option<BoxedFunc>
     }
 
     pub struct LogFunc {
-        pub variable: String,
         pub base: f32,
+        pub variable: String,
 
         child: Option<BoxedFunc>
     }
@@ -61,7 +60,7 @@ pub mod functions {
             let mut result: f32 = 0.0;
 
             for child in &self.children {
-                let child_res = child.apply(args);
+                let child_res = child.apply(&args.clone());
                 result += child_res;
             }
 
@@ -77,7 +76,7 @@ pub mod functions {
             let mut result: f32 = 1.0;
 
             for child in &self.children {
-                let child_res = child.apply(args);
+                let child_res = child.apply(&args.clone());
                 result *= child_res;
             }
 
@@ -92,7 +91,7 @@ pub mod functions {
         fn apply(&self, args: &FuncArgs) -> f32 {
             // has child
             if let Some(child) = &self.child {
-                let child_result = child.apply(args);
+                let child_result = child.apply(&args);
                 return child_result.powf(self.power);
             }
             
@@ -109,7 +108,7 @@ pub mod functions {
         fn apply(&self, args: &FuncArgs) -> f32 {
             // has child
             if let Some(child) = &self.child {
-                let child_result = child.apply(args);
+                let child_result = child.apply(&args);
                 return  self.base.powf(child_result);
             }
             
@@ -126,7 +125,7 @@ pub mod functions {
         fn apply(&self, args: &FuncArgs) -> f32 {
             // has child
             if let Some(child) = &self.child {
-                let child_result = child.apply(args);
+                let child_result = child.apply(&args);
                 return  child_result.log(self.base);
             }
 
