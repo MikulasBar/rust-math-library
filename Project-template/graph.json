@@ -1,0 +1,5 @@
+[
+    {"type": "note", "text": "my function f"},
+    {"type": "fun", "name": "f", "parameters": "x y", "body": "x * a + sin(y)"},
+    {"type": "var_num", "name": "a", "value": 0, "low_bound": 0, "high_bound": 1, "step": 0.1}
+]
