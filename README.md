@@ -1,8 +1,9 @@
 # HorizonSphere
 
  - math engine with graphical plotting
- - in rust
- - egui for GUI
+ - in c++
+ - QML
+ - Qt for GUI [https://www.qt.io/download-qt-installer]
  - maybe ANTLR
  <br>
  - check out GiNac, GSL
