@@ -1,12 +1,9 @@
 # HorizonSphere
 
  - math engine with graphical plotting
- - in c++
- - QML
- - Qt for GUI [https://www.qt.io/download-qt-installer]
- - maybe ANTLR
- <br>
- - check out GiNac, GSL
+ - in rust
+ - egui for ui / flutter + rust API
+ - ANTLR for text recognition 
 
 ## plotting types:
 
@@ -25,8 +22,8 @@
 (*step = unnecessary)
 
 1. function storing, plotting, moving around the plane
-2. line input, input recognizing
-3. math functions + constants ( goniometric, exponential, logarithmic ... )
+2. math functions ( goniometric, exponential, logarithmic ... )
+3. line input, input recognizing
 4. multiline input
 5. *equations
 6. *basic UI ( graph type, table with stored graphs [ SQL i guess ] )
@@ -51,7 +48,7 @@
 25. parameter recognizing ( point, list, number )
 26. derivative and notation
 27. sigma notation sum
-28. plot attributes ( color + alpha )
+28. plot attributes ( color + opacity + thickness ...)
 29. vector + matrix ( tranformations, determinant )
 30. list inner function for ( iterations in list definition )
 31. pi notation product 
@@ -61,4 +58,5 @@
 35. implement infinity variable
 36. limits with variables
 37. list range ( [1...20] )
-38. 
+38. prefabs
+39. graph export (watermark)
