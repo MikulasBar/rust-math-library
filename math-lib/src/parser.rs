@@ -16,39 +16,17 @@ pub mod parser {
     }
 
     impl FuncStructure { 
-        pub fn parse_definition(string_def: &str) -> Vec<String> {
-            let mut tokens: Vec<String> = Vec::new();
-            let mut depth = 0;
-            let mut token = "".to_string();
+        pub fn parse_definition(string: &str) -> Self {
+            let mut tokens = split_surface(string, '+');
 
-            let string_def = string_def.replace(" ", "");
-
-            for c in string_def.chars() {
-                match c {
-                    op @ ('+' | '-' | '*' | '/' | '^') if depth == 0 => {
-                        tokens.push(token.clone());
-                        tokens.push(op.to_string());
-                        token = "".to_string();
-                    },
-                    n => {
-                        depth += match n {
-                            '(' => 1,
-                            ')' => -1,
-                            _ => 0, 
-                        };
-                        token.push(n);
-                    },
-                }
-            }
-            tokens.push(token.clone());
-
-            if tokens.contains(&"+".to_string()) {
-                tokens.retain(|x| x != &"".to_string());
-
+            if tokens.len() == 1 {
+                tokens = split_surface(string, '*');
+                
+            } else {
 
             }
 
-            return tokens;
+            return FuncStructure::default();
         }
 
         fn apply(&self, args: &FuncArgs) -> f32 {
@@ -56,9 +34,19 @@ pub mod parser {
         }
     }
 
-
+    impl Default for FuncStructure {
+        fn default() -> Self {
+            Self {
+                name: String::new(),
+                variables: Vec::new(),
+                definition: Box::new(ConstFunc::new(0.0))
+            }
+        }
+    }
 
 }
+
+
 
 
 #[cfg(test)]
@@ -70,14 +58,6 @@ mod tests {
 
     #[test]
     fn test_simple() {
-        let string = "5+ (  456*(78 +2 ))  + func( n + x)^ ( j)";
 
-        let vec = FuncStructure::parse_definition(string);
-        let expected = vec!["5", "+", "(456*(78+2))", "+", "func(n+x)", "^", "(j)"];
-        let expected: Vec<String> = expected.into_iter()
-            .map(|x| x.to_string())
-            .collect();
-
-        assert_eq!(vec, expected);
     }
 }

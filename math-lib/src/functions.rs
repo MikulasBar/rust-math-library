@@ -22,7 +22,7 @@ pub trait Func {
 }
 
 pub struct ConstFunc{
-    value: f32
+    pub value: f32
 }
 
 pub struct AddFunc {           
@@ -55,7 +55,13 @@ pub struct LogFunc {
 }
 
 
-
+impl ConstFunc {
+    pub fn new(value: f32) -> Self {
+        Self {
+            value
+        }
+    }
+}
 impl Func for ConstFunc {
     fn apply(&self, _args: &FuncArgs) -> f32 {
         self.value
