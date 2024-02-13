@@ -1,5 +1,4 @@
-pub mod utilities {
-    
+pub mod function_utils {
     /// Used for implementing `new`, `set_child`, `remove_child` functions <br>
     /// Use it for functions that have `variable` field
     #[macro_export]
@@ -51,15 +50,8 @@ pub mod utilities {
             }
         };
     }
+}
 
+pub mod parser_utils {
 
-    
-    #[macro_export]
-    macro_rules! lazy_regex {
-        (name: $name:ident, def: $value:literal) => {
-            pub static $name: Lazy<Regex> = Lazy::new(||
-                Regex::new($value).unwrap()
-            );
-        };
-    }
 }

@@ -1,148 +1,154 @@
 
 
-/// Used for structure like functions <br>
-/// Use `f32` as one and only numeric type  
-pub mod functions {
-    use std::{collections::HashMap};
-    use crate::{impl_sequence_func, impl_variable_func};
+///! Used for structure like functions <br>
+///! Use `f32` as one and only numeric type  
 
 
-    pub const PI: f32 = 3.1415927;
-    pub const E: f32 = 2.7182818;
+use std::{collections::HashMap};
+use crate::{impl_sequence_func, impl_variable_func};
 
-    /// Type used for `child` fields
-    pub type BoxedFunc = Box<dyn Func>;
-    pub type FuncArgs = HashMap<String, f32>;
 
-    pub trait Func {
-        fn apply(&self, args: &FuncArgs) -> f32;
+pub const PI: f32 = 3.1415927;
+pub const E: f32 = 2.7182818;
 
-        //fn derivative(&self) -> Self;
+/// Type used for `child` fields
+pub type BoxedFunc = Box<dyn Func>;
+pub type FuncArgs = HashMap<String, f32>;
+
+pub trait Func {
+    fn apply(&self, args: &FuncArgs) -> f32;
+
+    //fn derivative(&self) -> Self;
+}
+
+pub struct ConstFunc{
+    value: f32
+}
+
+pub struct AddFunc {           
+    children: Vec<BoxedFunc>
+}
+
+pub struct MulFunc {
+    children: Vec<BoxedFunc>
+}
+
+pub struct PowFunc {
+    pub power: f32,
+    pub variable: String,
+
+    child: Option<BoxedFunc>
+}
+
+pub struct ExpFunc {
+    pub base: f32,
+    pub variable: String,
+
+    child: Option<BoxedFunc>
+}
+
+pub struct LogFunc {
+    pub base: f32,
+    pub variable: String,
+
+    child: Option<BoxedFunc>
+}
+
+
+
+impl Func for ConstFunc {
+    fn apply(&self, _args: &FuncArgs) -> f32 {
+        self.value
     }
+}
 
-    pub struct AddFunc {           
-        children: Vec<BoxedFunc>
-    }
+impl_sequence_func!(AddFunc);
 
-    pub struct MulFunc {
-        children: Vec<BoxedFunc>
-    }
+impl Func for AddFunc {
+    fn apply(&self, args: &FuncArgs) -> f32 {
+        let mut result: f32 = 0.0;
 
-    pub struct PowFunc {
-        pub power: f32,
-        pub variable: String,
-
-        child: Option<BoxedFunc>
-    }
-
-    pub struct ExpFunc {
-        pub base: f32,
-        pub variable: String,
-
-        child: Option<BoxedFunc>
-    }
-
-    pub struct LogFunc {
-        pub base: f32,
-        pub variable: String,
-
-        child: Option<BoxedFunc>
-    }
-
-
-
-
-
-    impl_sequence_func!(AddFunc);
-
-    impl Func for AddFunc {
-        fn apply(&self, args: &FuncArgs) -> f32 {
-            let mut result: f32 = 0.0;
-
-            for child in &self.children {
-                let child_res = child.apply(&args.clone());
-                result += child_res;
-            }
-
-            result
+        for child in &self.children {
+            let child_res = child.apply(&args.clone());
+            result += child_res;
         }
+
+        result
     }
-    
+}
 
-    impl_sequence_func!(MulFunc);
 
-    impl Func for MulFunc {
-        fn apply(&self, args: &FuncArgs) -> f32 {
-            let mut result: f32 = 1.0;
+impl_sequence_func!(MulFunc);
 
-            for child in &self.children {
-                let child_res = child.apply(&args.clone());
-                result *= child_res;
-            }
+impl Func for MulFunc {
+    fn apply(&self, args: &FuncArgs) -> f32 {
+        let mut result: f32 = 1.0;
 
-            result
+        for child in &self.children {
+            let child_res = child.apply(&args.clone());
+            result *= child_res;
         }
+
+        result
     }
+}
 
 
-    impl_variable_func!(PowFunc, power);
+impl_variable_func!(PowFunc, power);
 
-    impl Func for PowFunc {
-        fn apply(&self, args: &FuncArgs) -> f32 {
-            // has child
-            if let Some(child) = &self.child {
-                let child_result = child.apply(&args);
-                return child_result.powf(self.power);
-            }
-            
-            // has not child
-            let base = args.get(&self.variable).unwrap();
-            return base.powf(self.power);
+impl Func for PowFunc {
+    fn apply(&self, args: &FuncArgs) -> f32 {
+        // has child
+        if let Some(child) = &self.child {
+            let child_result = child.apply(&args);
+            return child_result.powf(self.power);
         }
+        
+        // has not child
+        let base = args.get(&self.variable).unwrap();
+        return base.powf(self.power);
     }
+}
 
 
-    impl_variable_func!(ExpFunc, base);
+impl_variable_func!(ExpFunc, base);
 
-    impl Func for ExpFunc {
-        fn apply(&self, args: &FuncArgs) -> f32 {
-            // has child
-            if let Some(child) = &self.child {
-                let child_result = child.apply(&args);
-                return  self.base.powf(child_result);
-            }
-            
-            // has not child
-            let power = args.get(&self.variable).unwrap();
-            return self.base.powf(*power);
+impl Func for ExpFunc {
+    fn apply(&self, args: &FuncArgs) -> f32 {
+        // has child
+        if let Some(child) = &self.child {
+            let child_result = child.apply(&args);
+            return  self.base.powf(child_result);
         }
+        
+        // has not child
+        let power = args.get(&self.variable).unwrap();
+        return self.base.powf(*power);
     }
+}
 
 
-    impl_variable_func!(LogFunc, base);
+impl_variable_func!(LogFunc, base);
 
-    impl Func for LogFunc {
-        fn apply(&self, args: &FuncArgs) -> f32 {
-            // has child
-            if let Some(child) = &self.child {
-                let child_result = child.apply(&args);
-                return  child_result.log(self.base);
-            }
-
-            // has not child
-            let log_arg = args.get(&self.variable).unwrap();
-            return log_arg.log(self.base);
+impl Func for LogFunc {
+    fn apply(&self, args: &FuncArgs) -> f32 {
+        // has child
+        if let Some(child) = &self.child {
+            let child_result = child.apply(&args);
+            return  child_result.log(self.base);
         }
+
+        // has not child
+        let log_arg = args.get(&self.variable).unwrap();
+        return log_arg.log(self.base);
     }
-} 
+}
 
 
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
-    use super::functions::{
-        *,
-    };
+    use super::*;
 
     
 
