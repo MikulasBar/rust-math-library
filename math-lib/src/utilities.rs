@@ -1,4 +1,19 @@
 pub mod function_utils {
+    use crate::functions::*;
+
+    /// Trait for everything that can be boxed
+    pub trait Boxed {
+        /// Create a boxed version of the object
+        fn boxed(self) -> Box<Self>;
+    }
+    
+    impl<T: Function + Sized> Boxed for T {
+        fn boxed(self) -> Box<Self> {
+            Box::new(self)
+        }
+    }
+    
+
     /// Used for implementing `new`, `set_child`, `remove_child` functions <br>
     /// Use it for functions that have `variable` field
     #[macro_export]
@@ -14,7 +29,7 @@ pub mod function_utils {
                     }
                 }
         
-                pub fn set_child(&mut self, child: BoxedFunc) {
+                pub fn set_child(&mut self, child: BoxedFunction) {
                     self.child = Some(child);
                 }
         
@@ -38,14 +53,23 @@ pub mod function_utils {
     macro_rules! impl_sequence_func {
         ($func_type:ty) => {
             impl $func_type {
-                pub fn new(children: Vec<BoxedFunc>) -> Self {
+                /// Initialise new function with no children
+                pub fn new(children: Vec<BoxedFunction>) -> Self {
                     Self {
-                        children
+                        children,
                     }
                 }
         
-                pub fn add_child(&mut self, child: BoxedFunc) {
+                pub fn add_child(&mut self, child: BoxedFunction) {
                     self.children.push(child);
+                }
+            }
+
+            impl Default for $func_type {
+                fn default() -> Self {
+                    Self {
+                        children: Vec::new()
+                    }
                 }
             }
         };
@@ -53,6 +77,11 @@ pub mod function_utils {
 }
 
 pub mod parser_utils {
+    use std::ops::Add;
+
+    use crate::functions::*;
+    use super::function_utils::Boxed;
+
     
     /// Split string on specified delimiter, but only on surface level <br>
     /// Also removes all spaces
@@ -77,6 +106,27 @@ pub mod parser_utils {
         result.push(string[start..].to_string());
 
         result
+    }
+
+    /// Parse string to `BoxedFunction`
+    pub fn parse_to_func(string: &str) -> BoxedFunction {
+        let mut tokens = split_surface(string, '+');
+
+        if tokens.len() == 1 {
+            tokens = split_surface(string, '*');
+            if tokens.len() == 1 {
+                
+            }
+            
+        } else {
+            return AddF::new(
+                tokens.into_iter()
+                .map(|x| parse_to_func(&x))
+                .collect()
+            ).boxed();
+        }
+
+        return ConstF::new(0.0).boxed();
     }
 
 

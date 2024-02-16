@@ -1,63 +1,83 @@
-/// Used to parse `String` to structure like function <br>
-/// Use the `functions` module from this library
-pub mod parser {
+use std::result;
+use std::{collections::HashMap, ops::Index};
 
-    use std::{collections::HashMap, ops::Index};
-
-    use crate::functions::*;
-    use crate::utilities::parser_utils::*;
-    
+use crate::functions::*;
+use crate::utilities::parser_utils::*;
+use crate::utilities::function_utils::Boxed;
 
 
-    pub struct FuncStructure {
-        pub name: String,
-        pub variables: Vec<String>,
-        definition: BoxedFunc,
-    }
 
-    impl FuncStructure { 
-        pub fn parse_definition(string: &str) -> Self {
-            let mut tokens = split_surface(string, '+');
-
-            if tokens.len() == 1 {
-                tokens = split_surface(string, '*');
-                
-            } else {
-
-            }
-
-            return FuncStructure::default();
-        }
-
-        fn apply(&self, args: &FuncArgs) -> f32 {
-            self.definition.apply(args)
-        }
-    }
-
-    impl Default for FuncStructure {
-        fn default() -> Self {
-            Self {
-                name: String::new(),
-                variables: Vec::new(),
-                definition: Box::new(ConstFunc::new(0.0))
-            }
-        }
-    }
-
+pub struct FunctionStruct {
+    pub definition: BoxedFunction,
 }
 
+impl FunctionStruct { 
+    pub fn from_str(string: &str) -> Self {
+        let definition = parse_to_func(string);
+        Self {
+            definition
+        }
+    }
 
+
+    /// Warning - this function may not be fast, use `get_closure()` instead
+    pub fn apply(&self, args: FunctionArgs) -> f32 {
+        self.definition.apply(args)
+    }
+
+    pub fn get_closure(&self) -> impl Fn(FunctionArgs) -> f32 {
+        |_| 0.0 // Unfinished, implement later
+    }
+}
+
+impl Default for FunctionStruct {
+    fn default() -> Self {
+        Self {
+            definition: ConstF::new(0.0).boxed()
+        }
+    }
+}
 
 
 #[cfg(test)]
 mod tests {
 
-    use super::parser::*;
 
-    
+    use crate::functions::*;
+    use super::*;
 
     #[test]
-    fn test_simple() {
+    fn test_func_struct() {
+        let func = FunctionStruct {
+            definition: PowF {
+                power: 2.0,
+                variable: "".to_string(),
+                child: Some(AddF {
+                    children: vec![
+                        ExpF {
+                            base: 2.0,
+                            variable: "x".to_string(),
+                            child: None,
+                        }.boxed(),
+                        MulF {
+                            children: vec![
+                                ConstF::new(3.0).boxed(),
+                                LogF {
+                                    base: 5.0,
+                                    variable: "y".to_string(),
+                                    child: None,
+                                }.boxed(),
+                            ],
+                        }.boxed(),
+                    ]
+                }.boxed()),
+            }.boxed(),
+        };
+        let mut args: FunctionArgs = FunctionArgs::new();
+        args.insert("x".to_string(), 3.0);
+        args.insert("y".to_string(), 25.0);
+        let result = func.apply(args);
 
+        assert_eq!(result, 196.0);
     }
 }
