@@ -85,12 +85,13 @@ pub mod parser_utils {
     /// Describes which operation <br>
     /// is on the surface level of the string that is being parsed
     enum ParseState {
-        Addition,
-        Subtraction,
-        Multiplication,
-        Division,
-        Power,
-        NamedFunction,
+        Addition(Vec<String>),
+        Subtraction(String, String),
+        Multiplication(Vec<String>),
+        Division(String, String),
+        Power(String, String),
+        NamedFunction(String, FunctionArgs),
+        Constant(f32),
         None,
     }
 
@@ -120,15 +121,42 @@ pub mod parser_utils {
         result
     }
 
-    fn get_surface_level_op() -> ParseState {
-        todo!();
+    /// Get the operation that is on the surface level of the string
+    fn split_surface_by_op(string: &str) -> ParseState {
+        ParseState::None
     }
 
+
+// make the DivF and CoefF functions
+// make the substraction somehow better
+
+
+
     pub fn parse_to_func(string: &str) -> BoxedFunction {
-        let surface_level_op = get_surface_level_op();
+        let surface_level_op = split_surface_by_op(string);
         match surface_level_op {
-            _ => todo!()
+            ParseState::Addition(v) => {
+                return AddF::new(
+                    v.into_iter()
+                        .map(|x| parse_to_func(&x))
+                        .collect()
+                ).boxed();
+            },
+            ParseState::Multiplication(v) => {
+                return MulF::new(
+                    v.into_iter()
+                        .map(|x| parse_to_func(&x))
+                        .collect()
+                ).boxed();
+            },
+            ParseState::Subtraction(a, b) => {},
+            ParseState::Division(a, b) => {},
+            ParseState::Power(a, b) => {},
+            ParseState::NamedFunction(name, args) => {},
+            ParseState::Constant(c) => return ConstF::new(c).boxed(),
+            _ => {},
         }
+        unreachable!();
     }
 
 
