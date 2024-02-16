@@ -82,10 +82,22 @@ pub mod parser_utils {
     use crate::functions::*;
     use super::function_utils::Boxed;
 
+    /// Describes which operation <br>
+    /// is on the surface level of the string that is being parsed
+    enum ParseState {
+        Addition,
+        Subtraction,
+        Multiplication,
+        Division,
+        Power,
+        NamedFunction,
+        None,
+    }
+
     
     /// Split string on specified delimiter, but only on surface level <br>
     /// Also removes all spaces
-    pub fn split_surface(string: &str, delimiter: char) -> Vec<String> {
+    fn split_surface(string: &str, delimiter: char) -> Vec<String> {
         let mut result = Vec::new();
         let mut start = 0;
         let mut depth = 0;
@@ -108,25 +120,15 @@ pub mod parser_utils {
         result
     }
 
-    /// Parse string to `BoxedFunction`
+    fn get_surface_level_op() -> ParseState {
+        todo!();
+    }
+
     pub fn parse_to_func(string: &str) -> BoxedFunction {
-        let mut tokens = split_surface(string, '+');
-
-        if tokens.len() == 1 {
-            tokens = split_surface(string, '*');
-            if tokens.len() == 1 {
-                
-            }
-            
-        } else {
-            return AddF::new(
-                tokens.into_iter()
-                .map(|x| parse_to_func(&x))
-                .collect()
-            ).boxed();
+        let surface_level_op = get_surface_level_op();
+        match surface_level_op {
+            _ => todo!()
         }
-
-        return ConstF::new(0.0).boxed();
     }
 
 

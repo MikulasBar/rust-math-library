@@ -1,5 +1,5 @@
 use std::result;
-use std::{collections::HashMap, ops::Index};
+use std::{collections::HashMap};
 
 use crate::functions::*;
 use crate::utilities::parser_utils::*;
@@ -26,7 +26,8 @@ impl FunctionStruct {
     }
 
     pub fn get_closure(&self) -> impl Fn(FunctionArgs) -> f32 {
-        |_| 0.0 // Unfinished, implement later
+        todo!();
+        |x| 0.0
     }
 }
 
