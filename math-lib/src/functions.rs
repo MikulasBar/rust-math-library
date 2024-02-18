@@ -1,229 +1,231 @@
+use std::{collections::HashMap};
+use crate::{impl_sequence_func, utilities::function_utils::{apply_on_result, apply_on_result2}};
+use ChildFn::*;
 
 
-///! Used for structure like functions <br>
-///! Use `f32` as one and only numeric type  
 
+pub type BoxedFn = Box<dyn Function>;
+pub type FnArgs = HashMap<String, f32>;
+pub type FnError = ();
+pub type FnResult = Result<f32, FnError>;
 
-use std::{borrow::Borrow, collections::HashMap};
-use crate::{impl_sequence_func, impl_variable_func};
-
-
-pub const PI: f32 = 3.1415927;
-pub const E: f32 = 2.7182818;
-
-/// Type used for `child` fields
-pub type BoxedFunction = Box<dyn Function>;
-pub type FunctionArgs = HashMap<String, f32>;
 
 pub trait Function{
-    fn apply(&self, args: FunctionArgs) -> f32;
+    fn apply(&self, args: FnArgs) -> FnResult;
     //fn derivative(&self) -> Self;
 }
 
-
-pub struct ConstF {
-    pub value: f32
+/// Type used for `child` fields
+pub enum ChildFn {
+    Fn(BoxedFn),
+    Var(String),
+    Const(f32)
 }
 
-pub struct AddF {           
-    pub children: Vec<BoxedFunction>
-}
-
-pub struct MulF {
-    pub children: Vec<BoxedFunction>
-}
-
-pub struct PowF {
-    pub power: f32,
-    pub variable: String,
-    pub child: Option<BoxedFunction>
-}
-
-pub struct ExpF {
-    pub base: f32,
-    pub variable: String,
-    pub child: Option<BoxedFunction>
-}
-
-pub struct LogF {
-    pub base: f32,
-    pub variable: String,
-    pub child: Option<BoxedFunction>
-}
-
-
-
-
-impl ConstF {
-    pub fn new(value: f32) -> Self {
-        Self {
-            value
+impl Function for ChildFn {
+    fn apply(&self, args: FnArgs) -> FnResult {
+        match self {
+            Fn(f) => f.apply(args),
+            Var(s) => {
+                if let Some(v) = args.get(s) {
+                    Ok(*v)
+                } else {
+                    Err(())
+                }
+            },
+            Const(c) => Ok(*c)
         }
     }
 }
-impl Function for ConstF {
-    fn apply(&self, _args: FunctionArgs) -> f32 {
-        self.value
+
+impl Into<ChildFn> for BoxedFn {
+    fn into(self) -> ChildFn {
+        Fn(self)
     }
 }
 
-impl_sequence_func!(AddF);
+impl Into<ChildFn> for String {
+    fn into(self) -> ChildFn {
+        Var(self)
+    }
+}
 
-impl Function for AddF {
-    fn apply(&self, args: FunctionArgs) -> f32 {
+impl Into<ChildFn> for &str {
+    fn into(self) -> ChildFn {
+        Var(self.to_string())
+    }
+}
+
+impl Into<ChildFn> for f32 {
+    fn into(self) -> ChildFn {
+        Const(self)
+    }
+}
+
+
+
+pub struct AddFn {           
+    pub children: Vec<ChildFn>
+}
+
+impl_sequence_func!(AddFn);
+
+impl Function for AddFn {
+    fn apply(&self, args: FnArgs) -> FnResult {
         let mut result: f32 = 0.0;
 
         for child in &self.children {
             let child_res = child.apply(args.clone());
-            result += child_res;
+            result += child_res?;
         }
 
-        result
+        Ok(result)
     }
 }
 
 
-impl_sequence_func!(MulF);
 
-impl Function for MulF {
-    fn apply(&self, args: FunctionArgs) -> f32 {
+pub struct MulFn {
+    pub children: Vec<ChildFn>
+}
+
+impl_sequence_func!(MulFn);
+
+impl Function for MulFn {
+    fn apply(&self, args: FnArgs) -> FnResult {
         let mut result: f32 = 1.0;
 
         for child in &self.children {
-            let child_res = child.apply(args.clone());
-            result *= child_res;
+            let child_result = child.apply(args.clone());
+            if let Ok(child_result) = child_result {
+                result *= child_result;
+            } else {
+                return Err(());
+            }
         }
-
-        result
+        Ok(result)
     }
 }
 
 
-impl_variable_func!(PowF, power);
+pub struct DivFn {
+    pub numerator: ChildFn,
+    pub denominator: ChildFn
+}
 
-impl Function for PowF {
-    fn apply(&self, args: FunctionArgs) -> f32 {
-        // has child
-        if let Some(child) = &self.child {
-            let child_result = child.apply(args);
-            return child_result.powf(self.power);
-        }
-        
-        // has not child
-        let base = args.get(&self.variable).unwrap();
-        return base.powf(self.power);
+impl Function for DivFn {
+    fn apply(&self, args: FnArgs) -> FnResult {
+        let num_result = self.numerator.apply(args.clone());
+        let den_result = self.denominator.apply(args);
+
+        apply_on_result2(num_result, den_result, |n, d| {
+            if d == 0.0 {
+                Err(())
+            } else {
+                Ok(n / d)
+            }
+        })
     }
 }
 
 
-impl_variable_func!(ExpF, base);
 
-impl Function for ExpF {
-    fn apply(&self, args: FunctionArgs) -> f32 {
-        // has child
-        if let Some(child) = &self.child {
-            let child_result = child.apply(args);
-            return  self.base.powf(child_result);
+/// This function is used for adding coefficient without using `MulFn` <br>
+pub struct CoefFn {
+    pub coefficient: f32,
+    pub child: ChildFn
+}
+
+impl CoefFn {
+    pub fn new(coefficient: f32, child: impl Into<ChildFn>) -> Self {
+        Self {
+            coefficient,
+            child: child.into()
         }
-        
-        // has not child
-        let power = args.get(&self.variable).unwrap();
-        return self.base.powf(*power);
+    }
+}
+
+impl Function for CoefFn {
+    fn apply(&self, args: FnArgs) -> FnResult {
+        let child_result = self.child.apply(args);
+        apply_on_result(child_result, |r| Ok(self.coefficient * r))
+    }
+}
+
+pub struct ExpFn {
+    pub base: ChildFn,
+    pub exponent: ChildFn
+}
+
+impl Function for ExpFn {
+    fn apply(&self, args: FnArgs) -> FnResult {
+        let base_result = self.base.apply(args.clone());
+        let exp_result = self.exponent.apply(args);
+
+        apply_on_result2(base_result, exp_result, |b, e| Ok(b.powf(e)))
     }
 }
 
 
-impl_variable_func!(LogF, base);
 
-impl Function for LogF {
-    fn apply(&self, args: FunctionArgs) -> f32 {
-        // has child
-        if let Some(child) = &self.child {
-            let child_result = child.apply(args);
-            return  child_result.log(self.base);
-        }
+pub struct LogFn {
+    pub base: ChildFn,
+    pub argument: ChildFn
+}
 
-        // has not child
-        let log_arg = args.get(&self.variable).unwrap();
-        return log_arg.log(self.base);
+impl Function for LogFn {
+    fn apply(&self, args: FnArgs) -> FnResult {
+        let base_result = self.base.apply(args.clone());
+        let arg_result = self.argument.apply(args);
+
+        apply_on_result2(base_result, arg_result, |b, a| Ok(a.log(b)))
     }
 }
+
 
 
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
-    use crate::utilities::function_utils::Boxed;
-
+    use crate::utilities::function_utils::ToChildFn;
     use super::*;
 
-    
 
     #[test]
-    fn test_PowF() {
-        let var1 = String::from("x");
-        let var2 = String::from("y");
+    fn test_AddFn() {
+        let x = "x".to_string();
+        let y = "y".to_string();
+        
+        let fx = CoefFn::new(2.0, x.clone()).to_child();
+        let fy = CoefFn::new(3.0, y.clone()).to_child();
 
-        let mut pow_func1 =  PowF::new(2.0, var1.clone());
-        let pow_func2 =      PowF::new(3.0, var2.clone());
+        let add_func = AddFn::new(vec![fx, fy]);
 
-        let mut args1: FunctionArgs = HashMap::new();
-        args1.insert(var1,          4.0);
-        args1.insert(var2.clone(),  5.0);
+        let mut args: FnArgs = HashMap::new();
 
-        assert_eq!(pow_func1.apply(args1.clone()), 16.0);
-        assert_eq!(pow_func2.apply(args1), 125.0);
+        args.insert(x, 4.0);
+        args.insert(y, 5.0);
 
 
-        pow_func1.set_child(pow_func2.boxed());
-
-        let mut args2: FunctionArgs = HashMap::new();
-        args2.insert(var2, 2.0);
-
-        assert_eq!(pow_func1.apply(args2), 64.0);
+        assert_eq!(add_func.apply(args), Ok(23.0));
     }
 
     #[test]
-    fn test_AddF() {
-        let (w, x, y, z) = ("w", "x", "y", "z");
+    fn test_MulFn() {
+        let x = "x".to_string();
+        let y = "y".to_string();
         
-        let f1 = PowF::new(1.0, w).boxed();
-        let f2 = PowF::new(2.0, x).boxed();
-        let f3 = PowF::new(3.0, y).boxed();
-        let f4 = PowF::new(4.0, z).boxed();
+        let fx = CoefFn::new(2.0, x.clone()).to_child();
+        let fy = CoefFn::new(3.0, y.clone()).to_child();
 
-        let add_func = AddF::new(vec![f1, f2, f3, f4]);
+        let mul_func = MulFn::new(vec![fx, fy]);
 
-        let mut args: FunctionArgs = HashMap::new();
+        let mut args: FnArgs = HashMap::new();
 
-        args.insert(w.to_string(), 1.0);
-        args.insert(x.to_string(), 2.0);
-        args.insert(y.to_string(), 3.0);
-        args.insert(z.to_string(), 4.0);
+        args.insert(x, 4.0);
+        args.insert(y, 5.0);
 
 
-        assert_eq!(add_func.apply(args), 288.0);
-    }
-
-    #[test]
-    fn test_MulF() {
-        let (w, x, y, z) = ("w", "x", "y", "z");
-        
-        let f1 = PowF::new(1.0, w).boxed();
-        let f2 = PowF::new(2.0, x).boxed();
-        let f3 = PowF::new(3.0, y).boxed();
-        let f4 = PowF::new(4.0, z).boxed();
-
-        let add_func = MulF::new(vec![f1, f2, f3, f4]);
-
-        let mut args: FunctionArgs = HashMap::new();
-
-        args.insert(w.to_string(), 1.0);
-        args.insert(x.to_string(), 2.0);
-        args.insert(y.to_string(), 3.0);
-        args.insert(z.to_string(), 4.0);
-
-
-        assert_eq!(add_func.apply(args), 27648.0);
+        assert_eq!(mul_func.apply(args), Ok(120.0));
     }
 }

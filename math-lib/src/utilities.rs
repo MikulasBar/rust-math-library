@@ -12,39 +12,31 @@ pub mod function_utils {
             Box::new(self)
         }
     }
-    
 
-    /// Used for implementing `new`, `set_child`, `remove_child` functions <br>
-    /// Use it for functions that have `variable` field
-    #[macro_export]
-    macro_rules! impl_variable_func {
-        ($func_type:ty, $($fields:ident),* ) => {
-            impl $func_type {
-                /// Initialise new function with no child
-                pub fn new($($fields),*: f32, variable: impl Into<String>) -> Self {
-                    Self {
-                        $($fields: $fields),* ,
-                        variable: variable.into(),
-                        child: None,
-                    }
-                }
-        
-                pub fn set_child(&mut self, child: BoxedFunction) {
-                    self.child = Some(child);
-                }
-        
-                pub fn remove_child(&mut self) {
-                    self.child = None;
-                }
-        
-                pub fn has_child(&self) -> bool {
-                    if let Option::Some(_) = self.child {
-                        return true;
-                    }
-                    false
-                } 
-            }
-        };
+    pub trait ToChildFn {
+        fn to_child(self) -> ChildFn;
+    }
+
+    impl<T: Function + Sized + 'static> ToChildFn for T {
+        fn to_child(self) -> ChildFn {
+            ChildFn::Fn(self.boxed())
+        }
+    }
+
+    pub fn apply_on_result(res: FnResult, f: impl Fn(f32) -> FnResult) -> FnResult {
+        if let Ok(v) = res {
+            f(v)
+        } else {
+            Err(())
+        }
+    }
+
+    pub fn apply_on_result2(res1: FnResult, res2: FnResult, f: impl Fn(f32, f32) -> FnResult) -> FnResult {
+        if let (Ok(v1), Ok(v2)) = (res1, res2) {
+            f(v1, v2)
+        } else {
+            Err(())
+        }
     }
 
     /// Used for implementing `new`, `add_child` functions <br>
@@ -54,13 +46,13 @@ pub mod function_utils {
         ($func_type:ty) => {
             impl $func_type {
                 /// Initialise new function with no children
-                pub fn new(children: Vec<BoxedFunction>) -> Self {
+                pub fn new(children: Vec<ChildFn>) -> Self {
                     Self {
                         children,
                     }
                 }
         
-                pub fn add_child(&mut self, child: BoxedFunction) {
+                pub fn add_child(&mut self, child: ChildFn) {
                     self.children.push(child);
                 }
             }
@@ -77,25 +69,7 @@ pub mod function_utils {
 }
 
 pub mod parser_utils {
-    use std::ops::Add;
 
-    use crate::functions::*;
-    use super::function_utils::Boxed;
-
-    /// Describes which operation <br>
-    /// is on the surface level of the string that is being parsed
-    enum ParseState {
-        Addition(Vec<String>),
-        Subtraction(String, String),
-        Multiplication(Vec<String>),
-        Division(String, String),
-        Power(String, String),
-        NamedFunction(String, FunctionArgs),
-        Constant(f32),
-        None,
-    }
-
-    
     /// Split string on specified delimiter, but only on surface level <br>
     /// Also removes all spaces
     fn split_surface(string: &str, delimiter: char) -> Vec<String> {
@@ -120,45 +94,6 @@ pub mod parser_utils {
 
         result
     }
-
-    /// Get the operation that is on the surface level of the string
-    fn split_surface_by_op(string: &str) -> ParseState {
-        ParseState::None
-    }
-
-
-// make the DivF and CoefF functions
-// make the substraction somehow better
-
-
-
-    pub fn parse_to_func(string: &str) -> BoxedFunction {
-        let surface_level_op = split_surface_by_op(string);
-        match surface_level_op {
-            ParseState::Addition(v) => {
-                return AddF::new(
-                    v.into_iter()
-                        .map(|x| parse_to_func(&x))
-                        .collect()
-                ).boxed();
-            },
-            ParseState::Multiplication(v) => {
-                return MulF::new(
-                    v.into_iter()
-                        .map(|x| parse_to_func(&x))
-                        .collect()
-                ).boxed();
-            },
-            ParseState::Subtraction(a, b) => {},
-            ParseState::Division(a, b) => {},
-            ParseState::Power(a, b) => {},
-            ParseState::NamedFunction(name, args) => {},
-            ParseState::Constant(c) => return ConstF::new(c).boxed(),
-            _ => {},
-        }
-        unreachable!();
-    }
-
 
 
     #[cfg(test)]
