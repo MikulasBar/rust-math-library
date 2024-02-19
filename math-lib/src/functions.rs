@@ -1,23 +1,54 @@
-use std::{collections::HashMap};
-use crate::{impl_sequence_func, utilities::function_utils::{apply_on_result, apply_on_result2}};
+use std::{
+    collections::HashMap,
+};
+use crate::{
+    impl_sequence_func,
+};
 use ChildFn::*;
+use FnError::*;
 
 
-
-pub type BoxedFn = Box<dyn Function>;
-pub type FnArgs = HashMap<String, f32>;
-pub type FnError = ();
 pub type FnResult = Result<f32, FnError>;
 
 
-pub trait Function{
+pub type FnArgs = HashMap<String, f32>;
+pub trait Function {
     fn apply(&self, args: FnArgs) -> FnResult;
     //fn derivative(&self) -> Self;
 }
 
-/// Type used for `child` fields
+
+#[derive(Debug)]
+pub enum FnError {
+    DivisionByZeroError,
+    NegativeEvenRootError,
+    NonPositiveLogArgError,
+    NonPositiveLogBaseError,
+    LogBaseOneError,
+    NegativeBaseNonIntegerExponentError,
+
+    ParameterNotFoundError,
+}
+
+// if i dont need to match specific error
+
+/*
+    pub enum FnError {
+        MathError(String),
+        InputError(String),
+    }
+*/
+
+impl PartialEq for FnError {
+    fn eq(&self, other: &Self) -> bool {
+        self == other
+    }
+}
+
+
+/// Type used for fields like `child` or `exponent` ... 
 pub enum ChildFn {
-    Fn(BoxedFn),
+    Fn(Box<dyn Function>),
     Var(String),
     Const(f32)
 }
@@ -26,11 +57,10 @@ impl Function for ChildFn {
     fn apply(&self, args: FnArgs) -> FnResult {
         match self {
             Fn(f) => f.apply(args),
-            Var(s) => {
-                if let Some(v) = args.get(s) {
-                    Ok(*v)
-                } else {
-                    Err(())
+            Var(ref s) => {
+                match args.get(s) {
+                    Some(&v) => Ok(v),
+                    _ => Err(ParameterNotFoundError)
                 }
             },
             Const(c) => Ok(*c)
@@ -38,11 +68,6 @@ impl Function for ChildFn {
     }
 }
 
-impl Into<ChildFn> for BoxedFn {
-    fn into(self) -> ChildFn {
-        Fn(self)
-    }
-}
 
 impl Into<ChildFn> for String {
     fn into(self) -> ChildFn {
@@ -75,10 +100,12 @@ impl Function for AddFn {
         let mut result: f32 = 0.0;
 
         for child in &self.children {
-            let child_res = child.apply(args.clone());
-            result += child_res?;
+            let child_result = child.apply(args.clone());
+            match child_result {
+                Ok(v) => result += v,
+                e => return e,
+            }
         }
-
         Ok(result)
     }
 }
@@ -97,10 +124,9 @@ impl Function for MulFn {
 
         for child in &self.children {
             let child_result = child.apply(args.clone());
-            if let Ok(child_result) = child_result {
-                result *= child_result;
-            } else {
-                return Err(());
+            match child_result {
+                Ok(v) => result *= v,
+                e => return e,
             }
         }
         Ok(result)
@@ -113,18 +139,38 @@ pub struct DivFn {
     pub denominator: ChildFn
 }
 
+impl DivFn {
+    pub fn new<T: Into<ChildFn>>(num: T, denom: T) -> Self {
+        Self {
+            numerator: num.into(),
+            denominator: denom.into(),
+        }
+    }
+}
+
 impl Function for DivFn {
     fn apply(&self, args: FnArgs) -> FnResult {
         let num_result = self.numerator.apply(args.clone());
         let den_result = self.denominator.apply(args);
 
-        apply_on_result2(num_result, den_result, |n, d| {
-            if d == 0.0 {
-                Err(())
-            } else {
-                Ok(n / d)
-            }
-        })
+        // apply_on_result2(num_result, den_result, |n, d| {
+        //     if d == 0.0 {
+        //         Err(())
+        //     } else {
+        //         Ok(n / d)
+        //     }
+        // })
+
+        match (num_result, den_result) {
+            (Ok(n), Ok(d)) => {
+                if d == 0.0 {
+                    Err(DivisionByZeroError)
+                } else {
+                    Ok(n / d)
+                }
+            },
+            (Err(e), _) | (_, Err(e)) => Err(e),
+        }
     }
 }
 
@@ -148,7 +194,11 @@ impl CoefFn {
 impl Function for CoefFn {
     fn apply(&self, args: FnArgs) -> FnResult {
         let child_result = self.child.apply(args);
-        apply_on_result(child_result, |r| Ok(self.coefficient * r))
+
+        match child_result {
+            Ok(v) => Ok(self.coefficient * v),
+            e => e,
+        }
     }
 }
 
@@ -157,12 +207,34 @@ pub struct ExpFn {
     pub exponent: ChildFn
 }
 
+impl ExpFn {
+    pub fn new<T, U>(base: T, exp: U) -> Self
+    where
+        T: Into<ChildFn>,
+        U: Into<ChildFn>,
+    {
+        Self {
+            base: base.into(),
+            exponent: exp.into(),
+        }
+    }
+}
+
 impl Function for ExpFn {
     fn apply(&self, args: FnArgs) -> FnResult {
         let base_result = self.base.apply(args.clone());
         let exp_result = self.exponent.apply(args);
 
-        apply_on_result2(base_result, exp_result, |b, e| Ok(b.powf(e)))
+        match (base_result, exp_result) {
+            (Ok(b), Ok(n)) => {
+                if b < 0.0 && n.fract() != 0.0 {
+                    Err(NegativeBaseNonIntegerExponentError)
+                } else {
+                    Ok(b.powf(n))
+                }
+            },
+            (Err(e), _) | (_, Err(e)) => Err(e),
+        }
     }
 }
 
@@ -173,59 +245,123 @@ pub struct LogFn {
     pub argument: ChildFn
 }
 
+impl LogFn {
+    pub fn new<T, U>(base: T, arg: U) -> Self
+    where
+        T: Into<ChildFn>,
+        U: Into<ChildFn>,
+    {
+        Self {
+            base: base.into(),
+            argument: arg.into(),
+        }
+    }
+}
+
 impl Function for LogFn {
     fn apply(&self, args: FnArgs) -> FnResult {
         let base_result = self.base.apply(args.clone());
         let arg_result = self.argument.apply(args);
 
-        apply_on_result2(base_result, arg_result, |b, a| Ok(a.log(b)))
+        match (base_result, arg_result) {
+            (Ok(b), Ok(a)) => {
+                if a <= 0.0 {
+                    Err(NonPositiveLogArgError)
+                } else if b <= 0.0 {
+                    Err(NonPositiveLogBaseError)
+                } else {
+                    Ok(a.log(b))
+                }
+            },
+            (Err(e), _) | (_, Err(e)) => Err(e),
+        }
     }
 }
 
 
-
+#[allow(non_snake_case)]
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
-    use crate::utilities::function_utils::ToChildFn;
     use super::*;
+    use crate::utilities::function_utils::{
+        ToChildFn, ToFnArgs
+    };
 
 
     #[test]
     fn test_AddFn() {
-        let x = "x".to_string();
-        let y = "y".to_string();
-        
-        let fx = CoefFn::new(2.0, x.clone()).to_child();
-        let fy = CoefFn::new(3.0, y.clone()).to_child();
+        let fx = CoefFn::new(2.0, "x").to_child();
+        let fy = CoefFn::new(3.0, "y").to_child();
 
         let add_func = AddFn::new(vec![fx, fy]);
 
-        let mut args: FnArgs = HashMap::new();
-
-        args.insert(x, 4.0);
-        args.insert(y, 5.0);
-
+        let mut args: FnArgs = vec![
+            ("x", 4.0 as f32),
+            ("y", 5.0),
+        ].to_fn_args();
 
         assert_eq!(add_func.apply(args), Ok(23.0));
     }
 
     #[test]
     fn test_MulFn() {
-        let x = "x".to_string();
-        let y = "y".to_string();
-        
-        let fx = CoefFn::new(2.0, x.clone()).to_child();
-        let fy = CoefFn::new(3.0, y.clone()).to_child();
+        let fx = CoefFn::new(2.0, "x").to_child();
+        let fy = CoefFn::new(3.0, "y").to_child();
 
         let mul_func = MulFn::new(vec![fx, fy]);
 
-        let mut args: FnArgs = HashMap::new();
-
-        args.insert(x, 4.0);
-        args.insert(y, 5.0);
-
+        let mut args: FnArgs = vec![
+            ("x", 4.0 as f32),
+            ("y", 5.0),
+        ].to_fn_args();
 
         assert_eq!(mul_func.apply(args), Ok(120.0));
+    }
+
+    #[test]
+    fn test_DivFn() {
+        let div_func = DivFn::new("x", "y");
+
+        let args: FnArgs = vec![
+            ("x", 48.0 as f32),
+            ("y", 4.0),
+        ].to_fn_args();
+
+        assert_eq!(div_func.apply(args), Ok(12.0));
+    }
+
+    #[test]
+    fn test_CoefFn() {
+        let coef_func = CoefFn::new(5.0, "x");
+
+        let args: FnArgs = vec![
+            ("x", 6.0 as f32),
+        ].to_fn_args();
+
+        assert_eq!(coef_func.apply(args), Ok(30.0));
+    }
+
+    #[test]
+    fn test_ExpFn() {
+        let exp_func = ExpFn::new("x", "y");
+
+        let args: FnArgs = vec![
+            ("x", 5.0 as f32),
+            ("y", 3.0),
+        ].to_fn_args();
+
+        assert_eq!(exp_func.apply(args), Ok(125.0));
+    }
+
+    #[test]
+    fn test_LogFn() {
+        let log_func = LogFn::new("x", "y");
+
+        let args: FnArgs = vec![
+            ("x", 2.0 as f32),
+            ("y", 16.0),
+        ].to_fn_args();
+
+        assert_eq!(log_func.apply(args), Ok(4.0));
     }
 }

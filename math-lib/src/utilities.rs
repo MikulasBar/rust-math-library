@@ -1,15 +1,18 @@
 pub mod function_utils {
     use crate::functions::*;
 
-    /// Trait for everything that can be boxed
-    pub trait Boxed {
-        /// Create a boxed version of the object
-        fn boxed(self) -> Box<Self>;
+    pub trait ToFnArgs {
+        fn to_fn_args(self) -> FnArgs;
     }
-    
-    impl<T: Function + Sized> Boxed for T {
-        fn boxed(self) -> Box<Self> {
-            Box::new(self)
+
+    impl ToFnArgs for Vec<(&str, f32)> {
+        fn to_fn_args(self) -> FnArgs {
+            let mut args = FnArgs::new();
+
+            for t in &self {
+                args.insert(t.0.to_string(), t.1);
+            }
+            args
         }
     }
 
@@ -19,23 +22,7 @@ pub mod function_utils {
 
     impl<T: Function + Sized + 'static> ToChildFn for T {
         fn to_child(self) -> ChildFn {
-            ChildFn::Fn(self.boxed())
-        }
-    }
-
-    pub fn apply_on_result(res: FnResult, f: impl Fn(f32) -> FnResult) -> FnResult {
-        if let Ok(v) = res {
-            f(v)
-        } else {
-            Err(())
-        }
-    }
-
-    pub fn apply_on_result2(res1: FnResult, res2: FnResult, f: impl Fn(f32, f32) -> FnResult) -> FnResult {
-        if let (Ok(v1), Ok(v2)) = (res1, res2) {
-            f(v1, v2)
-        } else {
-            Err(())
+            ChildFn::Fn(Box::new(self))
         }
     }
 
