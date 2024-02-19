@@ -6,5 +6,8 @@
                 "underline": false,
             }
         }
-    }
+    },
+    "rust-analyzer.linkedProjects": [
+        ".\\Cargo.toml"
+    ]
 }
