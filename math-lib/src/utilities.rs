@@ -73,7 +73,7 @@ pub mod parser_utils {
 
     /// Split string on specified delimiter, but only on surface level <br>
     /// Also removes all spaces
-    fn split_surface(string: &str, delimiter: char) -> Vec<String> {
+    pub fn split_surface(string: &str, delimiter: char) -> Vec<String> {
         let mut result = Vec::new();
         let mut start = 0;
         let mut depth = 0;
@@ -97,21 +97,5 @@ pub mod parser_utils {
     }
 
 
-    #[cfg(test)]
-    mod tests {
-        use super::*;
-
-        #[test]
-        fn test_split_surface() {
-            let string = "45 + 2*(78 + (x + y) + 7) / 2 + 2";
-            let vec = split_surface(string, '+');
-            let expected = vec!["45", "2*(78+(x+y)+7)/2", "2"];
-            let expected: Vec<String> = expected.into_iter()
-                .map(|x| x.to_string())
-                .collect();
-
-            assert_eq!(vec, expected);
-        }
-    }
 
 }

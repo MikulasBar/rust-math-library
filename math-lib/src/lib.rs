@@ -2,3 +2,4 @@
 mod functions;
 mod utilities;
 mod compiler;
+mod tests;
