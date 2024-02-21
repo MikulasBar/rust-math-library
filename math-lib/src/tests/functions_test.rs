@@ -2,7 +2,7 @@
 #[cfg(test)]
 mod tests {
     use crate::functions::*;
-    use crate::utilities::function_utils::{
+    use crate::utilities::{
         ToChildFn, ToFnArgs
     };
 

@@ -1,7 +1,9 @@
 
+// !!! This is compiler utilities test module ... change later
+
 #[cfg(test)]
 mod tests {
-    use crate::utilities::parser_utils::*;
+    use crate::compiler::utilities::*;
 
     #[test]
     fn test_split_surface() {
