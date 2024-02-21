@@ -4,7 +4,7 @@ use Token::*;
 use once_cell::sync::Lazy;
 
 #[derive(Debug, PartialEq, Clone)]
-enum Separator {
+pub enum Separator {
     LParen,
     RParen,
     //Comma,
@@ -22,17 +22,33 @@ pub enum Operator {
 #[derive(Debug, PartialEq, Clone)]
 pub enum Token {
     //Kw(String),
+
+    /// Operator like `+`,`-`, `*`, ...
     Op(Operator),
+
+    /// Separator like `(`, `)`
     Sep(Separator),
+
+    /// Literal like `1.5`, `-28`, ...
     Lit(f32),
+
+    /// Identifier like `x`, `my_name`, ...
     Id(String),
 }
 
 static OP_TO_ENUM: Lazy<HashMap<char, Token>> = Lazy::new(|| hashmap! {
     '+' => Op(Operator::Add),
     '-' => Op(Operator::Sub),
+    '*' => Op(Operator::Mul),
+    '/' => Op(Operator::Div),
+    '^' => Op(Operator::Pow),
 });
 
+
+static SEP_TO_ENUM: Lazy<HashMap<char, Token>> = Lazy::new(|| hashmap! {
+    '(' => Sep(Separator::LParen),
+    ')' => Sep(Separator::RParen),
+});
 
 
 
@@ -40,25 +56,33 @@ pub fn tokenize(input: &str) -> Vec<Token> {
     let mut tokens = Vec::new();
     let chars = input.chars();
 
-    let mut buffer = String::new();
+    let mut num_buffer = String::new();
     for c in chars {
         match c {
             ' ' => (),
-            op @ ('+' | '-') => {
-                if !buffer.is_empty() {
-                    tokens.push(Lit(buffer.parse().unwrap()));
-                    buffer.clear();
+            '0'..='9' => num_buffer.push(c),
+            '(' | ')' => {
+                if !num_buffer.is_empty() {
+                    tokens.push(Lit(num_buffer.parse().unwrap()));
+                    num_buffer.clear();
                 }
 
-                tokens.push(OP_TO_ENUM[&op].clone())
+                tokens.push(SEP_TO_ENUM[&c].clone());
             },
-            '0'..='9' => buffer.push(c),
+            '+' | '-' => {
+                if !num_buffer.is_empty() {
+                    tokens.push(Lit(num_buffer.parse().unwrap()));
+                    num_buffer.clear();
+                }
+
+                tokens.push(OP_TO_ENUM[&c].clone())
+            },
             _ => unreachable!(),
         }
     }
 
-    if !buffer.is_empty() {
-        tokens.push(Lit(buffer.parse().unwrap()));
+    if !num_buffer.is_empty() {
+        tokens.push(Lit(num_buffer.parse().unwrap()));
     }
     tokens
 }

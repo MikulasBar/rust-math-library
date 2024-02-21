@@ -79,6 +79,22 @@ impl Into<ChildFn> for f32 {
 }
 
 
+pub struct FnStruct {
+    pub definition: ChildFn,
+}
+
+impl FnStruct {
+    pub fn new<T: Into<ChildFn>>(def: T) -> Self {
+        Self {
+            definition: def.into()
+        }
+    }
+
+    pub fn apply(&self, args: &FnArgs) -> FnResult {
+        self.definition.apply(args)
+    } 
+}
+
 
 pub struct AddFn {           
     pub children: Vec<ChildFn>
@@ -144,14 +160,6 @@ impl Function for DivFn {
         let num_result = self.numerator.apply(args);
         let den_result = self.denominator.apply(args);
 
-        // apply_on_result2(num_result, den_result, |n, d| {
-        //     if d == 0.0 {
-        //         Err(())
-        //     } else {
-        //         Ok(n / d)
-        //     }
-        // })
-
         match (num_result, den_result) {
             (Ok(n), Ok(d)) => {
                 if d == 0.0 {
@@ -174,9 +182,13 @@ pub struct CoefFn {
 }
 
 impl CoefFn {
-    pub fn new(coefficient: f32, child: impl Into<ChildFn>) -> Self {
+    pub fn new<C, F>(coeff: C, child: F) -> Self
+    where
+        C: Into<f32>,
+        F: Into<ChildFn>,
+    {
         Self {
-            coefficient,
+            coefficient: coeff.into(),
             child: child.into()
         }
     }
