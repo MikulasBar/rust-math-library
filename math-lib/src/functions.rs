@@ -13,7 +13,7 @@ pub type FnResult = Result<f32, FnError>;
 
 pub type FnArgs = HashMap<String, f32>;
 pub trait Function {
-    fn apply(&self, args: FnArgs) -> FnResult;
+    fn apply(&self, args: &FnArgs) -> FnResult;
     //fn derivative(&self) -> Self;
 }
 
@@ -30,15 +30,6 @@ pub enum FnError {
     ParameterNotFoundError,
 }
 
-// if i dont need to match specific error
-
-/*
-    pub enum FnError {
-        MathError(String),
-        InputError(String),
-    }
-*/
-
 impl PartialEq for FnError {
     fn eq(&self, other: &Self) -> bool {
         self == other
@@ -54,7 +45,7 @@ pub enum ChildFn {
 }
 
 impl Function for ChildFn {
-    fn apply(&self, args: FnArgs) -> FnResult {
+    fn apply(&self, args: &FnArgs) -> FnResult {
         match self {
             Fn(f) => f.apply(args),
             Var(ref s) => {
@@ -96,11 +87,11 @@ pub struct AddFn {
 impl_sequence_func!(AddFn);
 
 impl Function for AddFn {
-    fn apply(&self, args: FnArgs) -> FnResult {
+    fn apply(&self, args: &FnArgs) -> FnResult {
         let mut result: f32 = 0.0;
 
         for child in &self.children {
-            let child_result = child.apply(args.clone());
+            let child_result = child.apply(args);
             match child_result {
                 Ok(v) => result += v,
                 e => return e,
@@ -119,11 +110,11 @@ pub struct MulFn {
 impl_sequence_func!(MulFn);
 
 impl Function for MulFn {
-    fn apply(&self, args: FnArgs) -> FnResult {
+    fn apply(&self, args: &FnArgs) -> FnResult {
         let mut result: f32 = 1.0;
 
         for child in &self.children {
-            let child_result = child.apply(args.clone());
+            let child_result = child.apply(args);
             match child_result {
                 Ok(v) => result *= v,
                 e => return e,
@@ -149,8 +140,8 @@ impl DivFn {
 }
 
 impl Function for DivFn {
-    fn apply(&self, args: FnArgs) -> FnResult {
-        let num_result = self.numerator.apply(args.clone());
+    fn apply(&self, args: &FnArgs) -> FnResult {
+        let num_result = self.numerator.apply(args);
         let den_result = self.denominator.apply(args);
 
         // apply_on_result2(num_result, den_result, |n, d| {
@@ -192,7 +183,7 @@ impl CoefFn {
 }
 
 impl Function for CoefFn {
-    fn apply(&self, args: FnArgs) -> FnResult {
+    fn apply(&self, args: &FnArgs) -> FnResult {
         let child_result = self.child.apply(args);
 
         match child_result {
@@ -221,8 +212,8 @@ impl ExpFn {
 }
 
 impl Function for ExpFn {
-    fn apply(&self, args: FnArgs) -> FnResult {
-        let base_result = self.base.apply(args.clone());
+    fn apply(&self, args: &FnArgs) -> FnResult {
+        let base_result = self.base.apply(args);
         let exp_result = self.exponent.apply(args);
 
         match (base_result, exp_result) {
@@ -259,8 +250,8 @@ impl LogFn {
 }
 
 impl Function for LogFn {
-    fn apply(&self, args: FnArgs) -> FnResult {
-        let base_result = self.base.apply(args.clone());
+    fn apply(&self, args: &FnArgs) -> FnResult {
+        let base_result = self.base.apply(args);
         let arg_result = self.argument.apply(args);
 
         match (base_result, arg_result) {
@@ -300,7 +291,7 @@ mod tests {
             ("y", 5.0),
         ].to_fn_args();
 
-        assert_eq!(add_func.apply(args), Ok(23.0));
+        assert_eq!(add_func.apply(&args), Ok(23.0));
     }
 
     #[test]
@@ -315,7 +306,7 @@ mod tests {
             ("y", 5.0),
         ].to_fn_args();
 
-        assert_eq!(mul_func.apply(args), Ok(120.0));
+        assert_eq!(mul_func.apply(&args), Ok(120.0));
     }
 
     #[test]
@@ -327,7 +318,7 @@ mod tests {
             ("y", 4.0),
         ].to_fn_args();
 
-        assert_eq!(div_func.apply(args), Ok(12.0));
+        assert_eq!(div_func.apply(&args), Ok(12.0));
     }
 
     #[test]
@@ -338,7 +329,7 @@ mod tests {
             ("x", 6.0),
         ].to_fn_args();
 
-        assert_eq!(coef_func.apply(args), Ok(30.0));
+        assert_eq!(coef_func.apply(&args), Ok(30.0));
     }
 
     #[test]
@@ -350,7 +341,7 @@ mod tests {
             ("y", 3.0),
         ].to_fn_args();
 
-        assert_eq!(exp_func.apply(args), Ok(125.0));
+        assert_eq!(exp_func.apply(&args), Ok(125.0));
     }
 
     #[test]
@@ -362,6 +353,6 @@ mod tests {
             ("y", 16.0),
         ].to_fn_args();
 
-        assert_eq!(log_func.apply(args), Ok(4.0));
+        assert_eq!(log_func.apply(&args), Ok(4.0));
     }
 }
