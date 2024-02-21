@@ -295,8 +295,8 @@ mod tests {
 
         let add_func = AddFn::new(vec![fx, fy]);
 
-        let mut args: FnArgs = vec![
-            ("x", 4.0 as f32),
+        let args: FnArgs = vec![
+            ("x", 4.0),
             ("y", 5.0),
         ].to_fn_args();
 
@@ -310,8 +310,8 @@ mod tests {
 
         let mul_func = MulFn::new(vec![fx, fy]);
 
-        let mut args: FnArgs = vec![
-            ("x", 4.0 as f32),
+        let args: FnArgs = vec![
+            ("x", 4.0),
             ("y", 5.0),
         ].to_fn_args();
 
@@ -323,7 +323,7 @@ mod tests {
         let div_func = DivFn::new("x", "y");
 
         let args: FnArgs = vec![
-            ("x", 48.0 as f32),
+            ("x", 48.0),
             ("y", 4.0),
         ].to_fn_args();
 
@@ -335,7 +335,7 @@ mod tests {
         let coef_func = CoefFn::new(5.0, "x");
 
         let args: FnArgs = vec![
-            ("x", 6.0 as f32),
+            ("x", 6.0),
         ].to_fn_args();
 
         assert_eq!(coef_func.apply(args), Ok(30.0));
@@ -346,7 +346,7 @@ mod tests {
         let exp_func = ExpFn::new("x", "y");
 
         let args: FnArgs = vec![
-            ("x", 5.0 as f32),
+            ("x", 5.0),
             ("y", 3.0),
         ].to_fn_args();
 
@@ -358,7 +358,7 @@ mod tests {
         let log_func = LogFn::new("x", "y");
 
         let args: FnArgs = vec![
-            ("x", 2.0 as f32),
+            ("x", 2.0),
             ("y", 16.0),
         ].to_fn_args();
 
