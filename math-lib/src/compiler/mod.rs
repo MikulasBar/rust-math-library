@@ -1,2 +1,2 @@
-mod tokenizer;
-pub mod utilities;
+mod lexer;
+mod parser;
