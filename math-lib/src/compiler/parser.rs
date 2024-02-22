@@ -9,20 +9,20 @@ use Token::*;
 
 fn parse(tokens: Vec<Token>) -> ChildFn {
     let mut f = AddFn::new(vec![]);
-    let mut sign: f32 = 1.0;
     let mut buffer: Vec<Token> = Vec::new();
-    let mut in_paren = false;
+    let mut sign: f32 = 1.0;
+    let mut depth = 0;
 
     for t in tokens.iter() {
-        if !in_paren {
+        if depth == 0 {
             // out of parentheses
             
             match t {
                 Sep(Separator::LParen) => {
-                    in_paren = true;
+                    depth += 1;
                 },
                 Lit(v) => {
-                    f.children.push(ChildFn::Const(*v * sign));
+                    f.add_child(ChildFn::Const(*v * sign));
                     sign = 1.0;
                 },
                 Op(Operator::Sub) => sign *= -1.0,
@@ -32,27 +32,24 @@ fn parse(tokens: Vec<Token>) -> ChildFn {
             // inside parentheses
             
             match t {
+                Sep(Separator::LParen) => {
+                    depth += 1;
+                    buffer.push(t.clone());
+                },
                 Sep(Separator::RParen) => {
-                    /*if sign == -1.0 {
-                        f.children.push(
-                            CoefFn::new(-1.0, parse(buffer.clone())).to_child()
+                    if depth == 1 {
+                        f.add_child(
+                            CoefFn::new(sign, parse(buffer.clone())).to_child()
                         );
+                        buffer.clear();
+                        sign = 1.0;
                     } else {
-                        f.children.push(
-                            parse(buffer.clone())
-                        );
-                    }*/
+                        buffer.push(t.clone());
+                    }
 
-                    f.children.push(
-                        CoefFn::new(sign, parse(buffer.clone())).to_child()
-                    );
-
-
-                    buffer.clear();
-                    in_paren = false;
-                    sign = 1.0;
+                    depth -= 1;
                 }
-                Op(_) | Lit(_) | Sep(Separator::LParen) => {
+                Op(_) | Lit(_) => {
                     buffer.push(t.clone());
                 },
                 _ => (),
@@ -71,21 +68,14 @@ mod tests {
 
     #[test]
     fn test_parse() {
-        let input = "1-(-1)";
+        let input = "1--(-(--1))";
         let tokens = tokenize(input);
 
-        //println!("{:?}", tokens);
+        println!("{:?}", tokens);
 
         let f = parse(tokens);
         assert_eq!(f.apply(&FnArgs::new()), Ok(0.0));
     }
 }
-
-
-// !!! wierd result: 1--(-(--1)), expected: 0, got: 1
-// solve nested parentheses
-// solve negative sign
-// solve multiple parentheses
-
 
 
