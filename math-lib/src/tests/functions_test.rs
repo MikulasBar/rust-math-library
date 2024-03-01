@@ -1,9 +1,10 @@
 #[allow(non_snake_case)]
 #[cfg(test)]
 mod tests {
-    use crate::functions::*;
+    use maplit::hashmap;
+    use crate::{fn_args, functions::*};
     use crate::utilities::{
-        ToChildFn, ToFnArgs
+        ToChildFn
     };
 
 
@@ -14,10 +15,10 @@ mod tests {
 
         let add_fn = AddFn::new(vec![fx, fy]);
 
-        let args: FnArgs = vec![
-            ("x", 4.0),
-            ("y", 5.0),
-        ].to_fn_args();
+        let args = fn_args!{
+            "x" => 4.0,
+            "y" => 5.0,
+        };
 
         assert_eq!(add_fn.apply(&args), Ok(23.0));
     }
@@ -29,10 +30,10 @@ mod tests {
 
         let mul_fn = MulFn::new(vec![fx, fy]);
 
-        let args: FnArgs = vec![
-            ("x", 4.0),
-            ("y", 5.0),
-        ].to_fn_args();
+        let args = fn_args!{
+            "x" => 4.0,
+            "y" => 5.0,
+        };
 
         assert_eq!(mul_fn.apply(&args), Ok(120.0));
     }
@@ -41,10 +42,10 @@ mod tests {
     fn test_DivFn() {
         let div_fn = DivFn::new("x", "y");
 
-        let args: FnArgs = vec![
-            ("x", 48.0),
-            ("y", 4.0),
-        ].to_fn_args();
+        let args = fn_args!{
+            "x" => 48.0,
+            "y" => 4.0,
+        };
 
         assert_eq!(div_fn.apply(&args), Ok(12.0));
     }
@@ -53,9 +54,9 @@ mod tests {
     fn test_CoefFn() {
         let coef_fn = CoefFn::new(5.0, "x");
 
-        let args: FnArgs = vec![
-            ("x", 6.0),
-        ].to_fn_args();
+        let args = fn_args!{
+            "x" => 6.0,
+        };
 
         assert_eq!(coef_fn.apply(&args), Ok(30.0));
     }
@@ -64,10 +65,10 @@ mod tests {
     fn test_ExpFn() {
         let exp_fn = ExpFn::new("x", "y");
 
-        let args: FnArgs = vec![
-            ("x", 5.0),
-            ("y", 3.0),
-        ].to_fn_args();
+        let args = fn_args!{
+            "x" => 5.0,
+            "y" => 3.0,
+        };
 
         assert_eq!(exp_fn.apply(&args), Ok(125.0));
     }
@@ -76,10 +77,10 @@ mod tests {
     fn test_LogFn() {
         let log_fn = LogFn::new("x", "y");
 
-        let args: FnArgs = vec![
-            ("x", 2.0),
-            ("y", 16.0),
-        ].to_fn_args();
+        let args = fn_args!{
+            "x" => 2.0,
+            "y" => 16.0,
+        };
 
         assert_eq!(log_fn.apply(&args), Ok(4.0));
     }
