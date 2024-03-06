@@ -5,6 +5,8 @@ use std::{
 use ChildFn::*;
 use FnError::*;
 
+use crate::{unary_fn};
+
 
 pub type FnResult = Result<f32, FnError>;
 
@@ -24,6 +26,7 @@ pub enum FnError {
     NonPositiveLogBaseError,
     LogBaseOneError,
     NegativeBaseNonIntegerExponentError,
+    TanAtPiOverTwoError,
 
     ParameterNotFoundError,
 }
@@ -320,3 +323,20 @@ impl<'a> Function for LogFn<'a> {
     }
 }
 
+
+// Goniometry functions
+
+unary_fn!(list: 
+    SinFn => |x: FnResult| {
+        x.map(f32::sin)
+    },
+    CosFn => |x: FnResult| {
+        x.map(f32::cos)
+    },
+    TanFn => |x: FnResult| {
+        if x == Ok(std::f32::consts::PI / 2.0) {
+            return Err(TanAtPiOverTwoError)
+        }
+        x.map(f32::tan)
+    }
+);
