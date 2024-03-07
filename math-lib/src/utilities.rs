@@ -23,31 +23,3 @@ macro_rules! fn_args {
         }
     };
 }
-
-#[macro_export]
-macro_rules! unary_fn {
-    ($name:ident => $function:expr) => {
-        struct $name<'a> {
-            child: ChildFn<'a>
-        }
-
-        impl<'a> $name<'a> {
-            pub fn new<T: Into<ChildFn<'a>>>(child: T) -> Self {
-                Self {
-                    child: child.into()
-                }
-            }
-        }
-
-        impl<'a> Function for $name<'a> {
-            fn apply(&self, args: &FnArgs) -> FnResult {
-                let child_result = self.child.apply(args);
-
-                $function(child_result)
-            }
-        }
-    };
-    (list: $($name:ident => $function:expr),+) => {
-        $(unary_fn!($name => $function);)+
-    }
-}

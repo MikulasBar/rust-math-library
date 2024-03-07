@@ -5,8 +5,6 @@ use std::{
 use ChildFn::*;
 use FnError::*;
 
-use crate::{unary_fn};
-
 
 pub type FnResult = Result<f32, FnError>;
 
@@ -326,17 +324,62 @@ impl<'a> Function for LogFn<'a> {
 
 // Goniometry functions
 
-unary_fn!(list: 
-    SinFn => |x: FnResult| {
-        x.map(f32::sin)
-    },
-    CosFn => |x: FnResult| {
-        x.map(f32::cos)
-    },
-    TanFn => |x: FnResult| {
-        if x == Ok(std::f32::consts::PI / 2.0) {
-            return Err(TanAtPiOverTwoError)
+pub struct SinFn<'a> {
+    child: ChildFn<'a>
+}
+
+impl<'a> SinFn<'a> {
+    pub fn new<T: Into<ChildFn<'a>>>(child: T) -> Self {
+        Self {
+            child: child.into()
         }
-        x.map(f32::tan)
     }
-);
+}
+
+impl<'a> Function for SinFn<'a> {
+    fn apply(&self, args: &FnArgs) -> FnResult {
+        let child_result = self.child.apply(args);
+        child_result.map(f32::sin)
+    }
+}
+
+
+pub struct CosFn<'a> {
+    child: ChildFn<'a>
+}
+
+impl<'a> CosFn<'a> {
+    pub fn new<T: Into<ChildFn<'a>>>(child: T) -> Self {
+        Self {
+            child: child.into()
+        }
+    }
+}
+
+impl<'a> Function for CosFn<'a> {
+    fn apply(&self, args: &FnArgs) -> FnResult {
+        let child_result = self.child.apply(args);
+        child_result.map(f32::cos)
+    }
+}
+
+
+pub struct TanFn<'a> {
+    child: ChildFn<'a>
+}
+
+impl<'a> TanFn<'a> {
+    pub fn new<T: Into<ChildFn<'a>>>(child: T) -> Self {
+        Self {
+            child: child.into()
+        }
+    }
+}
+
+impl<'a> Function for TanFn<'a> {
+    fn apply(&self, args: &FnArgs) -> FnResult {
+        let child_result = self.child.apply(args);
+        child_result.map(f32::tan)
+    }
+}
+
