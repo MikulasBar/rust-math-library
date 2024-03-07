@@ -1,7 +1,7 @@
 use std::{
     collections::HashMap,
 };
-
+use crate::utilities::ToChildFn;
 use ChildFn::*;
 use FnError::*;
 
@@ -59,33 +59,15 @@ impl<'a> Function for ChildFn<'a> {
 }
 
 
-// impl<'a> Into<ChildFn<'a>> for String {
-//     fn into(self) -> ChildFn<'a> {
-//         Var(self.as_str())
-//     }
-// }
-
-impl<'a> Into<ChildFn<'a>> for &'a str {
-    fn into(self) -> ChildFn<'a> {
-        Var(self)
-    }
-}
-
-impl<'a> Into<ChildFn<'a>> for f32 {
-    fn into(self) -> ChildFn<'a> {
-        Const(self)
-    }
-}
-
 
 pub struct FnStruct<'a> {
     pub definition: ChildFn<'a>,
 }
 
 impl<'a> FnStruct<'a> {
-    pub fn new<T: Into<ChildFn<'a>>>(def: T) -> Self {
+    pub fn new<T: ToChildFn<'a>>(def: T) -> Self {
         Self {
-            definition: def.into()
+            definition: def.to_child()
         }
     }
 
@@ -101,14 +83,23 @@ pub struct AddFn<'a> {
 
 impl<'a> AddFn<'a> {
     /// Initialise new function with no children
-    pub fn new(children: Vec<ChildFn<'a>>) -> Self {
+    pub fn new<T>(children: Vec<T>) -> Self
+    where 
+        T: ToChildFn<'a>,
+    {
         Self {
-            children,
+            children: children
+                .into_iter()
+                .map(|c| c.to_child())
+                .collect(),
         }
     }
 
-    pub fn add_child(&mut self, child: ChildFn<'a>) {
-        self.children.push(child);
+    pub fn add_child<T>(&mut self, new_child: T)
+    where
+        T: ToChildFn<'a>,
+    {
+        self.children.push(new_child.to_child());
     }
 }
 
@@ -125,11 +116,8 @@ impl<'a> Function for AddFn<'a> {
         let mut result: f32 = 0.0;
 
         for child in &self.children {
-            let child_result = child.apply(args);
-            match child_result {
-                Ok(v) => result += v,
-                e => return e,
-            }
+            let child_result = child.apply(args)?;
+            result += child_result;
         }
         Ok(result)
     }
@@ -138,19 +126,28 @@ impl<'a> Function for AddFn<'a> {
 
 
 pub struct MulFn<'a> {
-    pub children: Vec<ChildFn<'a>>
+    children: Vec<ChildFn<'a>>
 }
 
 impl<'a> MulFn<'a> {
     /// Initialise new function with no children
-    pub fn new(children: Vec<ChildFn<'a>>) -> Self {
+    pub fn new<T>(children: Vec<T>) -> Self
+    where 
+        T: ToChildFn<'a>,
+    {
         Self {
-            children,
+            children: children
+                .into_iter()
+                .map(|c| c.to_child())
+                .collect(),
         }
     }
 
-    pub fn add_child(&mut self, child: ChildFn<'a>) {
-        self.children.push(child);
+    pub fn add_child<T>(&mut self, new_child: T)
+    where
+        T: ToChildFn<'a>,
+    {
+        self.children.push(new_child.to_child());
     }
 }
 
@@ -167,11 +164,8 @@ impl<'a> Function for MulFn<'a> {
         let mut result: f32 = 1.0;
 
         for child in &self.children {
-            let child_result = child.apply(args);
-            match child_result {
-                Ok(v) => result *= v,
-                e => return e,
-            }
+            let child_result = child.apply(args)?;
+            result *= child_result;
         }
         Ok(result)
     }
@@ -186,30 +180,25 @@ pub struct DivFn<'a> {
 impl<'a> DivFn<'a> {
     pub fn new<T, U>(num: T, denom: U) -> Self
     where 
-        T: Into<ChildFn<'a>>,
-        U: Into<ChildFn<'a>>,
+        T: ToChildFn<'a>,
+        U: ToChildFn<'a>,
     {
         Self {
-            numerator: num.into(),
-            denominator: denom.into(),
+            numerator: num.to_child(),
+            denominator: denom.to_child(),
         }
     }
 }
 
 impl<'a> Function for DivFn<'a> {
     fn apply(&self, args: &FnArgs) -> FnResult {
-        let num_result = self.numerator.apply(args);
-        let den_result = self.denominator.apply(args);
+        let num_value = self.numerator.apply(args)?;
+        let den_value = self.denominator.apply(args)?;
 
-        match (num_result, den_result) {
-            (Ok(n), Ok(d)) => {
-                if d == 0.0 {
-                    return Err(DivisionByZeroError)
-                }
-                Ok(n / d)
-            },
-            (Err(e), _) | (_, Err(e)) => Err(e),
+        if den_value == 0.0 {
+            return Err(DivisionByZeroError)
         }
+        Ok(num_value / den_value)
     }
 }
 
@@ -225,23 +214,20 @@ impl<'a> CoefFn<'a> {
     pub fn new<C, F>(coeff: C, child: F) -> Self
     where
         C: Into<f32>,
-        F: Into<ChildFn<'a>>,
+        F: ToChildFn<'a>,
     {
         Self {
             coefficient: coeff.into(),
-            child: child.into()
+            child: child.to_child()
         }
     }
 }
 
 impl<'a> Function for CoefFn<'a> {
     fn apply(&self, args: &FnArgs) -> FnResult {
-        let child_result = self.child.apply(args);
+        let child_value = self.child.apply(args)?;
 
-        match child_result {
-            Ok(v) => Ok(self.coefficient * v),
-            e => e,
-        }
+        Ok(self.coefficient * child_value)
     }
 }
 
@@ -253,71 +239,61 @@ pub struct ExpFn<'a> {
 impl<'a> ExpFn<'a> {
     pub fn new<T, U>(base: T, exp: U) -> Self
     where
-        T: Into<ChildFn<'a>>,
-        U: Into<ChildFn<'a>>,
+        T: ToChildFn<'a>,
+        U: ToChildFn<'a>,
     {
         Self {
-            base: base.into(),
-            exponent: exp.into(),
+            base: base.to_child(),
+            exponent: exp.to_child(),
         }
     }
 }
 
 impl<'a> Function for ExpFn<'a> {
     fn apply(&self, args: &FnArgs) -> FnResult {
-        let base_result = self.base.apply(args);
-        let exp_result = self.exponent.apply(args);
+        let base_value = self.base.apply(args)?;
+        let exp_value = self.exponent.apply(args)?;
 
-        match (base_result, exp_result) {
-            (Ok(b), Ok(n)) => {
-                if b < 0.0 && n.fract() != 0.0 {
-                    return Err(NegativeBaseNonIntegerExponentError)
-                }
-                Ok(b.powf(n))
-            },
-            (Err(e), _) | (_, Err(e)) => Err(e),
+        if base_value < 0.0 && exp_value.fract() != 0.0 {
+            return Err(NegativeBaseNonIntegerExponentError)
         }
+        Ok(base_value.powf(exp_value))
     }
 }
 
 
 
 pub struct LogFn<'a> {
-    pub base: ChildFn<'a>,
-    pub argument: ChildFn<'a>
+    base: ChildFn<'a>,
+    argument: ChildFn<'a>
 }
 
 impl<'a> LogFn<'a> {
     pub fn new<T, U>(base: T, arg: U) -> Self
     where
-        T: Into<ChildFn<'a>>,
-        U: Into<ChildFn<'a>>,
+        T: ToChildFn<'a>,
+        U: ToChildFn<'a>,
     {
         Self {
-            base: base.into(),
-            argument: arg.into(),
+            base: base.to_child(),
+            argument: arg.to_child(),
         }
     }
 }
 
 impl<'a> Function for LogFn<'a> {
     fn apply(&self, args: &FnArgs) -> FnResult {
-        let base_result = self.base.apply(args);
-        let arg_result = self.argument.apply(args);
+        let base_value = self.base.apply(args)?;
+        let arg_value = self.argument.apply(args)?;
 
-        match (base_result, arg_result) {
-            (Ok(b), Ok(a)) => {
-                if a <= 0.0 {
-                    return Err(NonPositiveLogArgError)
-                } else if b <= 0.0 {
-                    return Err(NonPositiveLogBaseError)
-                } else if b == 1.0 {
-                    return Err(LogBaseOneError)
-                }
-                Ok(a.log(b))
-            },
-            (Err(e), _) | (_, Err(e)) => Err(e),
+        if arg_value <= 0.0 {
+            return Err(NonPositiveLogArgError)
+        } else if base_value <= 0.0 {
+            return Err(NonPositiveLogBaseError)
+        } else if base_value == 1.0 {
+            return Err(LogBaseOneError)
         }
+        Ok(arg_value.log(base_value))
     }
 }
 
@@ -329,9 +305,12 @@ pub struct SinFn<'a> {
 }
 
 impl<'a> SinFn<'a> {
-    pub fn new<T: Into<ChildFn<'a>>>(child: T) -> Self {
+    pub fn new<T>(child: T) -> Self
+    where 
+        T: ToChildFn<'a>,
+    {
         Self {
-            child: child.into()
+            child: child.to_child()
         }
     }
 }
@@ -349,9 +328,12 @@ pub struct CosFn<'a> {
 }
 
 impl<'a> CosFn<'a> {
-    pub fn new<T: Into<ChildFn<'a>>>(child: T) -> Self {
+    pub fn new<T>(child: T) -> Self
+    where 
+        T: ToChildFn<'a>,
+    {
         Self {
-            child: child.into()
+            child: child.to_child()
         }
     }
 }
@@ -369,9 +351,12 @@ pub struct TanFn<'a> {
 }
 
 impl<'a> TanFn<'a> {
-    pub fn new<T: Into<ChildFn<'a>>>(child: T) -> Self {
+    pub fn new<T>(child: T) -> Self
+    where 
+        T: ToChildFn<'a>,
+    {
         Self {
-            child: child.into()
+            child: child.to_child()
         }
     }
 }
@@ -379,7 +364,12 @@ impl<'a> TanFn<'a> {
 impl<'a> Function for TanFn<'a> {
     fn apply(&self, args: &FnArgs) -> FnResult {
         let child_result = self.child.apply(args);
-        child_result.map(f32::tan)
+
+        let value = child_result?;
+        if value == std::f32::consts::PI / 2.0 {
+            return Err(TanAtPiOverTwoError)
+        }
+        Ok(value.tan())
     }
 }
 
