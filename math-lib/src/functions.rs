@@ -60,6 +60,7 @@ impl Function for ChildFn {
 
 
 
+
 pub struct FnStruct {
     definition: ChildFn,
 }
@@ -70,7 +71,7 @@ impl FnStruct {
         T: ToChildFn,
     {
         Self {
-            definition: def.to_child()
+            definition: def.to_child_fn()
         }
     }
 
@@ -93,7 +94,7 @@ impl AddFn {
         Self {
             children: children
                 .into_iter()
-                .map(|c| c.to_child())
+                .map(|c| c.to_child_fn())
                 .collect(),
         }
     }
@@ -134,7 +135,7 @@ impl MulFn {
         Self {
             children: children
                 .into_iter()
-                .map(|c| c.to_child())
+                .map(|c| c.to_child_fn())
                 .collect(),
         }
     }
@@ -173,8 +174,8 @@ impl DivFn {
         U: ToChildFn,
     {
         Self {
-            numerator: num.to_child(),
-            denominator: denom.to_child(),
+            numerator: num.to_child_fn(),
+            denominator: denom.to_child_fn(),
         }
     }
 }
@@ -207,7 +208,7 @@ impl CoefFn {
     {
         Self {
             coefficient: coeff.into(),
-            child: child.to_child()
+            child: child.to_child_fn()
         }
     }
 }
@@ -232,8 +233,8 @@ impl ExpFn {
         U: ToChildFn,
     {
         Self {
-            base: base.to_child(),
-            exponent: exp.to_child(),
+            base: base.to_child_fn(),
+            exponent: exp.to_child_fn(),
         }
     }
 }
@@ -267,8 +268,8 @@ impl LogFn {
         U: ToChildFn,
     {
         Self {
-            base: base.to_child(),
-            argument: arg.to_child(),
+            base: base.to_child_fn(),
+            argument: arg.to_child_fn(),
         }
     }
 }
@@ -302,7 +303,7 @@ impl SinFn {
         T: ToChildFn,
     {
         Self {
-            child: child.to_child()
+            child: child.to_child_fn()
         }
     }
 }
@@ -326,7 +327,7 @@ impl CosFn {
         T: ToChildFn,
     {
         Self {
-            child: child.to_child()
+            child: child.to_child_fn()
         }
     }
 }
@@ -350,7 +351,7 @@ impl TanFn {
         T: ToChildFn,
     {
         Self {
-            child: child.to_child()
+            child: child.to_child_fn()
         }
     }
 }

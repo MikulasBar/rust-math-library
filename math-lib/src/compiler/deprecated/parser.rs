@@ -39,7 +39,7 @@ fn parse(tokens: Vec<Token>) -> ChildFn {
                 Sep(Separator::RParen) => {
                     if depth == 1 {
                         f.add_child(
-                            CoefFn::new(sign, parse(buffer.clone())).to_child()
+                            CoefFn::new(sign, parse(buffer.clone())).into()
                         );
                         buffer.clear();
                         sign = 1.0;
@@ -57,7 +57,7 @@ fn parse(tokens: Vec<Token>) -> ChildFn {
         }
     }
 
-    f.to_child()
+    f.into()
 }
 
 

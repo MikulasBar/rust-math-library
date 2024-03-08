@@ -11,8 +11,8 @@ mod tests {
 
     #[test]
     fn test_AddFn() {
-        let fx = CoefFn::new(2.0, "x").to_child();
-        let fy = CoefFn::new(3.0, "y").to_child();
+        let fx = CoefFn::new(2.0, "x").to_child_fn();
+        let fy = CoefFn::new(3.0, "y").to_child_fn();
 
         let add_fn = AddFn::new(vec![fx, fy]);
 
@@ -26,8 +26,8 @@ mod tests {
 
     #[test]
     fn test_MulFn() {
-        let fx = CoefFn::new(2.0, "x").to_child();
-        let fy = CoefFn::new(3.0, "y").to_child();
+        let fx = CoefFn::new(2.0, "x").to_child_fn();
+        let fy = CoefFn::new(3.0, "y").to_child_fn();
 
         let mul_fn = MulFn::new(vec![fx, fy]);
 
