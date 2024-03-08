@@ -1,10 +1,11 @@
 #[allow(non_snake_case)]
 #[cfg(test)]
 mod tests {
-    use maplit::hashmap;
     use crate::{fn_args, functions::*};
-    use crate::utilities::{
-        ToChildFn
+    use crate::utilities::ToChildFn;
+    use std::f32::{
+        consts::{FRAC_PI_2, FRAC_PI_4},
+        EPSILON,
     };
 
 
@@ -83,5 +84,41 @@ mod tests {
         };
 
         assert_eq!(log_fn.apply(&args), Ok(4.0));
+    }
+
+    #[test]
+    fn test_SinFn() {
+        let sin_fn = SinFn::new("x");
+
+        let args = fn_args!{
+            "x" => FRAC_PI_2,
+        };
+        let value = sin_fn.apply(&args).unwrap() - 1f32;
+
+        assert!(value.abs() <= EPSILON);
+    }
+
+    #[test]
+    fn test_CosFn() {
+        let cos_fn = CosFn::new("x");
+
+        let args = fn_args!{
+            "x" => FRAC_PI_2,
+        };
+        let value = cos_fn.apply(&args).unwrap();
+
+        assert!(value <= EPSILON);
+    }
+
+    #[test]
+    fn test_TanFn() {
+        let tan_fn = TanFn::new("x");
+
+        let args = fn_args!{
+            "x" => FRAC_PI_4,
+        };
+        let value = tan_fn.apply(&args).unwrap() - 1f32;
+
+        assert!(value.abs() <= EPSILON);
     }
 }

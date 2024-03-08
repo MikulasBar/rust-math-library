@@ -37,19 +37,19 @@ impl PartialEq for FnError {
 
 
 /// Type used for fields like `child` or `exponent` ... 
-pub enum ChildFn<'a> {
+pub enum ChildFn {
     Fn(Box<dyn Function>),
-    Var(&'a str),
+    Var(Box<str>),
     Const(f32)
 }
 
-impl<'a> Function for ChildFn<'a> {
+impl Function for ChildFn {
     fn apply(&self, args: &FnArgs) -> FnResult {
         match self {
             Fn(f) => f.apply(args),
             Const(c) => Ok(*c),
-            Var(ref s) => {
-                match args.get(s) {
+            Var(s) => {
+                match args.get(s.as_ref()) {
                     Some(&v) => Ok(v),
                     _ => Err(ParameterNotFoundError)
                 }
@@ -60,12 +60,15 @@ impl<'a> Function for ChildFn<'a> {
 
 
 
-pub struct FnStruct<'a> {
-    pub definition: ChildFn<'a>,
+pub struct FnStruct {
+    definition: ChildFn,
 }
 
-impl<'a> FnStruct<'a> {
-    pub fn new<T: ToChildFn<'a>>(def: T) -> Self {
+impl FnStruct {
+    pub fn new<T>(def: T) -> Self 
+    where
+        T: ToChildFn,
+    {
         Self {
             definition: def.to_child()
         }
@@ -77,16 +80,16 @@ impl<'a> FnStruct<'a> {
 }
 
 
-pub struct AddFn<'a> {           
-    pub children: Vec<ChildFn<'a>>
+pub struct AddFn {           
+    children: Vec<ChildFn>
 }
 
-impl<'a> AddFn<'a> {
+impl AddFn {
     /// Initialise new function with no children
     pub fn new<T>(children: Vec<T>) -> Self
     where 
-        T: ToChildFn<'a>,
-    {
+        T: ToChildFn,
+    { 
         Self {
             children: children
                 .into_iter()
@@ -94,16 +97,9 @@ impl<'a> AddFn<'a> {
                 .collect(),
         }
     }
-
-    pub fn add_child<T>(&mut self, new_child: T)
-    where
-        T: ToChildFn<'a>,
-    {
-        self.children.push(new_child.to_child());
-    }
 }
 
-impl<'a> Default for AddFn<'a> {
+impl Default for AddFn {
     fn default() -> Self {
         Self {
             children: Vec::new()
@@ -111,7 +107,7 @@ impl<'a> Default for AddFn<'a> {
     }
 }
 
-impl<'a> Function for AddFn<'a> {
+impl Function for AddFn {
     fn apply(&self, args: &FnArgs) -> FnResult {
         let mut result: f32 = 0.0;
 
@@ -125,15 +121,15 @@ impl<'a> Function for AddFn<'a> {
 
 
 
-pub struct MulFn<'a> {
-    children: Vec<ChildFn<'a>>
+pub struct MulFn {
+    children: Vec<ChildFn>
 }
 
-impl<'a> MulFn<'a> {
+impl MulFn {
     /// Initialise new function with no children
     pub fn new<T>(children: Vec<T>) -> Self
     where 
-        T: ToChildFn<'a>,
+        T: ToChildFn,
     {
         Self {
             children: children
@@ -142,16 +138,9 @@ impl<'a> MulFn<'a> {
                 .collect(),
         }
     }
-
-    pub fn add_child<T>(&mut self, new_child: T)
-    where
-        T: ToChildFn<'a>,
-    {
-        self.children.push(new_child.to_child());
-    }
 }
 
-impl<'a> Default for MulFn<'a> {
+impl Default for MulFn {
     fn default() -> Self {
         Self {
             children: Vec::new()
@@ -159,7 +148,7 @@ impl<'a> Default for MulFn<'a> {
     }
 }
 
-impl<'a> Function for MulFn<'a> {
+impl Function for MulFn {
     fn apply(&self, args: &FnArgs) -> FnResult {
         let mut result: f32 = 1.0;
 
@@ -172,16 +161,16 @@ impl<'a> Function for MulFn<'a> {
 }
 
 
-pub struct DivFn<'a> {
-    pub numerator: ChildFn<'a>,
-    pub denominator: ChildFn<'a>
+pub struct DivFn {
+    numerator: ChildFn,
+    denominator: ChildFn
 }
 
-impl<'a> DivFn<'a> {
+impl DivFn {
     pub fn new<T, U>(num: T, denom: U) -> Self
     where 
-        T: ToChildFn<'a>,
-        U: ToChildFn<'a>,
+        T: ToChildFn,
+        U: ToChildFn,
     {
         Self {
             numerator: num.to_child(),
@@ -190,7 +179,7 @@ impl<'a> DivFn<'a> {
     }
 }
 
-impl<'a> Function for DivFn<'a> {
+impl Function for DivFn {
     fn apply(&self, args: &FnArgs) -> FnResult {
         let num_value = self.numerator.apply(args)?;
         let den_value = self.denominator.apply(args)?;
@@ -205,16 +194,16 @@ impl<'a> Function for DivFn<'a> {
 
 
 /// This function is used for adding coefficient without using `MulFn` <br>
-pub struct CoefFn<'a> {
-    pub coefficient: f32,
-    pub child: ChildFn<'a>
+pub struct CoefFn {
+    coefficient: f32,
+    child: ChildFn
 }
 
-impl<'a> CoefFn<'a> {
+impl CoefFn {
     pub fn new<C, F>(coeff: C, child: F) -> Self
     where
         C: Into<f32>,
-        F: ToChildFn<'a>,
+        F: ToChildFn,
     {
         Self {
             coefficient: coeff.into(),
@@ -223,7 +212,7 @@ impl<'a> CoefFn<'a> {
     }
 }
 
-impl<'a> Function for CoefFn<'a> {
+impl Function for CoefFn {
     fn apply(&self, args: &FnArgs) -> FnResult {
         let child_value = self.child.apply(args)?;
 
@@ -231,16 +220,16 @@ impl<'a> Function for CoefFn<'a> {
     }
 }
 
-pub struct ExpFn<'a> {
-    pub base: ChildFn<'a>,
-    pub exponent: ChildFn<'a>
+pub struct ExpFn {
+    base: ChildFn,
+    exponent: ChildFn
 }
 
-impl<'a> ExpFn<'a> {
+impl ExpFn {
     pub fn new<T, U>(base: T, exp: U) -> Self
     where
-        T: ToChildFn<'a>,
-        U: ToChildFn<'a>,
+        T: ToChildFn,
+        U: ToChildFn,
     {
         Self {
             base: base.to_child(),
@@ -249,7 +238,7 @@ impl<'a> ExpFn<'a> {
     }
 }
 
-impl<'a> Function for ExpFn<'a> {
+impl Function for ExpFn {
     fn apply(&self, args: &FnArgs) -> FnResult {
         let base_value = self.base.apply(args)?;
         let exp_value = self.exponent.apply(args)?;
@@ -257,22 +246,25 @@ impl<'a> Function for ExpFn<'a> {
         if base_value < 0.0 && exp_value.fract() != 0.0 {
             return Err(NegativeBaseNonIntegerExponentError)
         }
+        if base_value < 0.0 && exp_value.fract() > 0.0 {
+            return Err(NegativeEvenRootError)
+        }
         Ok(base_value.powf(exp_value))
     }
 }
 
 
 
-pub struct LogFn<'a> {
-    base: ChildFn<'a>,
-    argument: ChildFn<'a>
+pub struct LogFn {
+    base: ChildFn,
+    argument: ChildFn
 }
 
-impl<'a> LogFn<'a> {
+impl LogFn {
     pub fn new<T, U>(base: T, arg: U) -> Self
     where
-        T: ToChildFn<'a>,
-        U: ToChildFn<'a>,
+        T: ToChildFn,
+        U: ToChildFn,
     {
         Self {
             base: base.to_child(),
@@ -281,7 +273,7 @@ impl<'a> LogFn<'a> {
     }
 }
 
-impl<'a> Function for LogFn<'a> {
+impl Function for LogFn {
     fn apply(&self, args: &FnArgs) -> FnResult {
         let base_value = self.base.apply(args)?;
         let arg_value = self.argument.apply(args)?;
@@ -300,14 +292,14 @@ impl<'a> Function for LogFn<'a> {
 
 // Goniometry functions
 
-pub struct SinFn<'a> {
-    child: ChildFn<'a>
+pub struct SinFn {
+    child: ChildFn
 }
 
-impl<'a> SinFn<'a> {
+impl SinFn {
     pub fn new<T>(child: T) -> Self
     where 
-        T: ToChildFn<'a>,
+        T: ToChildFn,
     {
         Self {
             child: child.to_child()
@@ -315,22 +307,23 @@ impl<'a> SinFn<'a> {
     }
 }
 
-impl<'a> Function for SinFn<'a> {
+impl Function for SinFn {
     fn apply(&self, args: &FnArgs) -> FnResult {
-        let child_result = self.child.apply(args);
-        child_result.map(f32::sin)
+        self.child
+            .apply(args)
+            .map(f32::sin)
     }
 }
 
 
-pub struct CosFn<'a> {
-    child: ChildFn<'a>
+pub struct CosFn {
+    child: ChildFn
 }
 
-impl<'a> CosFn<'a> {
+impl CosFn {
     pub fn new<T>(child: T) -> Self
     where 
-        T: ToChildFn<'a>,
+        T: ToChildFn,
     {
         Self {
             child: child.to_child()
@@ -338,22 +331,23 @@ impl<'a> CosFn<'a> {
     }
 }
 
-impl<'a> Function for CosFn<'a> {
+impl Function for CosFn {
     fn apply(&self, args: &FnArgs) -> FnResult {
-        let child_result = self.child.apply(args);
-        child_result.map(f32::cos)
+        self.child
+            .apply(args)
+            .map(f32::cos)
     }
 }
 
 
-pub struct TanFn<'a> {
-    child: ChildFn<'a>
+pub struct TanFn {
+    child: ChildFn
 }
 
-impl<'a> TanFn<'a> {
+impl TanFn {
     pub fn new<T>(child: T) -> Self
     where 
-        T: ToChildFn<'a>,
+        T: ToChildFn,
     {
         Self {
             child: child.to_child()
@@ -361,15 +355,14 @@ impl<'a> TanFn<'a> {
     }
 }
 
-impl<'a> Function for TanFn<'a> {
+impl Function for TanFn {
     fn apply(&self, args: &FnArgs) -> FnResult {
-        let child_result = self.child.apply(args);
+        let child_value = self.child.apply(args)?;
 
-        let value = child_result?;
-        if value == std::f32::consts::PI / 2.0 {
+        if child_value == std::f32::consts::FRAC_PI_2 {
             return Err(TanAtPiOverTwoError)
         }
-        Ok(value.tan())
+        Ok(child_value.tan())
     }
 }
 
