@@ -3,7 +3,7 @@
 mod tests {
     use crate::{fn_args, functions::*};
     use crate::utilities::ToChildFn;
-    use std::f32::{
+    use std::f64::{
         consts::{FRAC_PI_2, FRAC_PI_4},
         EPSILON,
     };
@@ -93,7 +93,7 @@ mod tests {
         let args = fn_args!{
             "x" => FRAC_PI_2,
         };
-        let value = sin_fn.apply(&args).unwrap() - 1f32;
+        let value = sin_fn.apply(&args).unwrap() - 1f64;
 
         assert!(value.abs() <= EPSILON);
     }
@@ -117,7 +117,7 @@ mod tests {
         let args = fn_args!{
             "x" => FRAC_PI_4,
         };
-        let value = tan_fn.apply(&args).unwrap() - 1f32;
+        let value = tan_fn.apply(&args).unwrap() - 1f64;
 
         assert!(value.abs() <= EPSILON);
     }

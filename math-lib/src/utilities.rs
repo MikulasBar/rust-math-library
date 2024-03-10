@@ -14,7 +14,7 @@ impl<T: Function + 'static> ToChildFn for T {
     }
 }
 
-impl ToChildFn for f32 {
+impl ToChildFn for f64 {
     fn to_child_fn(self) -> ChildFn {
         ChildFn::Const(self)
     }
@@ -35,7 +35,7 @@ macro_rules! fn_args {
         {
             let mut args = FnArgs::new();
             $(
-                args.insert($key, $value as f32);
+                args.insert($key, $value as f64);
             )*
             args
         }

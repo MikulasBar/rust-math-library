@@ -6,10 +6,10 @@ use ChildFn::*;
 use FnError::*;
 
 
-pub type FnResult = Result<f32, FnError>;
+pub type FnResult = Result<f64, FnError>;
 
 
-pub type FnArgs<'a> = HashMap<&'a str, f32>;
+pub type FnArgs<'a> = HashMap<&'a str, f64>;
 pub trait Function {
     fn apply(&self, args: &FnArgs) -> FnResult;
     //fn derivative(&self) -> Self;
@@ -40,7 +40,7 @@ impl PartialEq for FnError {
 pub enum ChildFn {
     Fn(Box<dyn Function>),
     Var(Box<str>),
-    Const(f32)
+    Const(f64)
 }
 
 impl Function for ChildFn {
@@ -110,7 +110,7 @@ impl Default for AddFn {
 
 impl Function for AddFn {
     fn apply(&self, args: &FnArgs) -> FnResult {
-        let mut result: f32 = 0.0;
+        let mut result: f64 = 0.0;
 
         for child in &self.children {
             let child_result = child.apply(args)?;
@@ -151,7 +151,7 @@ impl Default for MulFn {
 
 impl Function for MulFn {
     fn apply(&self, args: &FnArgs) -> FnResult {
-        let mut result: f32 = 1.0;
+        let mut result: f64 = 1.0;
 
         for child in &self.children {
             let child_result = child.apply(args)?;
@@ -196,14 +196,14 @@ impl Function for DivFn {
 
 /// This function is used for adding coefficient without using `MulFn` <br>
 pub struct CoefFn {
-    coefficient: f32,
+    coefficient: f64,
     child: ChildFn
 }
 
 impl CoefFn {
     pub fn new<C, F>(coeff: C, child: F) -> Self
     where
-        C: Into<f32>,
+        C: Into<f64>,
         F: ToChildFn,
     {
         Self {
@@ -312,7 +312,7 @@ impl Function for SinFn {
     fn apply(&self, args: &FnArgs) -> FnResult {
         self.child
             .apply(args)
-            .map(f32::sin)
+            .map(f64::sin)
     }
 }
 
@@ -336,7 +336,7 @@ impl Function for CosFn {
     fn apply(&self, args: &FnArgs) -> FnResult {
         self.child
             .apply(args)
-            .map(f32::cos)
+            .map(f64::cos)
     }
 }
 
@@ -360,7 +360,7 @@ impl Function for TanFn {
     fn apply(&self, args: &FnArgs) -> FnResult {
         let child_value = self.child.apply(args)?;
 
-        if child_value == std::f32::consts::FRAC_PI_2 {
+        if child_value == std::f64::consts::FRAC_PI_2 {
             return Err(TanAtPiOverTwoError)
         }
         Ok(child_value.tan())
