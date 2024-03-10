@@ -1,4 +1,4 @@
-// Generated from C:\Users\barta\code\rust\horizon-sphere\math-lib\src\compiler\math_g.g4 by ANTLR 4.8
+// Generated from C:\Users\barta\code\rust\horizon-sphere\math-lib\src\compiler\math.g4 by ANTLR 4.8
 #![allow(dead_code)]
 #![allow(nonstandard_style)]
 #![allow(unused_imports)]
@@ -71,28 +71,28 @@ pub type LocalTokenFactory<'input> = CommonTokenFactory;
 
 type From<'a> = <LocalTokenFactory<'a> as TokenFactory<'a> >::From;
 
-pub struct math_gLexer<'input, Input:CharStream<From<'input> >> {
-	base: BaseLexer<'input,math_gLexerActions,Input,LocalTokenFactory<'input>>,
+pub struct mathLexer<'input, Input:CharStream<From<'input> >> {
+	base: BaseLexer<'input,mathLexerActions,Input,LocalTokenFactory<'input>>,
 }
 
-antlr_rust::tid! { impl<'input,Input> TidAble<'input> for math_gLexer<'input,Input> where Input:CharStream<From<'input> > }
+antlr_rust::tid! { impl<'input,Input> TidAble<'input> for mathLexer<'input,Input> where Input:CharStream<From<'input> > }
 
-impl<'input, Input:CharStream<From<'input> >> Deref for math_gLexer<'input,Input>{
-	type Target = BaseLexer<'input,math_gLexerActions,Input,LocalTokenFactory<'input>>;
+impl<'input, Input:CharStream<From<'input> >> Deref for mathLexer<'input,Input>{
+	type Target = BaseLexer<'input,mathLexerActions,Input,LocalTokenFactory<'input>>;
 
 	fn deref(&self) -> &Self::Target {
 		&self.base
 	}
 }
 
-impl<'input, Input:CharStream<From<'input> >> DerefMut for math_gLexer<'input,Input>{
+impl<'input, Input:CharStream<From<'input> >> DerefMut for mathLexer<'input,Input>{
 	fn deref_mut(&mut self) -> &mut Self::Target {
 		&mut self.base
 	}
 }
 
 
-impl<'input, Input:CharStream<From<'input> >> math_gLexer<'input,Input>{
+impl<'input, Input:CharStream<From<'input> >> mathLexer<'input,Input>{
     fn get_rule_names(&self) -> &'static [&'static str] {
         &ruleNames
     }
@@ -105,7 +105,7 @@ impl<'input, Input:CharStream<From<'input> >> math_gLexer<'input,Input>{
     }
 
     fn get_grammar_file_name(&self) -> &'static str {
-        "math_gLexer.g4"
+        "mathLexer.g4"
     }
 
 	pub fn new_with_token_factory(input: Input, tf: &'input LocalTokenFactory<'input>) -> Self {
@@ -118,39 +118,39 @@ impl<'input, Input:CharStream<From<'input> >> math_gLexer<'input,Input>{
 					_decision_to_DFA.clone(),
 					_shared_context_cache.clone(),
 				),
-				math_gLexerActions{},
+				mathLexerActions{},
 				tf
 			)
 	    }
 	}
 }
 
-impl<'input, Input:CharStream<From<'input> >> math_gLexer<'input,Input> where &'input LocalTokenFactory<'input>:Default{
+impl<'input, Input:CharStream<From<'input> >> mathLexer<'input,Input> where &'input LocalTokenFactory<'input>:Default{
 	pub fn new(input: Input) -> Self{
-		math_gLexer::new_with_token_factory(input, <&LocalTokenFactory<'input> as Default>::default())
+		mathLexer::new_with_token_factory(input, <&LocalTokenFactory<'input> as Default>::default())
 	}
 }
 
-pub struct math_gLexerActions {
+pub struct mathLexerActions {
 }
 
-impl math_gLexerActions{
+impl mathLexerActions{
 }
 
-impl<'input, Input:CharStream<From<'input> >> Actions<'input,BaseLexer<'input,math_gLexerActions,Input,LocalTokenFactory<'input>>> for math_gLexerActions{
+impl<'input, Input:CharStream<From<'input> >> Actions<'input,BaseLexer<'input,mathLexerActions,Input,LocalTokenFactory<'input>>> for mathLexerActions{
 	}
 
-	impl<'input, Input:CharStream<From<'input> >> math_gLexer<'input,Input>{
+	impl<'input, Input:CharStream<From<'input> >> mathLexer<'input,Input>{
 
 }
 
-impl<'input, Input:CharStream<From<'input> >> LexerRecog<'input,BaseLexer<'input,math_gLexerActions,Input,LocalTokenFactory<'input>>> for math_gLexerActions{
+impl<'input, Input:CharStream<From<'input> >> LexerRecog<'input,BaseLexer<'input,mathLexerActions,Input,LocalTokenFactory<'input>>> for mathLexerActions{
 }
-impl<'input> TokenAware<'input> for math_gLexerActions{
+impl<'input> TokenAware<'input> for mathLexerActions{
 	type TF = LocalTokenFactory<'input>;
 }
 
-impl<'input, Input:CharStream<From<'input> >> TokenSource<'input> for math_gLexer<'input,Input>{
+impl<'input, Input:CharStream<From<'input> >> TokenSource<'input> for mathLexer<'input,Input>{
 	type TF = LocalTokenFactory<'input>;
 
     fn next_token(&mut self) -> <Self::TF as TokenFactory<'input>>::Tok {

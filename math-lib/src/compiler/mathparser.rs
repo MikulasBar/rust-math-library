@@ -1,4 +1,4 @@
-// Generated from C:\Users\barta\code\rust\horizon-sphere\math-lib\src\compiler\math_g.g4 by ANTLR 4.8
+// Generated from C:\Users\barta\code\rust\horizon-sphere\math-lib\src\compiler\math.g4 by ANTLR 4.8
 #![allow(dead_code)]
 #![allow(non_snake_case)]
 #![allow(non_upper_case_globals)]
@@ -24,7 +24,7 @@ use antlr_rust::token::{TOKEN_EOF,OwningToken,Token};
 use antlr_rust::int_stream::EOF;
 use antlr_rust::vocabulary::{Vocabulary,VocabularyImpl};
 use antlr_rust::token_factory::{CommonTokenFactory,TokenFactory, TokenAware};
-use super::math_glistener::*;
+use super::mathlistener::*;
 use antlr_rust::lazy_static;
 use antlr_rust::{TidAble,TidExt};
 
@@ -69,16 +69,16 @@ use std::any::{Any,TypeId};
 
 
 type BaseParserType<'input, I> =
-	BaseParser<'input,math_gParserExt<'input>, I, math_gParserContextType , dyn math_gListener<'input> + 'input >;
+	BaseParser<'input,mathParserExt<'input>, I, mathParserContextType , dyn mathListener<'input> + 'input >;
 
 type TokenType<'input> = <LocalTokenFactory<'input> as TokenFactory<'input>>::Tok;
 pub type LocalTokenFactory<'input> = CommonTokenFactory;
 
-pub type math_gTreeWalker<'input,'a> =
-	ParseTreeWalker<'input, 'a, math_gParserContextType , dyn math_gListener<'input> + 'a>;
+pub type mathTreeWalker<'input,'a> =
+	ParseTreeWalker<'input, 'a, mathParserContextType , dyn mathListener<'input> + 'a>;
 
-/// Parser for math_g grammar
-pub struct math_gParser<'input,I,H>
+/// Parser for math grammar
+pub struct mathParser<'input,I,H>
 where
     I: TokenStream<'input, TF = LocalTokenFactory<'input> > + TidAble<'input>,
     H: ErrorStrategy<'input,BaseParserType<'input,I>>
@@ -89,7 +89,7 @@ where
     pub err_handler: H,
 }
 
-impl<'input, I, H> math_gParser<'input, I, H>
+impl<'input, I, H> mathParser<'input, I, H>
 where
     I: TokenStream<'input, TF = LocalTokenFactory<'input> > + TidAble<'input>,
     H: ErrorStrategy<'input,BaseParserType<'input,I>>
@@ -111,7 +111,7 @@ where
 			base: BaseParser::new_base_parser(
 				input,
 				Arc::clone(&interpreter),
-				math_gParserExt{
+				mathParserExt{
 					_pd: Default::default(),
 				}
 			),
@@ -125,7 +125,7 @@ where
 
 type DynStrategy<'input,I> = Box<dyn ErrorStrategy<'input,BaseParserType<'input,I>> + 'input>;
 
-impl<'input, I> math_gParser<'input, I, DynStrategy<'input,I>>
+impl<'input, I> mathParser<'input, I, DynStrategy<'input,I>>
 where
     I: TokenStream<'input, TF = LocalTokenFactory<'input> > + TidAble<'input>,
 {
@@ -134,7 +134,7 @@ where
     }
 }
 
-impl<'input, I> math_gParser<'input, I, DefaultErrorStrategy<'input,math_gParserContextType>>
+impl<'input, I> mathParser<'input, I, DefaultErrorStrategy<'input,mathParserContextType>>
 where
     I: TokenStream<'input, TF = LocalTokenFactory<'input> > + TidAble<'input>,
 {
@@ -143,30 +143,30 @@ where
     }
 }
 
-/// Trait for monomorphized trait object that corresponds to the nodes of parse tree generated for math_gParser
-pub trait math_gParserContext<'input>:
-	for<'x> Listenable<dyn math_gListener<'input> + 'x > + 
-	ParserRuleContext<'input, TF=LocalTokenFactory<'input>, Ctx=math_gParserContextType>
+/// Trait for monomorphized trait object that corresponds to the nodes of parse tree generated for mathParser
+pub trait mathParserContext<'input>:
+	for<'x> Listenable<dyn mathListener<'input> + 'x > + 
+	ParserRuleContext<'input, TF=LocalTokenFactory<'input>, Ctx=mathParserContextType>
 {}
 
-antlr_rust::coerce_from!{ 'input : math_gParserContext<'input> }
+antlr_rust::coerce_from!{ 'input : mathParserContext<'input> }
 
-impl<'input> math_gParserContext<'input> for TerminalNode<'input,math_gParserContextType> {}
-impl<'input> math_gParserContext<'input> for ErrorNode<'input,math_gParserContextType> {}
+impl<'input> mathParserContext<'input> for TerminalNode<'input,mathParserContextType> {}
+impl<'input> mathParserContext<'input> for ErrorNode<'input,mathParserContextType> {}
 
-antlr_rust::tid! { impl<'input> TidAble<'input> for dyn math_gParserContext<'input> + 'input }
+antlr_rust::tid! { impl<'input> TidAble<'input> for dyn mathParserContext<'input> + 'input }
 
-antlr_rust::tid! { impl<'input> TidAble<'input> for dyn math_gListener<'input> + 'input }
+antlr_rust::tid! { impl<'input> TidAble<'input> for dyn mathListener<'input> + 'input }
 
-pub struct math_gParserContextType;
-antlr_rust::tid!{math_gParserContextType}
+pub struct mathParserContextType;
+antlr_rust::tid!{mathParserContextType}
 
-impl<'input> ParserNodeType<'input> for math_gParserContextType{
+impl<'input> ParserNodeType<'input> for mathParserContextType{
 	type TF = LocalTokenFactory<'input>;
-	type Type = dyn math_gParserContext<'input> + 'input;
+	type Type = dyn mathParserContext<'input> + 'input;
 }
 
-impl<'input, I, H> Deref for math_gParser<'input, I, H>
+impl<'input, I, H> Deref for mathParser<'input, I, H>
 where
     I: TokenStream<'input, TF = LocalTokenFactory<'input> > + TidAble<'input>,
     H: ErrorStrategy<'input,BaseParserType<'input,I>>
@@ -178,7 +178,7 @@ where
     }
 }
 
-impl<'input, I, H> DerefMut for math_gParser<'input, I, H>
+impl<'input, I, H> DerefMut for mathParser<'input, I, H>
 where
     I: TokenStream<'input, TF = LocalTokenFactory<'input> > + TidAble<'input>,
     H: ErrorStrategy<'input,BaseParserType<'input,I>>
@@ -188,22 +188,22 @@ where
     }
 }
 
-pub struct math_gParserExt<'input>{
+pub struct mathParserExt<'input>{
 	_pd: PhantomData<&'input str>,
 }
 
-impl<'input> math_gParserExt<'input>{
+impl<'input> mathParserExt<'input>{
 }
-antlr_rust::tid! { math_gParserExt<'a> }
+antlr_rust::tid! { mathParserExt<'a> }
 
-impl<'input> TokenAware<'input> for math_gParserExt<'input>{
+impl<'input> TokenAware<'input> for mathParserExt<'input>{
 	type TF = LocalTokenFactory<'input>;
 }
 
-impl<'input,I: TokenStream<'input, TF = LocalTokenFactory<'input> > + TidAble<'input>> ParserRecog<'input, BaseParserType<'input,I>> for math_gParserExt<'input>{}
+impl<'input,I: TokenStream<'input, TF = LocalTokenFactory<'input> > + TidAble<'input>> ParserRecog<'input, BaseParserType<'input,I>> for mathParserExt<'input>{}
 
-impl<'input,I: TokenStream<'input, TF = LocalTokenFactory<'input> > + TidAble<'input>> Actions<'input, BaseParserType<'input,I>> for math_gParserExt<'input>{
-	fn get_grammar_file_name(&self) -> & str{ "math_g.g4"}
+impl<'input,I: TokenStream<'input, TF = LocalTokenFactory<'input> > + TidAble<'input>> Actions<'input, BaseParserType<'input,I>> for mathParserExt<'input>{
+	fn get_grammar_file_name(&self) -> & str{ "math.g4"}
 
    	fn get_rule_names(&self) -> &[& str] {&ruleNames}
 
@@ -220,13 +220,13 @@ pub struct ExprContextExt<'input>{
 ph:PhantomData<&'input str>
 }
 
-impl<'input> math_gParserContext<'input> for ExprContext<'input>{}
+impl<'input> mathParserContext<'input> for ExprContext<'input>{}
 
-impl<'input,'a> Listenable<dyn math_gListener<'input> + 'a> for ExprContext<'input>{
-		fn enter(&self,listener: &mut (dyn math_gListener<'input> + 'a)) {
+impl<'input,'a> Listenable<dyn mathListener<'input> + 'a> for ExprContext<'input>{
+		fn enter(&self,listener: &mut (dyn mathListener<'input> + 'a)) {
 			listener.enter_every_rule(self);
 			listener.enter_expr(self);
-		}fn exit(&self,listener: &mut (dyn math_gListener<'input> + 'a)) {
+		}fn exit(&self,listener: &mut (dyn mathListener<'input> + 'a)) {
 			listener.exit_expr(self);
 			listener.exit_every_rule(self);
 		}
@@ -234,14 +234,14 @@ impl<'input,'a> Listenable<dyn math_gListener<'input> + 'a> for ExprContext<'inp
 
 impl<'input> CustomRuleContext<'input> for ExprContextExt<'input>{
 	type TF = LocalTokenFactory<'input>;
-	type Ctx = math_gParserContextType;
+	type Ctx = mathParserContextType;
 	fn get_rule_index(&self) -> usize { RULE_expr }
 	//fn type_rule_index() -> usize where Self: Sized { RULE_expr }
 }
 antlr_rust::tid!{ExprContextExt<'a>}
 
 impl<'input> ExprContextExt<'input>{
-	fn new(parent: Option<Rc<dyn math_gParserContext<'input> + 'input > >, invoking_state: isize) -> Rc<ExprContextAll<'input>> {
+	fn new(parent: Option<Rc<dyn mathParserContext<'input> + 'input > >, invoking_state: isize) -> Rc<ExprContextAll<'input>> {
 		Rc::new(
 			BaseParserRuleContext::new_parser_ctx(parent, invoking_state,ExprContextExt{
 				ph:PhantomData
@@ -250,7 +250,7 @@ impl<'input> ExprContextExt<'input>{
 	}
 }
 
-pub trait ExprContextAttrs<'input>: math_gParserContext<'input> + BorrowMut<ExprContextExt<'input>>{
+pub trait ExprContextAttrs<'input>: mathParserContext<'input> + BorrowMut<ExprContextExt<'input>>{
 
 fn term_all(&self) ->  Vec<Rc<TermContextAll<'input>>> where Self:Sized{
 	self.children_of_type()
@@ -259,21 +259,21 @@ fn term(&self, i: usize) -> Option<Rc<TermContextAll<'input>>> where Self:Sized{
 	self.child_of_type(i)
 }
 /// Retrieves all `TerminalNode`s corresponding to token PLUS in current rule
-fn PLUS_all(&self) -> Vec<Rc<TerminalNode<'input,math_gParserContextType>>>  where Self:Sized{
+fn PLUS_all(&self) -> Vec<Rc<TerminalNode<'input,mathParserContextType>>>  where Self:Sized{
 	self.children_of_type()
 }
 /// Retrieves 'i's TerminalNode corresponding to token PLUS, starting from 0.
 /// Returns `None` if number of children corresponding to token PLUS is less or equal than `i`.
-fn PLUS(&self, i: usize) -> Option<Rc<TerminalNode<'input,math_gParserContextType>>> where Self:Sized{
+fn PLUS(&self, i: usize) -> Option<Rc<TerminalNode<'input,mathParserContextType>>> where Self:Sized{
 	self.get_token(PLUS, i)
 }
 /// Retrieves all `TerminalNode`s corresponding to token MINUS in current rule
-fn MINUS_all(&self) -> Vec<Rc<TerminalNode<'input,math_gParserContextType>>>  where Self:Sized{
+fn MINUS_all(&self) -> Vec<Rc<TerminalNode<'input,mathParserContextType>>>  where Self:Sized{
 	self.children_of_type()
 }
 /// Retrieves 'i's TerminalNode corresponding to token MINUS, starting from 0.
 /// Returns `None` if number of children corresponding to token MINUS is less or equal than `i`.
-fn MINUS(&self, i: usize) -> Option<Rc<TerminalNode<'input,math_gParserContextType>>> where Self:Sized{
+fn MINUS(&self, i: usize) -> Option<Rc<TerminalNode<'input,mathParserContextType>>> where Self:Sized{
 	self.get_token(MINUS, i)
 }
 
@@ -281,7 +281,7 @@ fn MINUS(&self, i: usize) -> Option<Rc<TerminalNode<'input,math_gParserContextTy
 
 impl<'input> ExprContextAttrs<'input> for ExprContext<'input>{}
 
-impl<'input, I, H> math_gParser<'input, I, H>
+impl<'input, I, H> mathParser<'input, I, H>
 where
     I: TokenStream<'input, TF = LocalTokenFactory<'input> > + TidAble<'input>,
     H: ErrorStrategy<'input,BaseParserType<'input,I>>
@@ -358,13 +358,13 @@ pub struct TermContextExt<'input>{
 ph:PhantomData<&'input str>
 }
 
-impl<'input> math_gParserContext<'input> for TermContext<'input>{}
+impl<'input> mathParserContext<'input> for TermContext<'input>{}
 
-impl<'input,'a> Listenable<dyn math_gListener<'input> + 'a> for TermContext<'input>{
-		fn enter(&self,listener: &mut (dyn math_gListener<'input> + 'a)) {
+impl<'input,'a> Listenable<dyn mathListener<'input> + 'a> for TermContext<'input>{
+		fn enter(&self,listener: &mut (dyn mathListener<'input> + 'a)) {
 			listener.enter_every_rule(self);
 			listener.enter_term(self);
-		}fn exit(&self,listener: &mut (dyn math_gListener<'input> + 'a)) {
+		}fn exit(&self,listener: &mut (dyn mathListener<'input> + 'a)) {
 			listener.exit_term(self);
 			listener.exit_every_rule(self);
 		}
@@ -372,14 +372,14 @@ impl<'input,'a> Listenable<dyn math_gListener<'input> + 'a> for TermContext<'inp
 
 impl<'input> CustomRuleContext<'input> for TermContextExt<'input>{
 	type TF = LocalTokenFactory<'input>;
-	type Ctx = math_gParserContextType;
+	type Ctx = mathParserContextType;
 	fn get_rule_index(&self) -> usize { RULE_term }
 	//fn type_rule_index() -> usize where Self: Sized { RULE_term }
 }
 antlr_rust::tid!{TermContextExt<'a>}
 
 impl<'input> TermContextExt<'input>{
-	fn new(parent: Option<Rc<dyn math_gParserContext<'input> + 'input > >, invoking_state: isize) -> Rc<TermContextAll<'input>> {
+	fn new(parent: Option<Rc<dyn mathParserContext<'input> + 'input > >, invoking_state: isize) -> Rc<TermContextAll<'input>> {
 		Rc::new(
 			BaseParserRuleContext::new_parser_ctx(parent, invoking_state,TermContextExt{
 				ph:PhantomData
@@ -388,7 +388,7 @@ impl<'input> TermContextExt<'input>{
 	}
 }
 
-pub trait TermContextAttrs<'input>: math_gParserContext<'input> + BorrowMut<TermContextExt<'input>>{
+pub trait TermContextAttrs<'input>: mathParserContext<'input> + BorrowMut<TermContextExt<'input>>{
 
 fn factor_all(&self) ->  Vec<Rc<FactorContextAll<'input>>> where Self:Sized{
 	self.children_of_type()
@@ -397,21 +397,21 @@ fn factor(&self, i: usize) -> Option<Rc<FactorContextAll<'input>>> where Self:Si
 	self.child_of_type(i)
 }
 /// Retrieves all `TerminalNode`s corresponding to token MULTIPLY in current rule
-fn MULTIPLY_all(&self) -> Vec<Rc<TerminalNode<'input,math_gParserContextType>>>  where Self:Sized{
+fn MULTIPLY_all(&self) -> Vec<Rc<TerminalNode<'input,mathParserContextType>>>  where Self:Sized{
 	self.children_of_type()
 }
 /// Retrieves 'i's TerminalNode corresponding to token MULTIPLY, starting from 0.
 /// Returns `None` if number of children corresponding to token MULTIPLY is less or equal than `i`.
-fn MULTIPLY(&self, i: usize) -> Option<Rc<TerminalNode<'input,math_gParserContextType>>> where Self:Sized{
+fn MULTIPLY(&self, i: usize) -> Option<Rc<TerminalNode<'input,mathParserContextType>>> where Self:Sized{
 	self.get_token(MULTIPLY, i)
 }
 /// Retrieves all `TerminalNode`s corresponding to token DIVIDE in current rule
-fn DIVIDE_all(&self) -> Vec<Rc<TerminalNode<'input,math_gParserContextType>>>  where Self:Sized{
+fn DIVIDE_all(&self) -> Vec<Rc<TerminalNode<'input,mathParserContextType>>>  where Self:Sized{
 	self.children_of_type()
 }
 /// Retrieves 'i's TerminalNode corresponding to token DIVIDE, starting from 0.
 /// Returns `None` if number of children corresponding to token DIVIDE is less or equal than `i`.
-fn DIVIDE(&self, i: usize) -> Option<Rc<TerminalNode<'input,math_gParserContextType>>> where Self:Sized{
+fn DIVIDE(&self, i: usize) -> Option<Rc<TerminalNode<'input,mathParserContextType>>> where Self:Sized{
 	self.get_token(DIVIDE, i)
 }
 
@@ -419,7 +419,7 @@ fn DIVIDE(&self, i: usize) -> Option<Rc<TerminalNode<'input,math_gParserContextT
 
 impl<'input> TermContextAttrs<'input> for TermContext<'input>{}
 
-impl<'input, I, H> math_gParser<'input, I, H>
+impl<'input, I, H> mathParser<'input, I, H>
 where
     I: TokenStream<'input, TF = LocalTokenFactory<'input> > + TidAble<'input>,
     H: ErrorStrategy<'input,BaseParserType<'input,I>>
@@ -496,13 +496,13 @@ pub struct FactorContextExt<'input>{
 ph:PhantomData<&'input str>
 }
 
-impl<'input> math_gParserContext<'input> for FactorContext<'input>{}
+impl<'input> mathParserContext<'input> for FactorContext<'input>{}
 
-impl<'input,'a> Listenable<dyn math_gListener<'input> + 'a> for FactorContext<'input>{
-		fn enter(&self,listener: &mut (dyn math_gListener<'input> + 'a)) {
+impl<'input,'a> Listenable<dyn mathListener<'input> + 'a> for FactorContext<'input>{
+		fn enter(&self,listener: &mut (dyn mathListener<'input> + 'a)) {
 			listener.enter_every_rule(self);
 			listener.enter_factor(self);
-		}fn exit(&self,listener: &mut (dyn math_gListener<'input> + 'a)) {
+		}fn exit(&self,listener: &mut (dyn mathListener<'input> + 'a)) {
 			listener.exit_factor(self);
 			listener.exit_every_rule(self);
 		}
@@ -510,14 +510,14 @@ impl<'input,'a> Listenable<dyn math_gListener<'input> + 'a> for FactorContext<'i
 
 impl<'input> CustomRuleContext<'input> for FactorContextExt<'input>{
 	type TF = LocalTokenFactory<'input>;
-	type Ctx = math_gParserContextType;
+	type Ctx = mathParserContextType;
 	fn get_rule_index(&self) -> usize { RULE_factor }
 	//fn type_rule_index() -> usize where Self: Sized { RULE_factor }
 }
 antlr_rust::tid!{FactorContextExt<'a>}
 
 impl<'input> FactorContextExt<'input>{
-	fn new(parent: Option<Rc<dyn math_gParserContext<'input> + 'input > >, invoking_state: isize) -> Rc<FactorContextAll<'input>> {
+	fn new(parent: Option<Rc<dyn mathParserContext<'input> + 'input > >, invoking_state: isize) -> Rc<FactorContextAll<'input>> {
 		Rc::new(
 			BaseParserRuleContext::new_parser_ctx(parent, invoking_state,FactorContextExt{
 				ph:PhantomData
@@ -526,14 +526,14 @@ impl<'input> FactorContextExt<'input>{
 	}
 }
 
-pub trait FactorContextAttrs<'input>: math_gParserContext<'input> + BorrowMut<FactorContextExt<'input>>{
+pub trait FactorContextAttrs<'input>: mathParserContext<'input> + BorrowMut<FactorContextExt<'input>>{
 
 fn expr(&self) -> Option<Rc<ExprContextAll<'input>>> where Self:Sized{
 	self.child_of_type(0)
 }
 /// Retrieves first TerminalNode corresponding to token NUMBER
 /// Returns `None` if there is no child corresponding to token NUMBER
-fn NUMBER(&self) -> Option<Rc<TerminalNode<'input,math_gParserContextType>>> where Self:Sized{
+fn NUMBER(&self) -> Option<Rc<TerminalNode<'input,mathParserContextType>>> where Self:Sized{
 	self.get_token(NUMBER, 0)
 }
 
@@ -541,7 +541,7 @@ fn NUMBER(&self) -> Option<Rc<TerminalNode<'input,math_gParserContextType>>> whe
 
 impl<'input> FactorContextAttrs<'input> for FactorContext<'input>{}
 
-impl<'input, I, H> math_gParser<'input, I, H>
+impl<'input, I, H> mathParser<'input, I, H>
 where
     I: TokenStream<'input, TF = LocalTokenFactory<'input> > + TidAble<'input>,
     H: ErrorStrategy<'input,BaseParserType<'input,I>>

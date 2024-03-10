@@ -1,4 +1,4 @@
-grammar math_g;
+grammar math;
 
 
 // parser rules
