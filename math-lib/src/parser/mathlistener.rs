@@ -1,39 +1,91 @@
 #![allow(nonstandard_style)]
-// Generated from C:\Users\barta\code\rust\horizon-sphere\math-lib\src\compiler\math.g4 by ANTLR 4.8
+// Generated from C:\Users\barta\code\rust\horizon-sphere\math-lib\src\parser\math.g4 by ANTLR 4.8
 use antlr_rust::tree::ParseTreeListener;
 use super::mathparser::*;
 
 pub trait mathListener<'input> : ParseTreeListener<'input,mathParserContextType>{
 /**
- * Enter a parse tree produced by {@link mathParser#expr}.
+ * Enter a parse tree produced by {@link mathParser#prog}.
  * @param ctx the parse tree
  */
-fn enter_expr(&mut self, _ctx: &ExprContext<'input>) { }
+fn enter_prog(&mut self, _ctx: &ProgContext<'input>) { }
 /**
- * Exit a parse tree produced by {@link mathParser#expr}.
+ * Exit a parse tree produced by {@link mathParser#prog}.
  * @param ctx the parse tree
  */
-fn exit_expr(&mut self, _ctx: &ExprContext<'input>) { }
+fn exit_prog(&mut self, _ctx: &ProgContext<'input>) { }
 /**
- * Enter a parse tree produced by {@link mathParser#term}.
+ * Enter a parse tree produced by the {@code add}
+ * labeled alternative in {@link mathParser#expr}.
  * @param ctx the parse tree
  */
-fn enter_term(&mut self, _ctx: &TermContext<'input>) { }
+fn enter_add(&mut self, _ctx: &AddContext<'input>) { }
 /**
- * Exit a parse tree produced by {@link mathParser#term}.
+ * Exit a parse tree produced by the {@code add}
+ * labeled alternative in {@link mathParser#expr}.
  * @param ctx the parse tree
  */
-fn exit_term(&mut self, _ctx: &TermContext<'input>) { }
+fn exit_add(&mut self, _ctx: &AddContext<'input>) { }
 /**
- * Enter a parse tree produced by {@link mathParser#factor}.
+ * Enter a parse tree produced by the {@code number}
+ * labeled alternative in {@link mathParser#expr}.
  * @param ctx the parse tree
  */
-fn enter_factor(&mut self, _ctx: &FactorContext<'input>) { }
+fn enter_number(&mut self, _ctx: &NumberContext<'input>) { }
 /**
- * Exit a parse tree produced by {@link mathParser#factor}.
+ * Exit a parse tree produced by the {@code number}
+ * labeled alternative in {@link mathParser#expr}.
  * @param ctx the parse tree
  */
-fn exit_factor(&mut self, _ctx: &FactorContext<'input>) { }
+fn exit_number(&mut self, _ctx: &NumberContext<'input>) { }
+/**
+ * Enter a parse tree produced by the {@code parens}
+ * labeled alternative in {@link mathParser#expr}.
+ * @param ctx the parse tree
+ */
+fn enter_parens(&mut self, _ctx: &ParensContext<'input>) { }
+/**
+ * Exit a parse tree produced by the {@code parens}
+ * labeled alternative in {@link mathParser#expr}.
+ * @param ctx the parse tree
+ */
+fn exit_parens(&mut self, _ctx: &ParensContext<'input>) { }
+/**
+ * Enter a parse tree produced by the {@code function}
+ * labeled alternative in {@link mathParser#expr}.
+ * @param ctx the parse tree
+ */
+fn enter_function(&mut self, _ctx: &FunctionContext<'input>) { }
+/**
+ * Exit a parse tree produced by the {@code function}
+ * labeled alternative in {@link mathParser#expr}.
+ * @param ctx the parse tree
+ */
+fn exit_function(&mut self, _ctx: &FunctionContext<'input>) { }
+/**
+ * Enter a parse tree produced by the {@code power}
+ * labeled alternative in {@link mathParser#expr}.
+ * @param ctx the parse tree
+ */
+fn enter_power(&mut self, _ctx: &PowerContext<'input>) { }
+/**
+ * Exit a parse tree produced by the {@code power}
+ * labeled alternative in {@link mathParser#expr}.
+ * @param ctx the parse tree
+ */
+fn exit_power(&mut self, _ctx: &PowerContext<'input>) { }
+/**
+ * Enter a parse tree produced by the {@code multiply}
+ * labeled alternative in {@link mathParser#expr}.
+ * @param ctx the parse tree
+ */
+fn enter_multiply(&mut self, _ctx: &MultiplyContext<'input>) { }
+/**
+ * Exit a parse tree produced by the {@code multiply}
+ * labeled alternative in {@link mathParser#expr}.
+ * @param ctx the parse tree
+ */
+fn exit_multiply(&mut self, _ctx: &MultiplyContext<'input>) { }
 
 }
 

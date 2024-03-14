@@ -1,5 +1,7 @@
 // root of this library 
-mod functions;
 mod utilities;
+
+mod functions;
+mod functions_test;
+
 mod parser;
-mod tests;

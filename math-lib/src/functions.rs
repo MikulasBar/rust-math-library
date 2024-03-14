@@ -9,6 +9,7 @@ use FnError::*;
 pub type FnResult = Result<f64, FnError>;
 
 
+
 pub type FnArgs<'a> = HashMap<&'a str, f64>;
 pub trait Function {
     fn apply(&self, args: &FnArgs) -> FnResult;
