@@ -51,6 +51,30 @@ fn enter_parens(&mut self, _ctx: &ParensContext<'input>) { }
  */
 fn exit_parens(&mut self, _ctx: &ParensContext<'input>) { }
 /**
+ * Enter a parse tree produced by the {@code e}
+ * labeled alternative in {@link mathParser#expr}.
+ * @param ctx the parse tree
+ */
+fn enter_e(&mut self, _ctx: &EContext<'input>) { }
+/**
+ * Exit a parse tree produced by the {@code e}
+ * labeled alternative in {@link mathParser#expr}.
+ * @param ctx the parse tree
+ */
+fn exit_e(&mut self, _ctx: &EContext<'input>) { }
+/**
+ * Enter a parse tree produced by the {@code log}
+ * labeled alternative in {@link mathParser#expr}.
+ * @param ctx the parse tree
+ */
+fn enter_log(&mut self, _ctx: &LogContext<'input>) { }
+/**
+ * Exit a parse tree produced by the {@code log}
+ * labeled alternative in {@link mathParser#expr}.
+ * @param ctx the parse tree
+ */
+fn exit_log(&mut self, _ctx: &LogContext<'input>) { }
+/**
  * Enter a parse tree produced by the {@code function}
  * labeled alternative in {@link mathParser#expr}.
  * @param ctx the parse tree
@@ -62,6 +86,18 @@ fn enter_function(&mut self, _ctx: &FunctionContext<'input>) { }
  * @param ctx the parse tree
  */
 fn exit_function(&mut self, _ctx: &FunctionContext<'input>) { }
+/**
+ * Enter a parse tree produced by the {@code pi}
+ * labeled alternative in {@link mathParser#expr}.
+ * @param ctx the parse tree
+ */
+fn enter_pi(&mut self, _ctx: &PiContext<'input>) { }
+/**
+ * Exit a parse tree produced by the {@code pi}
+ * labeled alternative in {@link mathParser#expr}.
+ * @param ctx the parse tree
+ */
+fn exit_pi(&mut self, _ctx: &PiContext<'input>) { }
 /**
  * Enter a parse tree produced by the {@code power}
  * labeled alternative in {@link mathParser#expr}.

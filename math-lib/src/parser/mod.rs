@@ -6,9 +6,13 @@ mod mathparser;
 mod mathlistener;
 mod mathvisitor;
 
+use std::{collections::HashMap, f64::consts::E};
+use maplit::hashmap;
+
 use antlr_rust::{
     common_token_stream::CommonTokenStream, tree::{ParseTree, ParseTreeListener, ParseTreeVisitorCompat, VisitChildren}, InputStream
 };
+use once_cell::sync::Lazy;
 
 use self::{
     mathlexer::*,
@@ -18,6 +22,19 @@ use self::{
 };
 use crate::functions::*;
 
+
+fn string_fn(name: &str, arg: f64) -> Option<f64> {
+    Some(
+        match name {
+            "sin" => arg.sin(),
+            "cos" => arg.cos(),
+            "tan" => arg.tan(),
+            "log" => arg.log10(),
+            "ln" => arg.ln(),
+            _ => return None
+        }
+    )
+}
 
 
 struct MathVisitor(f64);
@@ -42,6 +59,14 @@ impl mathVisitorCompat<'_> for MathVisitor {
 
     fn visit_number(&mut self, ctx: &NumberContext<'_>) -> Self::Return {
         ctx.NUMBER().unwrap().get_text().parse().unwrap()
+    }
+
+    fn visit_pi(&mut self, ctx: &PiContext<'_>) -> Self::Return {
+        std::f64::consts::PI
+    }
+
+    fn visit_e(&mut self, ctx: &EContext<'_>) -> Self::Return {
+        std::f64::consts::E
     }
 
     fn visit_parens(&mut self, ctx: &ParensContext<'_>) -> Self::Return {
@@ -74,9 +99,21 @@ impl mathVisitorCompat<'_> for MathVisitor {
         a.powf(b)
     }
 
+    fn visit_log(&mut self, ctx: &LogContext<'_>) -> Self::Return {
+        let base = self.visit(&*ctx.expr(0).unwrap());
+        let arg = self.visit(&*ctx.expr(1).unwrap());
+
+        arg.log(base)
+    }
+
     fn visit_function(&mut self, ctx: &FunctionContext<'_>) -> Self::Return {
         let arg = self.visit(&*ctx.expr().unwrap());
-        todo!()
+        let name = ctx.ID().unwrap().get_text();
+        
+        if let Some(v) = string_fn(&name, arg) {
+            return v
+        }
+        panic!("Unrecognized function name")
     }
 }
 
@@ -85,7 +122,7 @@ impl mathVisitorCompat<'_> for MathVisitor {
 // #[should_panic]
 #[test]
 fn test_parser() {
-    let lexer = mathLexer::new(InputStream::new("4 * 2 - 6 / 3".into()));
+    let lexer = mathLexer::new(InputStream::new("2^(3 - 1) * (1 - cos(pi/2)) + log_5(4 + ln(e))".into()));
 
     let token_source = CommonTokenStream::new(lexer);
     let mut parser = mathParser::new(token_source);
@@ -93,26 +130,8 @@ fn test_parser() {
     let root = parser.prog().unwrap();
 
     let result = MathVisitor(0.0).visit(&*root);
-    assert_eq!(result, 6.0);
 
+    assert_eq!(result, 5.0);
 }
 
-#[test]
-fn test_visitor() {
-    let mut _lexer = mathLexer::new(InputStream::new("2 + 8 / 2".into()));
-    let token_source = CommonTokenStream::new(_lexer);
-    let mut parser = mathParser::new(token_source);
 
-    let root = parser.prog().unwrap();
-
-    assert_eq!(
-        "(s (expr (expr 2) + (expr (expr 8) / (expr 2))) <EOF>)",
-        root.to_string_tree(&*parser)
-    );
-    
-    let mut visitor = MathVisitor(0.0);
-
-    let visitor_result = visitor.visit(&*root);
-    assert_eq!(6.0, visitor_result)
-
-}

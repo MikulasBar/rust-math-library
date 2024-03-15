@@ -36,11 +36,32 @@ pub trait mathVisitor<'input>: ParseTreeVisitor<'input,mathParserContextType>{
 	fn visit_parens(&mut self, ctx: &ParensContext<'input>) { self.visit_children(ctx) }
 
 	/**
+	 * Visit a parse tree produced by the {@code e}
+	 * labeled alternative in {@link mathParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	fn visit_e(&mut self, ctx: &EContext<'input>) { self.visit_children(ctx) }
+
+	/**
+	 * Visit a parse tree produced by the {@code log}
+	 * labeled alternative in {@link mathParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	fn visit_log(&mut self, ctx: &LogContext<'input>) { self.visit_children(ctx) }
+
+	/**
 	 * Visit a parse tree produced by the {@code function}
 	 * labeled alternative in {@link mathParser#expr}.
 	 * @param ctx the parse tree
 	 */
 	fn visit_function(&mut self, ctx: &FunctionContext<'input>) { self.visit_children(ctx) }
+
+	/**
+	 * Visit a parse tree produced by the {@code pi}
+	 * labeled alternative in {@link mathParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	fn visit_pi(&mut self, ctx: &PiContext<'input>) { self.visit_children(ctx) }
 
 	/**
 	 * Visit a parse tree produced by the {@code power}
@@ -95,11 +116,38 @@ pub trait mathVisitorCompat<'input>:ParseTreeVisitorCompat<'input, Node= mathPar
 		}
 
 	/**
+	 * Visit a parse tree produced by the {@code e}
+	 * labeled alternative in {@link mathParser#expr}.
+	 * @param ctx the parse tree
+	 */
+		fn visit_e(&mut self, ctx: &EContext<'input>) -> Self::Return {
+			self.visit_children(ctx)
+		}
+
+	/**
+	 * Visit a parse tree produced by the {@code log}
+	 * labeled alternative in {@link mathParser#expr}.
+	 * @param ctx the parse tree
+	 */
+		fn visit_log(&mut self, ctx: &LogContext<'input>) -> Self::Return {
+			self.visit_children(ctx)
+		}
+
+	/**
 	 * Visit a parse tree produced by the {@code function}
 	 * labeled alternative in {@link mathParser#expr}.
 	 * @param ctx the parse tree
 	 */
 		fn visit_function(&mut self, ctx: &FunctionContext<'input>) -> Self::Return {
+			self.visit_children(ctx)
+		}
+
+	/**
+	 * Visit a parse tree produced by the {@code pi}
+	 * labeled alternative in {@link mathParser#expr}.
+	 * @param ctx the parse tree
+	 */
+		fn visit_pi(&mut self, ctx: &PiContext<'input>) -> Self::Return {
 			self.visit_children(ctx)
 		}
 
@@ -147,8 +195,23 @@ where
         *<Self as ParseTreeVisitorCompat>::temp_result(self) = result;
 	}
 
+	fn visit_e(&mut self, ctx: &EContext<'input>){
+		let result = <Self as mathVisitorCompat>::visit_e(self, ctx);
+        *<Self as ParseTreeVisitorCompat>::temp_result(self) = result;
+	}
+
+	fn visit_log(&mut self, ctx: &LogContext<'input>){
+		let result = <Self as mathVisitorCompat>::visit_log(self, ctx);
+        *<Self as ParseTreeVisitorCompat>::temp_result(self) = result;
+	}
+
 	fn visit_function(&mut self, ctx: &FunctionContext<'input>){
 		let result = <Self as mathVisitorCompat>::visit_function(self, ctx);
+        *<Self as ParseTreeVisitorCompat>::temp_result(self) = result;
+	}
+
+	fn visit_pi(&mut self, ctx: &PiContext<'input>){
+		let result = <Self as mathVisitorCompat>::visit_pi(self, ctx);
         *<Self as ParseTreeVisitorCompat>::temp_result(self) = result;
 	}
 

@@ -4,27 +4,24 @@ grammar math;
 // parser rules
 prog: expr EOF;
 expr	
-		: NUMBER						# number
-		| expr POW expr					# power
-		| expr (MUL | DIV) expr 		# multiply
-		| expr (ADD | SUB) expr			# add
-		| (FN_NAME | LOG) '(' expr ')'	# function
-		| '(' expr ')'					# parens		
+		: NUMBER					# number
+		| PI						# pi
+		| E							# e
+		| expr POW expr				# power
+		| expr (MUL | DIV) expr 	# multiply
+		| expr (ADD | SUB) expr		# add
+		| LOG expr '(' expr ')'		# log
+		| ID '(' expr ')'			# function
+		| '(' expr ')'				# parens		
 		;
 
 
 
 // lexer rules
-FN_NAME: SIN | COS | TAN;
-LOG: LOGBASE | LOG10 | LN;
+LOG: 'log_';
 
-LOGBASE: 'log_' NUMBER;
-LOG10: 'log';
-LN: 'ln';
-
-SIN: 'sin';
-COS: 'cos';
-TAN: 'tan';
+PI: 'pi';
+E: 'e';
 
 ADD: '+';
 SUB: '-';
@@ -32,9 +29,11 @@ MUL: '*';
 DIV: '/';
 POW: '^';
 
+ID: ID_CHAR+;
 NUMBER: SIGN? DIGIT+ ('.' DIGIT+)?;
 WS: [ \t\r\n]+ -> skip;
 
 // fragments
 fragment DIGIT: [0-9];
 fragment SIGN: [+-];
+fragment ID_CHAR: [_a-zA-Z];

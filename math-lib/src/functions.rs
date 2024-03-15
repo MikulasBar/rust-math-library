@@ -1,6 +1,4 @@
-use std::{
-    collections::HashMap,
-};
+use std::collections::HashMap;
 use crate::utilities::ToChildFn;
 use ChildFn::*;
 use FnError::*;
