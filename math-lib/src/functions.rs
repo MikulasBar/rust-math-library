@@ -57,26 +57,10 @@ impl Function for ChildFn {
     }
 }
 
-
-
-
-pub struct FnStruct {
-    definition: ChildFn,
-}
-
-impl FnStruct {
-    pub fn new<T>(def: T) -> Self 
-    where
-        T: ToChildFn,
-    {
-        Self {
-            definition: def.to_child_fn()
-        }
+impl Default for ChildFn {
+    fn default() -> Self {
+        Const(0.0)
     }
-
-    pub fn apply(&self, args: &FnArgs) -> FnResult {
-        self.definition.apply(args)
-    } 
 }
 
 

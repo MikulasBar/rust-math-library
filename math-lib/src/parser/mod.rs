@@ -6,14 +6,14 @@ mod mathparser;
 mod mathlistener;
 mod mathvisitor;
 
-use std::{collections::HashMap, f64::consts::E};
-use maplit::hashmap;
-
 use antlr_rust::{
-    common_token_stream::CommonTokenStream, tree::{ParseTree, ParseTreeListener, ParseTreeVisitorCompat, VisitChildren}, InputStream
+    common_token_stream::CommonTokenStream,
+    tree::{ParseTree, ParseTreeListener, ParseTreeVisitorCompat, VisitChildren},
+    InputStream,
 };
+use std::{collections::HashMap, f64::consts::E, process::Child};
+use maplit::hashmap;
 use once_cell::sync::Lazy;
-
 use self::{
     mathlexer::*,
     mathparser::*,
@@ -21,27 +21,50 @@ use self::{
     mathvisitor::*,
 };
 use crate::functions::*;
+use crate::utilities::*;
 
 
-fn string_fn(name: &str, arg: f64) -> Option<f64> {
-    Some(
-        match name {
-            "sin" => arg.sin(),
-            "cos" => arg.cos(),
-            "tan" => arg.tan(),
-            "log" => arg.log10(),
-            "ln" => arg.ln(),
+pub struct FnStruct {
+    definition: ChildFn,
+}
+
+impl FnStruct {
+    pub fn apply(&self, args: &FnArgs) -> FnResult {
+        self.definition.apply(args)
+    } 
+}
+
+impl Default for FnStruct {
+    fn default() -> Self {
+        Self {
+            definition: "x".to_child_fn()
+        }
+    }
+}
+
+fn string_fn(name: &str, args: Vec<f64>) -> Option<f64> {
+    Some (
+        match args.len() {
+            1 => match name {
+                "sin" => args[0].sin(),
+                "cos" => args[0].cos(),
+                "tan" => args[0].tan(),
+                "log" => args[0].log10(),
+                "ln" => args[0].ln(),
+                _ => return None
+            },
             _ => return None
         }
     )
 }
 
 
-struct MathVisitor(f64);
+struct MathVisitor(ChildFn);
+
 
 impl ParseTreeVisitorCompat<'_> for MathVisitor {
     type Node = mathParserContextType;
-    type Return = f64;
+    type Return = ChildFn;
 
     fn temp_result(&mut self) -> &mut Self::Return {
         &mut self.0
@@ -58,15 +81,30 @@ impl mathVisitorCompat<'_> for MathVisitor {
     }
 
     fn visit_number(&mut self, ctx: &NumberContext<'_>) -> Self::Return {
-        ctx.NUMBER().unwrap().get_text().parse().unwrap()
+        ChildFn::Const(
+            ctx.NUMBER()
+                .unwrap()
+                .get_text()
+                .parse()
+                .unwrap()
+        )
     }
 
     fn visit_pi(&mut self, ctx: &PiContext<'_>) -> Self::Return {
-        std::f64::consts::PI
+        ChildFn::Const(std::f64::consts::PI)
     }
 
     fn visit_e(&mut self, ctx: &EContext<'_>) -> Self::Return {
-        std::f64::consts::E
+        ChildFn::Const(std::f64::consts::E)
+    }
+
+    fn visit_var(&mut self, ctx: &VarContext<'_>) -> Self::Return {
+        ChildFn::Var(
+            ctx.ID()
+                .unwrap()
+                .get_text()
+                .into_boxed_str()
+        )
     }
 
     fn visit_parens(&mut self, ctx: &ParensContext<'_>) -> Self::Return {
@@ -74,19 +112,14 @@ impl mathVisitorCompat<'_> for MathVisitor {
     }
 
     fn visit_add(&mut self, ctx: &AddContext<'_>) -> Self::Return {
-        let a = self.visit(&*ctx.expr(0).unwrap());
-        let b = self.visit(&*ctx.expr(1).unwrap());
+        let mut res: Vec<> = vec![];
+        ctx.expr_all
+        for i in {
 
-        if ctx.ADD().is_some() {
-            return a + b
         }
-        a - b
     }
 
     fn visit_multiply(&mut self, ctx: &MultiplyContext<'_>) -> Self::Return {
-        let a = self.visit(&*ctx.expr(0).unwrap());
-        let b = self.visit(&*ctx.expr(1).unwrap());
-
         if ctx.MUL().is_some() {
             return a * b
         }

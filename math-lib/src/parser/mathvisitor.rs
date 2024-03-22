@@ -50,6 +50,13 @@ pub trait mathVisitor<'input>: ParseTreeVisitor<'input,mathParserContextType>{
 	fn visit_log(&mut self, ctx: &LogContext<'input>) { self.visit_children(ctx) }
 
 	/**
+	 * Visit a parse tree produced by the {@code var}
+	 * labeled alternative in {@link mathParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	fn visit_var(&mut self, ctx: &VarContext<'input>) { self.visit_children(ctx) }
+
+	/**
 	 * Visit a parse tree produced by the {@code function}
 	 * labeled alternative in {@link mathParser#expr}.
 	 * @param ctx the parse tree
@@ -134,6 +141,15 @@ pub trait mathVisitorCompat<'input>:ParseTreeVisitorCompat<'input, Node= mathPar
 		}
 
 	/**
+	 * Visit a parse tree produced by the {@code var}
+	 * labeled alternative in {@link mathParser#expr}.
+	 * @param ctx the parse tree
+	 */
+		fn visit_var(&mut self, ctx: &VarContext<'input>) -> Self::Return {
+			self.visit_children(ctx)
+		}
+
+	/**
 	 * Visit a parse tree produced by the {@code function}
 	 * labeled alternative in {@link mathParser#expr}.
 	 * @param ctx the parse tree
@@ -202,6 +218,11 @@ where
 
 	fn visit_log(&mut self, ctx: &LogContext<'input>){
 		let result = <Self as mathVisitorCompat>::visit_log(self, ctx);
+        *<Self as ParseTreeVisitorCompat>::temp_result(self) = result;
+	}
+
+	fn visit_var(&mut self, ctx: &VarContext<'input>){
+		let result = <Self as mathVisitorCompat>::visit_var(self, ctx);
         *<Self as ParseTreeVisitorCompat>::temp_result(self) = result;
 	}
 

@@ -75,6 +75,18 @@ fn enter_log(&mut self, _ctx: &LogContext<'input>) { }
  */
 fn exit_log(&mut self, _ctx: &LogContext<'input>) { }
 /**
+ * Enter a parse tree produced by the {@code var}
+ * labeled alternative in {@link mathParser#expr}.
+ * @param ctx the parse tree
+ */
+fn enter_var(&mut self, _ctx: &VarContext<'input>) { }
+/**
+ * Exit a parse tree produced by the {@code var}
+ * labeled alternative in {@link mathParser#expr}.
+ * @param ctx the parse tree
+ */
+fn exit_var(&mut self, _ctx: &VarContext<'input>) { }
+/**
  * Enter a parse tree produced by the {@code function}
  * labeled alternative in {@link mathParser#expr}.
  * @param ctx the parse tree
