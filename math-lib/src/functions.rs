@@ -1,22 +1,20 @@
 use std::{collections::HashMap};
 use crate::utilities::ToChildFn;
 use ChildFn::*;
-use FnError::*;
+use FnApplyError::*;
 
-
-pub type FnResult = Result<f64, FnError>;
 
 pub type FnArgs<'a> = HashMap<&'a str, f64>;
 
 
 pub trait Function {
-    fn apply(&self, args: &FnArgs) -> FnResult;
+    fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError>;
     //fn derivative(&self) -> Self;
 }
 
 
 #[derive(Debug)]
-pub enum FnError {
+pub enum FnApplyError {
     DivisionByZeroError,
     NegativeEvenRootError,
     NonPositiveLogArgError,
@@ -28,7 +26,7 @@ pub enum FnError {
     ParameterNotFoundError,
 }
 
-impl PartialEq for FnError {
+impl PartialEq for FnApplyError {
     fn eq(&self, other: &Self) -> bool {
         self == other
     }
@@ -43,7 +41,7 @@ pub enum ChildFn {
 }
 
 impl Function for ChildFn {
-    fn apply(&self, args: &FnArgs) -> FnResult {
+    fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError> {
         match self {
             Fn(f) => f.apply(args),
             Const(c) => Ok(*c),
@@ -83,7 +81,7 @@ impl AddFn {
 }
 
 impl Function for AddFn {
-    fn apply(&self, args: &FnArgs) -> FnResult {
+    fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError> {
         let left = self.left.apply(args)?;
         let right = self.right.apply(args)?;
 
@@ -111,7 +109,7 @@ impl SubFn {
 }
 
 impl Function for SubFn {
-    fn apply(&self, args: &FnArgs) -> FnResult {
+    fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError> {
         let left = self.left.apply(args)?;
         let right = self.right.apply(args)?;
 
@@ -139,7 +137,7 @@ impl MulFn {
 }
 
 impl Function for MulFn {
-    fn apply(&self, args: &FnArgs) -> FnResult {
+    fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError> {
         let left = self.left.apply(args)?;
         let right = self.right.apply(args)?;
 
@@ -167,7 +165,7 @@ impl DivFn {
 }
 
 impl Function for DivFn {
-    fn apply(&self, args: &FnArgs) -> FnResult {
+    fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError> {
         let num_value = self.numerator.apply(args)?;
         let den_value = self.denominator.apply(args)?;
 
@@ -200,7 +198,7 @@ impl CoefFn {
 }
 
 impl Function for CoefFn {
-    fn apply(&self, args: &FnArgs) -> FnResult {
+    fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError> {
         let child_value = self.child.apply(args)?;
 
         Ok(self.coefficient * child_value)
@@ -226,7 +224,7 @@ impl ExpFn {
 }
 
 impl Function for ExpFn {
-    fn apply(&self, args: &FnArgs) -> FnResult {
+    fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError> {
         let base_value = self.base.apply(args)?;
         let exp_value = self.exponent.apply(args)?;
 
@@ -261,7 +259,7 @@ impl LogFn {
 }
 
 impl Function for LogFn {
-    fn apply(&self, args: &FnArgs) -> FnResult {
+    fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError> {
         let base_value = self.base.apply(args)?;
         let arg_value = self.argument.apply(args)?;
 
@@ -295,7 +293,7 @@ impl SinFn {
 }
 
 impl Function for SinFn {
-    fn apply(&self, args: &FnArgs) -> FnResult {
+    fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError> {
         self.child
             .apply(args)
             .map(f64::sin)
@@ -319,7 +317,7 @@ impl CosFn {
 }
 
 impl Function for CosFn {
-    fn apply(&self, args: &FnArgs) -> FnResult {
+    fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError> {
         self.child
             .apply(args)
             .map(f64::cos)
@@ -343,7 +341,7 @@ impl TanFn {
 }
 
 impl Function for TanFn {
-    fn apply(&self, args: &FnArgs) -> FnResult {
+    fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError> {
         let child_value = self.child.apply(args)?;
 
         if child_value == std::f64::consts::FRAC_PI_2 {
@@ -377,7 +375,7 @@ impl SeqAddFn {
 }
 
 impl Function for SeqAddFn {
-    fn apply(&self, args: &FnArgs) -> FnResult {
+    fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError> {
         let mut result: f64 = 0.0;
 
         for child in &self.children {
@@ -410,7 +408,7 @@ impl SeqMulFn {
 }
 
 impl Function for SeqMulFn {
-    fn apply(&self, args: &FnArgs) -> FnResult {
+    fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError> {
         let mut result: f64 = 1.0;
 
         for child in &self.children {
