@@ -10,11 +10,11 @@ use std::f64::{
 
 
 #[test]
-fn test_AddFn() {
+fn test_SeqAddFn() {
     let fx = CoefFn::new(2.0, "x").to_child_fn();
     let fy = CoefFn::new(3.0, "y").to_child_fn();
 
-    let add_fn = AddFn::new(vec![fx, fy]);
+    let add_fn = SeqAddFn::new(vec![fx, fy]);
 
     let args = fn_args!{
         "x" => 4.0,
@@ -25,11 +25,11 @@ fn test_AddFn() {
 }
 
 #[test]
-fn test_MulFn() {
+fn test_SeqMulFn() {
     let fx = CoefFn::new(2.0, "x").to_child_fn();
     let fy = CoefFn::new(3.0, "y").to_child_fn();
 
-    let mul_fn = MulFn::new(vec![fx, fy]);
+    let mul_fn = SeqMulFn::new(vec![fx, fy]);
 
     let args = fn_args!{
         "x" => 4.0,

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap};
 use crate::utilities::ToChildFn;
 use ChildFn::*;
 use FnError::*;
@@ -64,83 +64,86 @@ impl Default for ChildFn {
 }
 
 
-pub struct AddFn {           
-    children: Vec<ChildFn>
+pub struct AddFn {
+    left: ChildFn,
+    right: ChildFn
 }
 
 impl AddFn {
-    /// Initialise new function with no children
-    pub fn new<T>(children: Vec<T>) -> Self
-    where 
+    pub fn new<T, U>(left: T, right: U) -> Self
+    where
         T: ToChildFn,
-    { 
+        U: ToChildFn
+    {
         Self {
-            children: children
-                .into_iter()
-                .map(|c| c.to_child_fn())
-                .collect(),
-        }
-    }
-}
-
-impl Default for AddFn {
-    fn default() -> Self {
-        Self {
-            children: Vec::new()
+            left: left.to_child_fn(),
+            right: right.to_child_fn()
         }
     }
 }
 
 impl Function for AddFn {
     fn apply(&self, args: &FnArgs) -> FnResult {
-        let mut result: f64 = 0.0;
+        let left = self.left.apply(args)?;
+        let right = self.right.apply(args)?;
 
-        for child in &self.children {
-            let child_result = child.apply(args)?;
-            result += child_result;
-        }
-        Ok(result)
+        Ok(left + right)
     }
 }
 
+
+pub struct SubFn {
+    left: ChildFn,
+    right: ChildFn
+}
+
+impl SubFn {
+    pub fn new<T, U>(left: T, right: U) -> Self
+    where
+        T: ToChildFn,
+        U: ToChildFn
+    {
+        Self {
+            left: left.to_child_fn(),
+            right: right.to_child_fn()
+        }
+    }
+}
+
+impl Function for SubFn {
+    fn apply(&self, args: &FnArgs) -> FnResult {
+        let left = self.left.apply(args)?;
+        let right = self.right.apply(args)?;
+
+        Ok(left - right)
+    }
+}
 
 
 pub struct MulFn {
-    children: Vec<ChildFn>
+    left: ChildFn,
+    right: ChildFn
 }
 
 impl MulFn {
-    /// Initialise new function with no children
-    pub fn new<T>(children: Vec<T>) -> Self
-    where 
+    pub fn new<T, U>(left: T, right: U) -> Self
+    where
         T: ToChildFn,
+        U: ToChildFn
     {
         Self {
-            children: children
-                .into_iter()
-                .map(|c| c.to_child_fn())
-                .collect(),
-        }
-    }
-}
-
-impl Default for MulFn {
-    fn default() -> Self {
-        Self {
-            children: Vec::new()
+            left: left.to_child_fn(),
+            right: right.to_child_fn()
         }
     }
 }
 
 impl Function for MulFn {
     fn apply(&self, args: &FnArgs) -> FnResult {
-        let mut result: f64 = 1.0;
+        let left = self.left.apply(args)?;
+        let right = self.right.apply(args)?;
 
-        for child in &self.children {
-            let child_result = child.apply(args)?;
-            result *= child_result;
-        }
-        Ok(result)
+        Ok(left * right)
     }
 }
 
@@ -177,7 +180,7 @@ impl Function for DivFn {
 
 
 
-/// This function is used for adding coefficient without using `MulFn` <br>
+/// This function is used for adding coefficient without using `SeqMulFn` <br>
 pub struct CoefFn {
     coefficient: f64,
     child: ChildFn
@@ -349,4 +352,73 @@ impl Function for TanFn {
         Ok(child_value.tan())
     }
 }
+
+
+
+
+
+pub struct SeqAddFn {           
+    children: Vec<ChildFn>
+}
+
+impl SeqAddFn {
+    /// Initialise new function with no children
+    pub fn new<T>(children: Vec<T>) -> Self
+    where 
+        T: ToChildFn,
+    { 
+        Self {
+            children: children
+                .into_iter()
+                .map(|c| c.to_child_fn())
+                .collect(),
+        }
+    }
+}
+
+impl Function for SeqAddFn {
+    fn apply(&self, args: &FnArgs) -> FnResult {
+        let mut result: f64 = 0.0;
+
+        for child in &self.children {
+            let child_result = child.apply(args)?;
+            result += child_result;
+        }
+        Ok(result)
+    }
+}
+
+
+
+pub struct SeqMulFn {
+    children: Vec<ChildFn>
+}
+
+impl SeqMulFn {
+    /// Initialise new function with no children
+    pub fn new<T>(children: Vec<T>) -> Self
+    where 
+        T: ToChildFn,
+    {
+        Self {
+            children: children
+                .into_iter()
+                .map(|c| c.to_child_fn())
+                .collect(),
+        }
+    }
+}
+
+impl Function for SeqMulFn {
+    fn apply(&self, args: &FnArgs) -> FnResult {
+        let mut result: f64 = 1.0;
+
+        for child in &self.children {
+            let child_result = child.apply(args)?;
+            result *= child_result;
+        }
+        Ok(result)
+    }
+}
+
 

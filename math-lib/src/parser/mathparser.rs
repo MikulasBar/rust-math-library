@@ -461,23 +461,15 @@ pub trait AddContextAttrs<'input>: mathParserContext<'input>{
 	fn expr(&self, i: usize) -> Option<Rc<ExprContextAll<'input>>> where Self:Sized{
 		self.child_of_type(i)
 	}
-	/// Retrieves all `TerminalNode`s corresponding to token ADD in current rule
-	fn ADD_all(&self) -> Vec<Rc<TerminalNode<'input,mathParserContextType>>>  where Self:Sized{
-		self.children_of_type()
+	/// Retrieves first TerminalNode corresponding to token ADD
+	/// Returns `None` if there is no child corresponding to token ADD
+	fn ADD(&self) -> Option<Rc<TerminalNode<'input,mathParserContextType>>> where Self:Sized{
+		self.get_token(ADD, 0)
 	}
-	/// Retrieves 'i's TerminalNode corresponding to token ADD, starting from 0.
-	/// Returns `None` if number of children corresponding to token ADD is less or equal than `i`.
-	fn ADD(&self, i: usize) -> Option<Rc<TerminalNode<'input,mathParserContextType>>> where Self:Sized{
-		self.get_token(ADD, i)
-	}
-	/// Retrieves all `TerminalNode`s corresponding to token SUB in current rule
-	fn SUB_all(&self) -> Vec<Rc<TerminalNode<'input,mathParserContextType>>>  where Self:Sized{
-		self.children_of_type()
-	}
-	/// Retrieves 'i's TerminalNode corresponding to token SUB, starting from 0.
-	/// Returns `None` if number of children corresponding to token SUB is less or equal than `i`.
-	fn SUB(&self, i: usize) -> Option<Rc<TerminalNode<'input,mathParserContextType>>> where Self:Sized{
-		self.get_token(SUB, i)
+	/// Retrieves first TerminalNode corresponding to token SUB
+	/// Returns `None` if there is no child corresponding to token SUB
+	fn SUB(&self) -> Option<Rc<TerminalNode<'input,mathParserContextType>>> where Self:Sized{
+		self.get_token(SUB, 0)
 	}
 }
 
@@ -1099,23 +1091,15 @@ pub trait MultiplyContextAttrs<'input>: mathParserContext<'input>{
 	fn expr(&self, i: usize) -> Option<Rc<ExprContextAll<'input>>> where Self:Sized{
 		self.child_of_type(i)
 	}
-	/// Retrieves all `TerminalNode`s corresponding to token MUL in current rule
-	fn MUL_all(&self) -> Vec<Rc<TerminalNode<'input,mathParserContextType>>>  where Self:Sized{
-		self.children_of_type()
+	/// Retrieves first TerminalNode corresponding to token MUL
+	/// Returns `None` if there is no child corresponding to token MUL
+	fn MUL(&self) -> Option<Rc<TerminalNode<'input,mathParserContextType>>> where Self:Sized{
+		self.get_token(MUL, 0)
 	}
-	/// Retrieves 'i's TerminalNode corresponding to token MUL, starting from 0.
-	/// Returns `None` if number of children corresponding to token MUL is less or equal than `i`.
-	fn MUL(&self, i: usize) -> Option<Rc<TerminalNode<'input,mathParserContextType>>> where Self:Sized{
-		self.get_token(MUL, i)
-	}
-	/// Retrieves all `TerminalNode`s corresponding to token DIV in current rule
-	fn DIV_all(&self) -> Vec<Rc<TerminalNode<'input,mathParserContextType>>>  where Self:Sized{
-		self.children_of_type()
-	}
-	/// Retrieves 'i's TerminalNode corresponding to token DIV, starting from 0.
-	/// Returns `None` if number of children corresponding to token DIV is less or equal than `i`.
-	fn DIV(&self, i: usize) -> Option<Rc<TerminalNode<'input,mathParserContextType>>> where Self:Sized{
-		self.get_token(DIV, i)
+	/// Retrieves first TerminalNode corresponding to token DIV
+	/// Returns `None` if there is no child corresponding to token DIV
+	fn DIV(&self) -> Option<Rc<TerminalNode<'input,mathParserContextType>>> where Self:Sized{
+		self.get_token(DIV, 0)
 	}
 }
 
@@ -1359,17 +1343,17 @@ where
 
 			let tmp = recog.input.lt(-1).cloned();
 			recog.ctx.as_ref().unwrap().set_stop(tmp);
-			recog.base.set_state(58);
+			recog.base.set_state(50);
 			recog.err_handler.sync(&mut recog.base)?;
-			_alt = recog.interpreter.adaptive_predict(6,&mut recog.base)?;
+			_alt = recog.interpreter.adaptive_predict(4,&mut recog.base)?;
 			while { _alt!=2 && _alt!=INVALID_ALT } {
 				if _alt==1 {
 					recog.trigger_exit_rule_event();
 					_prevctx = _localctx.clone();
 					{
-					recog.base.set_state(56);
+					recog.base.set_state(48);
 					recog.err_handler.sync(&mut recog.base)?;
-					match  recog.interpreter.adaptive_predict(5,&mut recog.base)? {
+					match  recog.interpreter.adaptive_predict(3,&mut recog.base)? {
 						1 =>{
 							{
 							/*recRuleLabeledAltStartAction*/
@@ -1400,39 +1384,21 @@ where
 							if !({recog.precpred(None, 6)}) {
 								Err(FailedPredicateError::new(&mut recog.base, Some("recog.precpred(None, 6)".to_owned()), None))?;
 							}
-							recog.base.set_state(45); 
-							recog.err_handler.sync(&mut recog.base)?;
-							_alt = 1;
-							loop {
-								match _alt {
-								    x if x == 1=>
-									{
-									{
-									recog.base.set_state(43);
-									_la = recog.base.input.la(1);
-									if { !(_la==MUL || _la==DIV) } {
-										recog.err_handler.recover_inline(&mut recog.base)?;
+							recog.base.set_state(43);
+							_la = recog.base.input.la(1);
+							if { !(_la==MUL || _la==DIV) } {
+								recog.err_handler.recover_inline(&mut recog.base)?;
 
-									}
-									else {
-										if  recog.base.input.la(1)==TOKEN_EOF { recog.base.matched_eof = true };
-										recog.err_handler.report_match(&mut recog.base);
-										recog.base.consume(&mut recog.err_handler);
-									}
-									/*InvokeRule expr*/
-									recog.base.set_state(44);
-									recog.expr_rec(0)?;
-
-									}
-									}
-
-								_ => Err(ANTLRError::NoAltError(NoViableAltError::new(&mut recog.base)))?
-								}
-								recog.base.set_state(47); 
-								recog.err_handler.sync(&mut recog.base)?;
-								_alt = recog.interpreter.adaptive_predict(3,&mut recog.base)?;
-								if _alt==2 || _alt==INVALID_ALT { break }
 							}
+							else {
+								if  recog.base.input.la(1)==TOKEN_EOF { recog.base.matched_eof = true };
+								recog.err_handler.report_match(&mut recog.base);
+								recog.base.consume(&mut recog.err_handler);
+							}
+							/*InvokeRule expr*/
+							recog.base.set_state(44);
+							recog.expr_rec(7)?;
+
 							}
 						}
 					,
@@ -1442,43 +1408,25 @@ where
 							let mut tmp = AddContextExt::new(&**ExprContextExt::new(_parentctx.clone(), _parentState));
 							recog.push_new_recursion_context(tmp.clone(), _startState, RULE_expr);
 							_localctx = tmp;
-							recog.base.set_state(49);
+							recog.base.set_state(45);
 							if !({recog.precpred(None, 5)}) {
 								Err(FailedPredicateError::new(&mut recog.base, Some("recog.precpred(None, 5)".to_owned()), None))?;
 							}
-							recog.base.set_state(52); 
-							recog.err_handler.sync(&mut recog.base)?;
-							_alt = 1;
-							loop {
-								match _alt {
-								    x if x == 1=>
-									{
-									{
-									recog.base.set_state(50);
-									_la = recog.base.input.la(1);
-									if { !(_la==ADD || _la==SUB) } {
-										recog.err_handler.recover_inline(&mut recog.base)?;
+							recog.base.set_state(46);
+							_la = recog.base.input.la(1);
+							if { !(_la==ADD || _la==SUB) } {
+								recog.err_handler.recover_inline(&mut recog.base)?;
 
-									}
-									else {
-										if  recog.base.input.la(1)==TOKEN_EOF { recog.base.matched_eof = true };
-										recog.err_handler.report_match(&mut recog.base);
-										recog.base.consume(&mut recog.err_handler);
-									}
-									/*InvokeRule expr*/
-									recog.base.set_state(51);
-									recog.expr_rec(0)?;
-
-									}
-									}
-
-								_ => Err(ANTLRError::NoAltError(NoViableAltError::new(&mut recog.base)))?
-								}
-								recog.base.set_state(54); 
-								recog.err_handler.sync(&mut recog.base)?;
-								_alt = recog.interpreter.adaptive_predict(4,&mut recog.base)?;
-								if _alt==2 || _alt==INVALID_ALT { break }
 							}
+							else {
+								if  recog.base.input.la(1)==TOKEN_EOF { recog.base.matched_eof = true };
+								recog.err_handler.report_match(&mut recog.base);
+								recog.base.consume(&mut recog.err_handler);
+							}
+							/*InvokeRule expr*/
+							recog.base.set_state(47);
+							recog.expr_rec(6)?;
+
 							}
 						}
 
@@ -1486,9 +1434,9 @@ where
 					}
 					} 
 				}
-				recog.base.set_state(60);
+				recog.base.set_state(52);
 				recog.err_handler.sync(&mut recog.base)?;
-				_alt = recog.interpreter.adaptive_predict(6,&mut recog.base)?;
+				_alt = recog.interpreter.adaptive_predict(4,&mut recog.base)?;
 			}
 			}
 			Ok(())
@@ -1528,37 +1476,33 @@ lazy_static! {
 
 const _serializedATN:&'static str =
 	"\x03\u{608b}\u{a72a}\u{8133}\u{b9ed}\u{417c}\u{3be7}\u{7786}\u{5964}\x03\
-	\x10\x40\x04\x02\x09\x02\x04\x03\x09\x03\x03\x02\x03\x02\x03\x02\x03\x03\
+	\x10\x38\x04\x02\x09\x02\x04\x03\x09\x03\x03\x02\x03\x02\x03\x02\x03\x03\
 	\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\
 	\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x07\x03\x19\x0a\x03\x0c\x03\x0e\
 	\x03\x1c\x0b\x03\x03\x03\x05\x03\x1f\x0a\x03\x03\x03\x03\x03\x03\x03\x03\
 	\x03\x03\x03\x03\x03\x03\x03\x05\x03\x28\x0a\x03\x03\x03\x03\x03\x03\x03\
-	\x03\x03\x03\x03\x03\x03\x06\x03\x30\x0a\x03\x0d\x03\x0e\x03\x31\x03\x03\
-	\x03\x03\x03\x03\x06\x03\x37\x0a\x03\x0d\x03\x0e\x03\x38\x07\x03\x3b\x0a\
-	\x03\x0c\x03\x0e\x03\x3e\x0b\x03\x03\x03\x02\x03\x04\x04\x02\x04\x02\x04\
-	\x03\x02\x0b\x0c\x03\x02\x09\x0a\x02\x4a\x02\x06\x03\x02\x02\x02\x04\x27\
-	\x03\x02\x02\x02\x06\x07\x05\x04\x03\x02\x07\x08\x07\x02\x02\x03\x08\x03\
-	\x03\x02\x02\x02\x09\x0a\x08\x03\x01\x02\x0a\x28\x07\x0f\x02\x02\x0b\x28\
-	\x07\x07\x02\x02\x0c\x28\x07\x08\x02\x02\x0d\x0e\x07\x06\x02\x02\x0e\x0f\
-	\x05\x04\x03\x02\x0f\x10\x07\x03\x02\x02\x10\x11\x05\x04\x03\x02\x11\x12\
-	\x07\x04\x02\x02\x12\x28\x03\x02\x02\x02\x13\x14\x07\x0e\x02\x02\x14\x15\
-	\x07\x03\x02\x02\x15\x1a\x05\x04\x03\x02\x16\x17\x07\x05\x02\x02\x17\x19\
-	\x05\x04\x03\x02\x18\x16\x03\x02\x02\x02\x19\x1c\x03\x02\x02\x02\x1a\x18\
-	\x03\x02\x02\x02\x1a\x1b\x03\x02\x02\x02\x1b\x1e\x03\x02\x02\x02\x1c\x1a\
-	\x03\x02\x02\x02\x1d\x1f\x07\x05\x02\x02\x1e\x1d\x03\x02\x02\x02\x1e\x1f\
-	\x03\x02\x02\x02\x1f\x20\x03\x02\x02\x02\x20\x21\x07\x04\x02\x02\x21\x28\
-	\x03\x02\x02\x02\x22\x28\x07\x0e\x02\x02\x23\x24\x07\x03\x02\x02\x24\x25\
-	\x05\x04\x03\x02\x25\x26\x07\x04\x02\x02\x26\x28\x03\x02\x02\x02\x27\x09\
-	\x03\x02\x02\x02\x27\x0b\x03\x02\x02\x02\x27\x0c\x03\x02\x02\x02\x27\x0d\
-	\x03\x02\x02\x02\x27\x13\x03\x02\x02\x02\x27\x22\x03\x02\x02\x02\x27\x23\
-	\x03\x02\x02\x02\x28\x3c\x03\x02\x02\x02\x29\x2a\x0c\x09\x02\x02\x2a\x2b\
-	\x07\x0d\x02\x02\x2b\x3b\x05\x04\x03\x0a\x2c\x2f\x0c\x08\x02\x02\x2d\x2e\
-	\x09\x02\x02\x02\x2e\x30\x05\x04\x03\x02\x2f\x2d\x03\x02\x02\x02\x30\x31\
-	\x03\x02\x02\x02\x31\x2f\x03\x02\x02\x02\x31\x32\x03\x02\x02\x02\x32\x3b\
-	\x03\x02\x02\x02\x33\x36\x0c\x07\x02\x02\x34\x35\x09\x03\x02\x02\x35\x37\
-	\x05\x04\x03\x02\x36\x34\x03\x02\x02\x02\x37\x38\x03\x02\x02\x02\x38\x36\
-	\x03\x02\x02\x02\x38\x39\x03\x02\x02\x02\x39\x3b\x03\x02\x02\x02\x3a\x29\
-	\x03\x02\x02\x02\x3a\x2c\x03\x02\x02\x02\x3a\x33\x03\x02\x02\x02\x3b\x3e\
-	\x03\x02\x02\x02\x3c\x3a\x03\x02\x02\x02\x3c\x3d\x03\x02\x02\x02\x3d\x05\
-	\x03\x02\x02\x02\x3e\x3c\x03\x02\x02\x02\x09\x1a\x1e\x27\x31\x38\x3a\x3c";
+	\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x07\x03\x33\x0a\x03\x0c\
+	\x03\x0e\x03\x36\x0b\x03\x03\x03\x02\x03\x04\x04\x02\x04\x02\x04\x03\x02\
+	\x0b\x0c\x03\x02\x09\x0a\x02\x40\x02\x06\x03\x02\x02\x02\x04\x27\x03\x02\
+	\x02\x02\x06\x07\x05\x04\x03\x02\x07\x08\x07\x02\x02\x03\x08\x03\x03\x02\
+	\x02\x02\x09\x0a\x08\x03\x01\x02\x0a\x28\x07\x0f\x02\x02\x0b\x28\x07\x07\
+	\x02\x02\x0c\x28\x07\x08\x02\x02\x0d\x0e\x07\x06\x02\x02\x0e\x0f\x05\x04\
+	\x03\x02\x0f\x10\x07\x03\x02\x02\x10\x11\x05\x04\x03\x02\x11\x12\x07\x04\
+	\x02\x02\x12\x28\x03\x02\x02\x02\x13\x14\x07\x0e\x02\x02\x14\x15\x07\x03\
+	\x02\x02\x15\x1a\x05\x04\x03\x02\x16\x17\x07\x05\x02\x02\x17\x19\x05\x04\
+	\x03\x02\x18\x16\x03\x02\x02\x02\x19\x1c\x03\x02\x02\x02\x1a\x18\x03\x02\
+	\x02\x02\x1a\x1b\x03\x02\x02\x02\x1b\x1e\x03\x02\x02\x02\x1c\x1a\x03\x02\
+	\x02\x02\x1d\x1f\x07\x05\x02\x02\x1e\x1d\x03\x02\x02\x02\x1e\x1f\x03\x02\
+	\x02\x02\x1f\x20\x03\x02\x02\x02\x20\x21\x07\x04\x02\x02\x21\x28\x03\x02\
+	\x02\x02\x22\x28\x07\x0e\x02\x02\x23\x24\x07\x03\x02\x02\x24\x25\x05\x04\
+	\x03\x02\x25\x26\x07\x04\x02\x02\x26\x28\x03\x02\x02\x02\x27\x09\x03\x02\
+	\x02\x02\x27\x0b\x03\x02\x02\x02\x27\x0c\x03\x02\x02\x02\x27\x0d\x03\x02\
+	\x02\x02\x27\x13\x03\x02\x02\x02\x27\x22\x03\x02\x02\x02\x27\x23\x03\x02\
+	\x02\x02\x28\x34\x03\x02\x02\x02\x29\x2a\x0c\x09\x02\x02\x2a\x2b\x07\x0d\
+	\x02\x02\x2b\x33\x05\x04\x03\x0a\x2c\x2d\x0c\x08\x02\x02\x2d\x2e\x09\x02\
+	\x02\x02\x2e\x33\x05\x04\x03\x09\x2f\x30\x0c\x07\x02\x02\x30\x31\x09\x03\
+	\x02\x02\x31\x33\x05\x04\x03\x08\x32\x29\x03\x02\x02\x02\x32\x2c\x03\x02\
+	\x02\x02\x32\x2f\x03\x02\x02\x02\x33\x36\x03\x02\x02\x02\x34\x32\x03\x02\
+	\x02\x02\x34\x35\x03\x02\x02\x02\x35\x05\x03\x02\x02\x02\x36\x34\x03\x02\
+	\x02\x02\x07\x1a\x1e\x27\x32\x34";
 

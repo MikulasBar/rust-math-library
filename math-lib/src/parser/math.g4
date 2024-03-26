@@ -3,19 +3,19 @@ grammar math;
 
 // parser rules
 prog: expr EOF;
-expr		
-	: NUMBER											# number
-	| PI												# pi
-	| E													# e
-	| expr POW expr										# power
-	| expr ((MUL | DIV) expr)+ 							# multiply
-	| expr ((ADD | SUB) expr)+							# add
-	| LOG expr '(' expr ')'								# log
-	| ID '(' expr (',' expr)* ','? ')'					# function
-	| ID												# var
-	| '(' expr ')'										# parens
-	;
-	
+
+expr
+    : NUMBER											# number
+    | PI												# pi
+    | E													# e
+    | expr POW expr										# power
+    | expr (MUL | DIV) expr 							# multiply
+    | expr (ADD | SUB) expr				    			# add
+    | LOG expr '(' expr ')'								# log
+    | ID '(' expr (',' expr)* ','? ')'					# function
+    | ID												# var
+    | '(' expr ')'										# parens
+    ;
 
 // lexer rules
 LOG: 'log_';

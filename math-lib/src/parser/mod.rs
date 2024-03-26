@@ -119,32 +119,38 @@ impl mathVisitorCompat<'_> for MathVisitor {
     }
 
     fn visit_add(&mut self, ctx: &AddContext<'_>) -> Self::Return {
-        let children: Vec<_> = ctx.expr_all()
-            .into_iter()
-            .map(|x| self.visit(&*x))
-            .collect();
+        let left = self.visit(&*ctx.expr(0).unwrap());
+        let right = self.visit(&*ctx.expr(1).unwrap());
 
-        AddFn::new(children).to_child_fn()
+        if ctx.SUB().is_some() {
+            return SubFn::new(left, right).to_child_fn()
+        }
+
+        AddFn::new(left, right).to_child_fn()
     }
 
     fn visit_multiply(&mut self, ctx: &MultiplyContext<'_>) -> Self::Return {
-        let children: Vec<_> = ctx.expr_all()
-            .into_iter()
-            .map(|x| self.visit(&*x))
-            .collect();
+        let left = self.visit(&*ctx.expr(0).unwrap());
+        let right = self.visit(&*ctx.expr(1).unwrap());
 
-        MulFn::new(children).to_child_fn()
+        if ctx.DIV().is_some() {
+            return DivFn::new(left, right).to_child_fn()
+        }
+
+        MulFn::new(left, right).to_child_fn()
     }
 
     fn visit_power(&mut self, ctx: &PowerContext<'_>) -> Self::Return {
         let base = self.visit(&*ctx.expr(0).unwrap());
         let power = self.visit(&*ctx.expr(1).unwrap());
+
         ExpFn::new(base, power).to_child_fn()
     }
 
     fn visit_log(&mut self, ctx: &LogContext<'_>) -> Self::Return {
         let base = self.visit(&*ctx.expr(0).unwrap());
         let arg = self.visit(&*ctx.expr(1).unwrap());
+
         LogFn::new(base, arg).to_child_fn()
     }
 
@@ -165,28 +171,29 @@ impl mathVisitorCompat<'_> for MathVisitor {
 
 // --> see listener and visitor on https://github.com/rrevenantt/antlr4rust/blob/master/tests/visitors_tests.rs
 // test: "2^(3 - 1) * (1 - cos(pi/x)) + log_5(y + ln(e))"
+// 4 + 8 - 9 * 8
 
 // #[should_panic]
+// this parser cannot even multiply and add term in correct order
 #[test]
 fn test_parser() {
-    let lexer = mathLexer::new(InputStream::new("log_5(x + ln(e))".into()));
+    let lexer = mathLexer::new(InputStream::new("2^(3 - 1) * (1 - cos(pi/x)) + log_5(y + ln(e))".into()));
 
     let token_source = CommonTokenStream::new(lexer);
     let mut parser = mathParser::new(token_source);
 
     let root = parser.prog().unwrap();
 
-    println!("PARSING - DONE");
-
     let func = MathVisitor::new().visit(&*root);
 
     let result = func.apply(&fn_args!(
-        "x" => 4,
+        "x" => 2,
+        "y" => 4,
     )).unwrap();
 
-    println!("RESULT - DONE");
+    println!("{}", root.to_string_tree(&*parser));
 
-    assert_eq!(result, 1.0);
+    assert_eq!(result, 5.0);
 }
 
 

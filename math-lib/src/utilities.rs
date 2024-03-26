@@ -34,7 +34,10 @@ impl ToChildFn for String {
 
 impl<T: Function + 'static> ToChildFn for Option<T> {
     fn to_child_fn(self) -> ChildFn {
-        self.to_child_fn()
+        if let Some(res) = self {
+            return res.to_child_fn()
+        }
+        panic!("Cannot convert None to ChildFn")
     }
 }
 
