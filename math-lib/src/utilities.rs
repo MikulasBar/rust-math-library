@@ -26,6 +26,18 @@ impl ToChildFn for &str {
     }
 }
 
+impl ToChildFn for String {
+    fn to_child_fn(self) -> ChildFn {
+        ChildFn::Var(self.into_boxed_str())
+    }
+}
+
+impl<T: Function + 'static> ToChildFn for Option<T> {
+    fn to_child_fn(self) -> ChildFn {
+        self.to_child_fn()
+    }
+}
+
 
 
 

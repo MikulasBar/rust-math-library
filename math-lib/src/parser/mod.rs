@@ -42,17 +42,14 @@ impl Default for FnStruct {
     }
 }
 
-fn string_fn(name: &str, args: Vec<f64>) -> Option<f64> {
+fn string_to_fn(name: &str, mut args: Vec<ChildFn>) -> Option<ChildFn> {
     Some (
-        match args.len() {
-            1 => match name {
-                "sin" => args[0].sin(),
-                "cos" => args[0].cos(),
-                "tan" => args[0].tan(),
-                "log" => args[0].log10(),
-                "ln" => args[0].ln(),
-                _ => return None
-            },
+        match name {
+            "sin" => args.pop().map(SinFn::new).to_child_fn(),
+            "cos" => args.pop().map(CosFn::new).to_child_fn(),
+            "tan" => args.pop().map(TanFn::new).to_child_fn(),
+            // "log" => args.pop().map(LogFn::new).to_child_fn(),
+            // "ln" => args.pop().map(LogFn::new).to_child_fn(),
             _ => return None
         }
     )
@@ -60,6 +57,12 @@ fn string_fn(name: &str, args: Vec<f64>) -> Option<f64> {
 
 
 struct MathVisitor(ChildFn);
+
+impl MathVisitor {
+    pub fn new() -> Self {
+        Self("x".to_child_fn())
+    }
+}
 
 
 impl ParseTreeVisitorCompat<'_> for MathVisitor {
@@ -99,12 +102,10 @@ impl mathVisitorCompat<'_> for MathVisitor {
     }
 
     fn visit_var(&mut self, ctx: &VarContext<'_>) -> Self::Return {
-        ChildFn::Var(
-            ctx.ID()
-                .unwrap()
-                .get_text()
-                .into_boxed_str()
-        )
+        ctx.ID()
+            .unwrap()
+            .get_text()
+            .to_child_fn()
     }
 
     fn visit_parens(&mut self, ctx: &ParensContext<'_>) -> Self::Return {
@@ -112,40 +113,43 @@ impl mathVisitorCompat<'_> for MathVisitor {
     }
 
     fn visit_add(&mut self, ctx: &AddContext<'_>) -> Self::Return {
-        let mut res: Vec<> = vec![];
-        ctx.expr_all
-        for i in {
+        let children: Vec<_> = ctx.expr_all()
+            .into_iter()
+            .map(|x| self.visit(&*x))
+            .collect();
 
-        }
+        AddFn::new(children).to_child_fn()
     }
 
     fn visit_multiply(&mut self, ctx: &MultiplyContext<'_>) -> Self::Return {
-        if ctx.MUL().is_some() {
-            return a * b
-        }
-        a / b
+        let children: Vec<_> = ctx.expr_all()
+            .into_iter()
+            .map(|x| self.visit(&*x))
+            .collect();
+
+        MulFn::new(children).to_child_fn()
     }
 
     fn visit_power(&mut self, ctx: &PowerContext<'_>) -> Self::Return {
-        let a = self.visit(&*ctx.expr(0).unwrap());
-        let b = self.visit(&*ctx.expr(1).unwrap());
-        a.powf(b)
+        let base = self.visit(&*ctx.expr(0).unwrap());
+        let power = self.visit(&*ctx.expr(1).unwrap());
+        ExpFn::new(base, power).to_child_fn()
     }
 
     fn visit_log(&mut self, ctx: &LogContext<'_>) -> Self::Return {
         let base = self.visit(&*ctx.expr(0).unwrap());
         let arg = self.visit(&*ctx.expr(1).unwrap());
-
-        arg.log(base)
+        LogFn::new(base, arg).to_child_fn()
     }
 
     fn visit_function(&mut self, ctx: &FunctionContext<'_>) -> Self::Return {
-        let arg = self.visit(&*ctx.expr().unwrap());
         let name = ctx.ID().unwrap().get_text();
+        let args: Vec<_> = ctx.expr_all()
+            .into_iter()
+            .map(|x| self.visit(&*x))
+            .collect();
         
-        if let Some(v) = string_fn(&name, arg) {
-            return v
-        }
+
         panic!("Unrecognized function name")
     }
 }
@@ -162,7 +166,7 @@ fn test_parser() {
 
     let root = parser.prog().unwrap();
 
-    let result = MathVisitor(0.0).visit(&*root);
+    let result = MathVisitor::new().visit(&*root);
 
     assert_eq!(result, 5.0);
 }

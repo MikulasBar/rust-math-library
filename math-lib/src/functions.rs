@@ -6,9 +6,9 @@ use FnError::*;
 
 pub type FnResult = Result<f64, FnError>;
 
-
-
 pub type FnArgs<'a> = HashMap<&'a str, f64>;
+
+
 pub trait Function {
     fn apply(&self, args: &FnArgs) -> FnResult;
     //fn derivative(&self) -> Self;
@@ -35,7 +35,7 @@ impl PartialEq for FnError {
 }
 
 
-/// Type used for fields like `child` or `exponent` ... 
+/// Type used for fields like `child` or `exponent` ...
 pub enum ChildFn {
     Fn(Box<dyn Function>),
     Var(Box<str>),
