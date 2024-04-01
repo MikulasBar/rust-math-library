@@ -9,40 +9,21 @@ use antlr_rust::{
     InputStream
 };
 
-use crate::antlr_parser::{
+use crate::{antlr_parser::{
     mathlexer::*,
     mathparser::*,
     mathvisitor::*
-};
+}, function_tree::DefaultParsingRules, visitor};
 use crate::{
     function_tree::{
         ParsingResult,
+        ParsingError,
         ParsingRules,
     },
     functions::*,
     utilities::*,
     fn_args,
 };
-
-
-// fn string_to_fn(name: &str, mut args: Vec<ChildFn>) -> Option<ChildFn> {
-//     Some (
-//         match name {
-//             "sin" => args.pop().map(SinFn::new).to_child_fn(),
-//             "cos" => args.pop().map(CosFn::new).to_child_fn(),
-//             "tan" => args.pop().map(TanFn::new).to_child_fn(),
-//             "log" => {
-//                 let arg = args.pop()?;
-//                 LogFn::new(10.0, arg).to_child_fn()
-//             },
-//             "ln" => {
-//                 let arg = args.pop()?;
-//                 LogFn::new(E, arg).to_child_fn()
-//             },
-//             _ => return None
-//         }
-//     )
-// }
 
 
 pub struct MathVisitor{
@@ -179,21 +160,44 @@ impl mathVisitorCompat<'_> for MathVisitor {
         let base = self.visit(&*ctx.expr(0).unwrap());
         let arg = self.visit(&*ctx.expr(1).unwrap());
 
-        LogFn::new(base, arg).to_child_fn()
+        if base.is_err() {
+            return base
+        }
+
+        if arg.is_err() {
+            return arg
+        }
+
+        let base = base.unwrap();
+        let arg = arg.unwrap();
+
+        ParsingResult::Ok(
+            LogFn::new(base, arg).to_child_fn()
+        )
     }
 
     fn visit_function(&mut self, ctx: &FunctionContext<'_>) -> Self::Return {
         let name = ctx.ID().unwrap().get_text();
-        let args: Vec<_> = ctx.expr_all()
+        let result_args: Vec<ParsingResult> = ctx.expr_all()
             .into_iter()
             .map(|x| self.visit(&*x))
             .collect();
 
-        if let Some(result) = string_to_fn(&name, args) {
-            return result
+        let mut args: Vec<ChildFn> = vec![];
+        for arg in result_args {
+            if arg.is_err() {
+                return arg
+            }
+            args.push(arg.unwrap())
         }
 
-        panic!("Unrecognized function name: {}", name);
+        if let Some(result) = self.rules.get_function(&name, args) {
+            return ParsingResult::Ok(result)
+        }
+
+        return ParsingResult::Err(
+            ParsingError::UnrecognizedFunctionNameError
+        )
     }
 }
 
@@ -208,15 +212,16 @@ fn test_parser() {
     let mut parser = mathParser::new(token_source);
 
     let root = parser.prog().unwrap();
+    let mut visitor = MathVisitor::new(
+        Box::new(DefaultParsingRules)
+    );
 
-    let func = MathVisitor::new().visit(&*root);
+    let func = visitor.visit(&*root).unwrap();
 
     let result = func.apply(&fn_args!(
         "x" => 2,
         "y" => 4,
     )).unwrap();
-
-    println!("{}", root.to_string_tree(&*parser));
 
     assert_eq!(result, 5.0);
 }

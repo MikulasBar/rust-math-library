@@ -16,8 +16,10 @@ use crate::antlr_parser::{
     mathvisitor::*,
 };
 
-enum ParsingError {
-    PlaceHolder
+pub enum ParsingError {
+    PlaceHolder,
+    UnrecognizedFunctionNameError,
+    AntlrError
 }
 
 /// this exists only because the antlr visitor pattern trait only accepts
@@ -52,11 +54,12 @@ impl Default for ParsingResult {
 
 
 
-pub trait ParsingRules{
+pub trait ParsingRules {
     fn get_function(&self, name: &str, args: Vec<ChildFn>) -> Option<ChildFn>;
     fn get_constant(&self, name: &str) -> Option<f64>;
 }
 
+#[derive(Clone)]
 pub struct DefaultParsingRules;
 
 impl ParsingRules for DefaultParsingRules {
@@ -92,27 +95,34 @@ impl ParsingRules for DefaultParsingRules {
 
 
 pub struct FnParser {
-    rules: Box<dyn ParsingRules>,
+    visitor: MathVisitor,
 }
 
 impl FnParser {
     pub fn new() -> Self {
         FnParser {
-            rules: Box::new(DefaultParsingRules)
+            visitor: MathVisitor::new(
+                Box::new(DefaultParsingRules)
+            )
         }
     }
 
-    pub fn set_rules(&self, rules: Box<dyn ParsingRules>) {
-        self.rules = rules;
+    pub fn change_rules(&mut self, rules: Box<dyn ParsingRules>) {
+        self.visitor = MathVisitor::new(rules);
     }
 
-    pub fn parse(&self, input: &str) -> Result<FnTree, ParsingError> {
+    pub fn parse(&mut self, input: &str) -> Result<FnTree, ParsingError> {
         let lexer = mathLexer::new(InputStream::new(input.into()));
         let token_source = CommonTokenStream::new(lexer);
         let mut parser = mathParser::new(token_source);
 
-        let root = parser.prog().unwrap();
-        let parsing_result = MathVisitor::new(self.rules).visit(&*root);
+        let root = parser.prog();
+        if root.is_err() {
+            return Err(ParsingError::AntlrError)
+        }
+
+        let root = root.unwrap();
+        let parsing_result = self.visitor.visit(&*root);
 
         match parsing_result {
             ParsingResult::Ok(v) => Ok(FnTree::new(v)),
