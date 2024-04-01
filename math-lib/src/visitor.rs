@@ -27,15 +27,15 @@ use crate::{
 
 
 pub struct MathVisitor{
-    value: ParsingResult,
-    rules: Box<dyn ParsingRules>
+    rules: Box<dyn ParsingRules>,
+    temp: ParsingResult
 }
 
 impl MathVisitor {
     pub fn new(rules: Box<dyn ParsingRules>) -> Self {
         Self{
-            value: ParsingResult::default(),
             rules,
+            temp: ParsingResult::default(),
         }  
     }
 }
@@ -46,11 +46,11 @@ impl ParseTreeVisitorCompat<'_> for MathVisitor {
     type Return = ParsingResult;
 
     fn temp_result(&mut self) -> &mut Self::Return {
-        &mut self.value
+        &mut self.temp
     }
 
-    fn aggregate_results(&self, _: Self::Return, _: Self::Return) -> Self::Return {
-        panic!("AGGREGATE RESULTS USED")
+    fn aggregate_results(&self, aggregate: Self::Return, next: Self::Return) -> Self::Return {
+        next
     }
 }
 
@@ -202,7 +202,8 @@ impl mathVisitorCompat<'_> for MathVisitor {
 }
 
 
-
+// 2^(3 - 1) * (1 - cos(pi/x)) + log_5(y + ln(e))
+// this doesnt work
 
 #[test]
 fn test_parser() {
@@ -211,17 +212,48 @@ fn test_parser() {
     let token_source = CommonTokenStream::new(lexer);
     let mut parser = mathParser::new(token_source);
 
-    let root = parser.prog().unwrap();
+    let root = parser.prog();
+    if root.is_err() {
+        panic!("Root is cannot be parsed")
+    }
+    let root = root.unwrap();
+
+
     let mut visitor = MathVisitor::new(
         Box::new(DefaultParsingRules)
     );
 
-    let func = visitor.visit(&*root).unwrap();
+    println!("%%% Visitor is going to be used");
+
+    let func = visitor.visit(&*root);
+    match &func {
+        ParsingResult::Ok(v) => (),
+        ParsingResult::Err(e) => {
+            let out = match e {
+                ParsingError::AntlrError => "AntlrError",
+                ParsingError::UnrecognizedFunctionNameError => "UnrecognizedFunctionName",
+                ParsingError::PlaceHolder => "how did you end up here"
+            };
+            panic!("{}", out);
+        }
+    }
+    let func = func.unwrap();
+
+    println!("%%% Function is going to be applied");
 
     let result = func.apply(&fn_args!(
-        "x" => 2,
-        "y" => 4,
-    )).unwrap();
+        "x" => 3,
+        "y" => 5,
+    ));
+
+    if let Err(e) = result {
+        let out = match e {
+            FnApplyError::ParameterNotFoundError => "Parameter",
+            _ => "Something else "
+        };
+        panic!("{}", out)
+    }
+    let result = result.unwrap(); 
 
     assert_eq!(result, 5.0);
 }

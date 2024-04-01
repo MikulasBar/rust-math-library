@@ -1,6 +1,7 @@
 
 use std::{
     f64::consts::{E, PI},
+    
 };
 use antlr_rust::{
     common_token_stream::CommonTokenStream,
@@ -41,14 +42,24 @@ impl ParsingResult {
     pub fn unwrap(self) -> ChildFn {
         match self {
             Self::Ok(v) => v,
-            _ => panic!()
+            _ => panic!("Err cannot be unwraped")
         }
     }
 }
 
 impl Default for ParsingResult {
     fn default() -> Self {
-        Self::Err(ParsingError::PlaceHolder)
+        // Self::Err(ParsingError::PlaceHolder)
+        Self::Ok("placeholder".to_child_fn())
+    }
+}
+
+impl Into<Result<ChildFn, ParsingError>> for ParsingResult {
+    fn into(self) -> Result<ChildFn, ParsingError> {
+        match self {
+            ParsingResult::Ok(v) => Ok(v),
+            ParsingResult::Err(e) => Err(e)
+        }
     }
 }
 
