@@ -1,7 +1,6 @@
-
+use derive_more::*;
 use std::{
     f64::consts::{E, PI},
-    
 };
 use antlr_rust::{
     common_token_stream::CommonTokenStream,
@@ -17,6 +16,8 @@ use crate::antlr_parser::{
     mathvisitor::*,
 };
 
+
+#[derive(Debug, Display)]
 pub enum ParsingError {
     PlaceHolder,
     UnrecognizedFunctionNameError,
@@ -30,6 +31,7 @@ pub enum ParsingResult {
     Ok(ChildFn),
     Err(ParsingError),
 }
+
 
 impl ParsingResult {
     pub fn is_err(&self) -> bool {
@@ -127,7 +129,7 @@ impl FnParser {
         let token_source = CommonTokenStream::new(lexer);
         let mut parser = mathParser::new(token_source);
 
-        let root = parser.prog();
+        let root = parser.root();
         if root.is_err() {
             return Err(ParsingError::AntlrError)
         }

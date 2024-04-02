@@ -48,7 +48,10 @@ impl Function for ChildFn {
             Var(s) => {
                 match args.get(s.as_ref()) {
                     Some(&v) => Ok(v),
-                    _ => Err(ParameterNotFoundError)
+                    _ => {
+                        panic!("Parameter {:#?} cannot be found", s);
+                        Err(ParameterNotFoundError)
+                    }
                 }
             },
         }

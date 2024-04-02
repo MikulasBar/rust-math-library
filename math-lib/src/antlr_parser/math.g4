@@ -2,12 +2,10 @@ grammar math;
 
 
 // parser rules
-prog: expr EOF;
+root: expr EOF;
 
 expr
     : NUMBER											# number
-    | PI												# pi
-    | E													# e
     | expr POW expr										# power
     | expr (MUL | DIV) expr 							# multiply
     | expr (ADD | SUB) expr				    			# add
@@ -19,9 +17,6 @@ expr
 
 // lexer rules
 LOG: 'log_';
-
-PI: 'pi';
-E: 'e';
 
 ADD: '+';
 SUB: '-';

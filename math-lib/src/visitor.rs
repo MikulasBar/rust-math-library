@@ -50,14 +50,15 @@ impl ParseTreeVisitorCompat<'_> for MathVisitor {
     }
 
     fn aggregate_results(&self, aggregate: Self::Return, next: Self::Return) -> Self::Return {
-        next
+        panic!("This should not be reacheble")
     }
 }
 
 impl mathVisitorCompat<'_> for MathVisitor {
-    fn visit_prog(&mut self, ctx: &ProgContext<'_>) -> Self::Return {
+    fn visit_root(&mut self, ctx: &RootContext<'_>) -> Self::Return {
         self.visit(&*ctx.expr().unwrap())
     }
+    
 
     fn visit_number(&mut self, ctx: &NumberContext<'_>) -> Self::Return {
         ParsingResult::Ok(
@@ -203,7 +204,6 @@ impl mathVisitorCompat<'_> for MathVisitor {
 
 
 // 2^(3 - 1) * (1 - cos(pi/x)) + log_5(y + ln(e))
-// this doesnt work
 
 #[test]
 fn test_parser() {
@@ -212,7 +212,7 @@ fn test_parser() {
     let token_source = CommonTokenStream::new(lexer);
     let mut parser = mathParser::new(token_source);
 
-    let root = parser.prog();
+    let root = parser.root();
     if root.is_err() {
         panic!("Root is cannot be parsed")
     }
@@ -229,12 +229,7 @@ fn test_parser() {
     match &func {
         ParsingResult::Ok(v) => (),
         ParsingResult::Err(e) => {
-            let out = match e {
-                ParsingError::AntlrError => "AntlrError",
-                ParsingError::UnrecognizedFunctionNameError => "UnrecognizedFunctionName",
-                ParsingError::PlaceHolder => "how did you end up here"
-            };
-            panic!("{}", out);
+            panic!("{:#?}", e);
         }
     }
     let func = func.unwrap();
@@ -242,16 +237,12 @@ fn test_parser() {
     println!("%%% Function is going to be applied");
 
     let result = func.apply(&fn_args!(
-        "x" => 3,
-        "y" => 5,
+        "x" => 2,
+        "y" => 4,
     ));
 
     if let Err(e) = result {
-        let out = match e {
-            FnApplyError::ParameterNotFoundError => "Parameter",
-            _ => "Something else "
-        };
-        panic!("{}", out)
+        panic!("{:#?}", e)
     }
     let result = result.unwrap(); 
 
