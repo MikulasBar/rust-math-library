@@ -1,5 +1,6 @@
 use std::{collections::HashMap};
-use crate::utilities::ToChildFn;
+use std::f64::consts::E;
+use crate::{antlr_parser::mathlexer::mathLexer, utilities::ToChildFn};
 use ChildFn::*;
 use FnApplyError::*;
 
@@ -9,7 +10,7 @@ pub type FnArgs<'a> = HashMap<&'a str, f64>;
 
 pub trait Function {
     fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError>;
-    //fn derivative(&self) -> Self;
+    fn derivative(&self, variable: &str) -> ChildFn;
 }
 
 
@@ -40,6 +41,29 @@ pub enum ChildFn {
     Const(f64)
 }
 
+impl ChildFn {
+    pub fn is_const(&self) -> bool {
+        match *self {
+            Const(_) => true,
+            _ => false
+        }
+    }
+
+    pub fn is_var(&self) -> bool {
+        match *self {
+            Var(_) => true,
+            _ => false
+        }
+    }
+
+    pub fn is_function(&self) -> bool {
+        match *self {
+            Fn(_) => true,
+            _ => false
+        }
+    }
+}
+
 impl Function for ChildFn {
     fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError> {
         match self {
@@ -54,6 +78,20 @@ impl Function for ChildFn {
                     }
                 }
             },
+        }
+    }
+
+    fn derivative(&self, variable: &str) -> ChildFn {
+        match self {
+            Fn(f) => f.derivative(variable),
+            Const(c) => c.to_child_fn(),
+            Var(v) => {
+                let mut value = 0.0;
+                if **v == *variable {
+                    value = 1.0;
+                }
+                value.to_child_fn()
+            }
         }
     }
 }
@@ -90,6 +128,13 @@ impl Function for AddFn {
 
         Ok(left + right)
     }
+
+    fn derivative(&self, variable: &str) -> ChildFn {
+        let left = self.left.derivative(variable);
+        let right = self.right.derivative(variable);
+
+        AddFn::new(left, right).to_child_fn()
+    }
 }
 
 
@@ -118,6 +163,13 @@ impl Function for SubFn {
 
         Ok(left - right)
     }
+
+    fn derivative(&self, variable: &str) -> ChildFn {
+        let left = self.left.derivative(variable);
+        let right = self.right.derivative(variable);
+
+        SubFn::new(left, right).to_child_fn()
+    }
 }
 
 
@@ -145,6 +197,16 @@ impl Function for MulFn {
         let right = self.right.apply(args)?;
 
         Ok(left * right)
+    }
+
+    fn derivative(&self, variable: &str) -> ChildFn {
+        let d_left = self.left.derivative(variable);
+        let d_right = self.right.derivative(variable);
+
+        let result_left = MulFn::new(d_left, self.right);
+        let result_right = MulFn::new(d_right, self.left);
+
+        AddFn::new(result_left, result_right).to_child_fn()
     }
 }
 
@@ -177,6 +239,19 @@ impl Function for DivFn {
         }
         Ok(num_value / den_value)
     }
+
+    fn derivative(&self, variable: &str) -> ChildFn {
+        let d_num = self.numerator.derivative(variable);
+        let d_denom = self.denominator.derivative(variable);
+
+        let num_first = MulFn::new(self.numerator, d_denom);
+        let num_second = MulFn::new(self.numerator, d_num);
+
+        let result_num = SubFn::new(num_first, num_second);
+        let result_denom = ExpFn::new(self.denominator, 2.0);
+
+        DivFn::new(result_num, result_denom).to_child_fn()
+    }
 }
 
 
@@ -205,6 +280,10 @@ impl Function for CoefFn {
         let child_value = self.child.apply(args)?;
 
         Ok(self.coefficient * child_value)
+    }
+
+    fn derivative(&self, variable: &str) -> ChildFn {
+        CoefFn::new(self.coefficient, self.derivative(variable)).to_child_fn()
     }
 }
 
@@ -238,6 +317,18 @@ impl Function for ExpFn {
             return Err(NegativeEvenRootError)
         }
         Ok(base_value.powf(exp_value))
+    }
+
+    fn derivative(&self, variable: &str) -> ChildFn {
+        let d_exp = self.exponent.derivative(variable);
+        let d_base = self.base.derivative(variable);
+
+        let left_factor = MulFn::new(d_exp, LogFn::new(E, self.base));
+        let right_factor = DivFn::new(MulFn::new(self.exponent, d_base), self.base);
+        
+        let factor = AddFn::new(left_factor, right_factor);
+
+        MulFn::new(*self, factor).to_child_fn()
     }
 }
 
@@ -274,6 +365,15 @@ impl Function for LogFn {
             return Err(LogBaseOneError)
         }
         Ok(arg_value.log(base_value))
+    }
+
+    fn derivative(&self, variable: &str) -> ChildFn {
+        let num = LogFn::new(E, self.argument);
+        let denom = LogFn::new(E, self.base);
+
+        let func = DivFn::new(num, denom);
+
+        func.derivative(variable)
     }
 }
 

@@ -164,7 +164,11 @@ impl FnTree {
 impl Function for FnTree {
     fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError> {
         self.definition.apply(args)
-    } 
+    }
+
+    fn derivative(&self, variable: &str) -> ChildFn {
+        self.definition.derivative(variable)
+    }
 }
 
 impl Default for FnTree {
