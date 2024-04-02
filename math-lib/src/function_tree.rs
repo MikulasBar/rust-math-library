@@ -7,7 +7,7 @@ use antlr_rust::{
     tree::{ParseTree, ParseTreeVisitorCompat},
     InputStream
 };
-use crate::visitor::MathVisitor;
+use crate::{fn_args, visitor::MathVisitor};
 use crate::functions::*;
 use crate::utilities::*;
 use crate::antlr_parser::{
@@ -173,4 +173,21 @@ impl Default for FnTree {
             definition: "x".to_child_fn()
         }
     }
+}
+
+
+
+#[test]
+fn test_parser() {
+    let mut parser = FnParser::new();
+
+    let result = parser.parse("2^(3 - 1) * (1 - cos(pi/x)) + log_5(y + ln(e))");
+    let func = result.unwrap();
+
+    let value = func.apply(&fn_args!{
+        "x" => 2,
+        "y" => 4,
+    }).unwrap();
+
+    assert_eq!(value, 5.0)
 }

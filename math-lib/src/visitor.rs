@@ -211,7 +211,6 @@ fn test_parser() {
 
     let token_source = CommonTokenStream::new(lexer);
     let mut parser = mathParser::new(token_source);
-
     let root = parser.root();
     if root.is_err() {
         panic!("Root is cannot be parsed")
