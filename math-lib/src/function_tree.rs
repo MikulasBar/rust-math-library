@@ -26,7 +26,8 @@ pub enum ParsingError {
 
 /// this exists only because the antlr visitor pattern trait only accepts
 /// Return types only that have `Default` implementation <br>
-/// it is converted to normal `Result<ChildFn, ParsingError>` in `ParserFn` struct 
+/// it is converted to normal `Result<ChildFn, ParsingError>` in `ParserFn` struct
+#[derive(Debug)]
 pub enum ParsingResult {
     Ok(ChildFn),
     Err(ParsingError),
@@ -51,8 +52,7 @@ impl ParsingResult {
 
 impl Default for ParsingResult {
     fn default() -> Self {
-        // Self::Err(ParsingError::PlaceHolder)
-        Self::Ok("placeholder".to_child_fn())
+        Self::Err(ParsingError::PlaceHolder)
     }
 }
 
@@ -145,7 +145,7 @@ impl FnParser {
 }
 
 
-
+#[derive(Debug, Clone)]
 pub struct FnTree {
     definition: ChildFn,
 }

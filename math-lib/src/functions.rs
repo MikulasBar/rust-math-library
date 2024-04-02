@@ -1,5 +1,6 @@
 use std::{collections::HashMap};
-use std::f64::consts::E;
+use std::f64::consts::{E, FRAC_PI_2};
+use core::fmt::Debug;
 use crate::{antlr_parser::mathlexer::mathLexer, utilities::ToChildFn};
 use ChildFn::*;
 use FnApplyError::*;
@@ -8,7 +9,7 @@ use FnApplyError::*;
 pub type FnArgs<'a> = HashMap<&'a str, f64>;
 
 
-pub trait Function {
+pub trait Function: Debug + Clone {
     fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError>;
     fn derivative(&self, variable: &str) -> ChildFn;
 }
@@ -24,7 +25,7 @@ pub enum FnApplyError {
     NegativeBaseNonIntegerExponentError,
     TanAtPiOverTwoError,
 
-    ParameterNotFoundError,
+    ParameterNotFoundError(Box<str>),
 }
 
 impl PartialEq for FnApplyError {
@@ -35,6 +36,7 @@ impl PartialEq for FnApplyError {
 
 
 /// Type used for fields like `child` or `exponent` ...
+#[derive(Debug, Clone)]
 pub enum ChildFn {
     Fn(Box<dyn Function>),
     Var(Box<str>),
@@ -73,8 +75,8 @@ impl Function for ChildFn {
                 match args.get(s.as_ref()) {
                     Some(&v) => Ok(v),
                     _ => {
-                        panic!("Parameter {:#?} cannot be found", s);
-                        Err(ParameterNotFoundError)
+                        //println!("Parameter {:#?} cannot be found", s);
+                        Err(ParameterNotFoundError(*s))
                     }
                 }
             },
@@ -103,6 +105,7 @@ impl Default for ChildFn {
 }
 
 
+#[derive(Debug, Clone)]
 pub struct AddFn {
     left: ChildFn,
     right: ChildFn
@@ -138,6 +141,7 @@ impl Function for AddFn {
 }
 
 
+#[derive(Debug, Clone)]
 pub struct SubFn {
     left: ChildFn,
     right: ChildFn
@@ -173,6 +177,7 @@ impl Function for SubFn {
 }
 
 
+#[derive(Debug, Clone)]
 pub struct MulFn {
     left: ChildFn,
     right: ChildFn
@@ -211,6 +216,7 @@ impl Function for MulFn {
 }
 
 
+#[derive(Debug, Clone)]
 pub struct DivFn {
     numerator: ChildFn,
     denominator: ChildFn
@@ -255,8 +261,8 @@ impl Function for DivFn {
 }
 
 
-
 /// This function is used for adding coefficient without using `SeqMulFn` <br>
+#[derive(Debug, Clone)]
 pub struct CoefFn {
     coefficient: f64,
     child: ChildFn
@@ -287,6 +293,8 @@ impl Function for CoefFn {
     }
 }
 
+
+#[derive(Debug, Clone)]
 pub struct ExpFn {
     base: ChildFn,
     exponent: ChildFn
@@ -333,7 +341,7 @@ impl Function for ExpFn {
 }
 
 
-
+#[derive(Debug, Clone)]
 pub struct LogFn {
     base: ChildFn,
     argument: ChildFn
@@ -368,18 +376,20 @@ impl Function for LogFn {
     }
 
     fn derivative(&self, variable: &str) -> ChildFn {
-        let num = LogFn::new(E, self.argument);
-        let denom = LogFn::new(E, self.base);
+        let d_base = self.argument.derivative(variable);
+        let d_arg = self.base.derivative(variable);
 
-        let func = DivFn::new(num, denom);
+        let left_term = DivFn::new(self.argument, d_arg);
+        let right_term = DivFn::new(MulFn::new(d_base, *self), self.base);
 
-        func.derivative(variable)
+        let factor = SubFn::new(left_term, right_term);
+
+        DivFn::new(factor, LogFn::new(E, self.base)).to_child_fn()
     }
 }
 
 
-// Goniometry functions
-
+#[derive(Debug, Clone)]
 pub struct SinFn {
     child: ChildFn
 }
@@ -401,9 +411,14 @@ impl Function for SinFn {
             .apply(args)
             .map(f64::sin)
     }
+
+    fn derivative(&self, variable: &str) -> ChildFn {
+        CosFn::new(self.child).to_child_fn()
+    }
 }
 
 
+#[derive(Debug, Clone)]
 pub struct CosFn {
     child: ChildFn
 }
@@ -425,9 +440,14 @@ impl Function for CosFn {
             .apply(args)
             .map(f64::cos)
     }
+
+    fn derivative(&self, variable: &str) -> ChildFn {
+        CoefFn::new(-1, SinFn::new(self.child)).to_child_fn()
+    }
 }
 
 
+#[derive(Debug, Clone)]
 pub struct TanFn {
     child: ChildFn
 }
@@ -447,17 +467,22 @@ impl Function for TanFn {
     fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError> {
         let child_value = self.child.apply(args)?;
 
-        if child_value == std::f64::consts::FRAC_PI_2 {
+        if child_value == FRAC_PI_2 {
             return Err(TanAtPiOverTwoError)
         }
         Ok(child_value.tan())
+    }
+
+    fn derivative(&self, variable: &str) -> ChildFn {
+        let denom = ExpFn::new(CosFn::new(self.child), 2.0);
+        DivFn::new(1.0, denom).to_child_fn()
     }
 }
 
 
 
 
-
+#[derive(Debug, Clone)]
 pub struct SeqAddFn {           
     children: Vec<ChildFn>
 }
@@ -487,10 +512,14 @@ impl Function for SeqAddFn {
         }
         Ok(result)
     }
+
+    fn derivative(&self, variable: &str) -> ChildFn {
+        todo!()
+    }
 }
 
 
-
+#[derive(Debug, Clone)]
 pub struct SeqMulFn {
     children: Vec<ChildFn>
 }
@@ -519,6 +548,10 @@ impl Function for SeqMulFn {
             result *= child_result;
         }
         Ok(result)
+    }
+
+    fn derivative(&self, variable: &str) -> ChildFn {
+        todo!()
     }
 }
 
