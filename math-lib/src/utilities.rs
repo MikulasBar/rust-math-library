@@ -3,7 +3,7 @@ use std::any::Any;
 use crate::{antlr_parser::mathparser::FunctionContextAttrs, function_tree::FnTree, functions::*};
 
 // trait for converting a type to a ChildFn
-// used instead of Into<ChildFn> because Into cannot be used to convert Function trait
+// used instead of Into<ChildFn> because Into cannot be used to convert Function dynamic object
 pub trait ToChildFn {
     fn to_child_fn(self) -> ChildFn;
 }

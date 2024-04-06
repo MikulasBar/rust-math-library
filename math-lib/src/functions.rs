@@ -1,3 +1,4 @@
+use std::process::Child;
 use std::{collections::HashMap};
 use std::f64::consts::{E, FRAC_PI_2};
 use core::fmt::Debug;
@@ -10,7 +11,7 @@ use ApplyError::*;
 
 pub type FnArgs<'a> = HashMap<&'a str, f64>;
 
-#[derive(Debug)]
+
 pub enum FunctionType<'a> {
     None,
     Unary(&'a ChildFn),
@@ -19,6 +20,7 @@ pub enum FunctionType<'a> {
 }
 
 pub trait Function {
+    fn clone_box(&self) -> Box<dyn Function>;
     fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError>;
     fn derivative(&self, variable: &str) -> ChildFn;
 
@@ -68,13 +70,54 @@ impl PartialEq for ApplyError {
 }
 
 
+
+
+
+
+
+
+
+
+
+// impl<T> Function for T
+// where
+//     T: 'static + Function + Clone,
+// {
+//     fn clone_box(&self) -> Box<dyn Function> {
+//         Box::new(self.clone())
+//     }
+    
+// }
+
+
+
+impl Clone for ChildFn {
+    fn clone(&self) -> Self {
+        match self {
+            ChildFn::Fn(f) => ChildFn::Fn(f.clone_box()),
+            ChildFn::Var(v) => ChildFn::Var(v.clone()),
+            ChildFn::Const(c) => ChildFn::Const(*c),
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
 /// Type used for fields like `child` or `exponent` ...
-#[derive(Debug, Clone)]
 pub enum ChildFn {
-    Fn(Box<FnTree>),
+    Fn(Box<dyn Function>),
     Var(Box<str>),
     Const(f64)
 }
+
 
 impl ChildFn {  
     pub fn is_function(&self) -> bool {
@@ -100,6 +143,10 @@ impl ChildFn {
 }
 
 impl Function for ChildFn {
+    fn clone_box(&self) -> Box<dyn Function> {
+        Box::new(self.clone())
+    }
+
     fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         match self {
             Fn(f) => f.apply(args),
@@ -145,7 +192,7 @@ impl Default for ChildFn {
 }
 
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct AddFn {
     left: ChildFn,
     right: ChildFn
@@ -165,6 +212,10 @@ impl AddFn {
 }
 
 impl Function for AddFn {
+    fn clone_box(&self) -> Box<dyn Function> {
+        Box::new(self.clone())
+    }
+
     fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         let left = self.left.apply(args)?;
         let right = self.right.apply(args)?;
@@ -185,7 +236,7 @@ impl Function for AddFn {
 }
 
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct SubFn {
     left: ChildFn,
     right: ChildFn
@@ -205,6 +256,10 @@ impl SubFn {
 }
 
 impl Function for SubFn {
+    fn clone_box(&self) -> Box<dyn Function> {
+        Box::new(self.clone())
+    }
+
     fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         let left = self.left.apply(args)?;
         let right = self.right.apply(args)?;
@@ -225,7 +280,7 @@ impl Function for SubFn {
 }
 
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct MulFn {
     left: ChildFn,
     right: ChildFn
@@ -245,6 +300,10 @@ impl MulFn {
 }
 
 impl Function for MulFn {
+    fn clone_box(&self) -> Box<dyn Function> {
+        Box::new(self.clone())
+    }
+
     fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         let left = self.left.apply(args)?;
         let right = self.right.apply(args)?;
@@ -275,7 +334,7 @@ impl Function for MulFn {
 }
 
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct DivFn {
     numerator: ChildFn,
     denominator: ChildFn
@@ -295,6 +354,10 @@ impl DivFn {
 }
 
 impl Function for DivFn {
+    fn clone_box(&self) -> Box<dyn Function> {
+        Box::new(self.clone())
+    }
+
     fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         let num_value = self.numerator.apply(args)?;
         let den_value = self.denominator.apply(args)?;
@@ -340,7 +403,7 @@ impl Function for DivFn {
 
 
 /// This function is used for adding coefficient without using `SeqMulFn` <br>
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct CoefFn {
     coefficient: f64,
     child: ChildFn
@@ -360,6 +423,10 @@ impl CoefFn {
 }
 
 impl Function for CoefFn {
+    fn clone_box(&self) -> Box<dyn Function> {
+        Box::new(self.clone())
+    }
+
     fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         let child_value = self.child.apply(args)?;
 
@@ -379,7 +446,7 @@ impl Function for CoefFn {
 }
 
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct ExpFn {
     base: ChildFn,
     exponent: ChildFn
@@ -399,6 +466,10 @@ impl ExpFn {
 }
 
 impl Function for ExpFn {
+    fn clone_box(&self) -> Box<dyn Function> {
+        Box::new(self.clone())
+    }
+
     fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         let base_value = self.base.apply(args)?;
         let exp_value = self.exponent.apply(args)?;
@@ -437,7 +508,7 @@ impl Function for ExpFn {
 }
 
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct LogFn {
     base: ChildFn,
     argument: ChildFn
@@ -457,6 +528,10 @@ impl LogFn {
 }
 
 impl Function for LogFn {
+    fn clone_box(&self) -> Box<dyn Function> {
+        Box::new(self.clone())
+    }
+
     fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         let base_value = self.base.apply(args)?;
         let arg_value = self.argument.apply(args)?;
@@ -497,7 +572,7 @@ impl Function for LogFn {
 }
 
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct SinFn {
     child: ChildFn
 }
@@ -514,6 +589,10 @@ impl SinFn {
 }
 
 impl Function for SinFn {
+    fn clone_box(&self) -> Box<dyn Function> {
+        Box::new(self.clone())
+    }
+
     fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         self.child
             .apply(args)
@@ -530,7 +609,7 @@ impl Function for SinFn {
 }
 
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct CosFn {
     child: ChildFn
 }
@@ -547,6 +626,10 @@ impl CosFn {
 }
 
 impl Function for CosFn {
+    fn clone_box(&self) -> Box<dyn Function> {
+        Box::new(self.clone())
+    }
+
     fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         self.child
             .apply(args)
@@ -564,7 +647,7 @@ impl Function for CosFn {
 }
 
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct TanFn {
     child: ChildFn
 }
@@ -581,6 +664,10 @@ impl TanFn {
 }
 
 impl Function for TanFn {
+    fn clone_box(&self) -> Box<dyn Function> {
+        Box::new(self.clone())
+    }
+
     fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         let child_value = self.child.apply(args)?;
 
@@ -606,7 +693,7 @@ impl Function for TanFn {
 //Seq stands for sequence,
 // it means the function has arbitrary number of children 
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct SeqAddFn {           
     children: Vec<ChildFn>
 }
@@ -627,6 +714,10 @@ impl SeqAddFn {
 }
 
 impl Function for SeqAddFn {
+    fn clone_box(&self) -> Box<dyn Function> {
+        Box::new(self.clone())
+    }
+
     fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         let mut result: f64 = 0.0;
 
@@ -647,7 +738,7 @@ impl Function for SeqAddFn {
 }
 
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct SeqMulFn {
     children: Vec<ChildFn>
 }
@@ -668,6 +759,10 @@ impl SeqMulFn {
 }
 
 impl Function for SeqMulFn {
+    fn clone_box(&self) -> Box<dyn Function> {
+        Box::new(self.clone())
+    }
+
     fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         let mut result: f64 = 1.0;
 

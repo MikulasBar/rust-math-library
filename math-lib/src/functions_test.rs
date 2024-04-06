@@ -10,33 +10,27 @@ use std::f64::{
 
 
 #[test]
-fn test_SeqAddFn() {
-    let fx = CoefFn::new(2.0, "x").to_child_fn();
-    let fy = CoefFn::new(3.0, "y").to_child_fn();
-
-    let add_fn = SeqAddFn::new(vec![fx, fy]);
+fn test_AddFn() {
+    let add_fn = AddFn::new("x", "y");
 
     let args = fn_args!{
         "x" => 4.0,
         "y" => 5.0,
     };
 
-    assert_eq!(add_fn.apply(&args), Ok(23.0));
+    assert_eq!(add_fn.apply(&args), Ok(9.0));
 }
 
 #[test]
-fn test_SeqMulFn() {
-    let fx = CoefFn::new(2.0, "x").to_child_fn();
-    let fy = CoefFn::new(3.0, "y").to_child_fn();
-
-    let mul_fn = SeqMulFn::new(vec![fx, fy]);
+fn test_MulFn() {
+    let mul_fn = MulFn::new("x", "y");
 
     let args = fn_args!{
         "x" => 4.0,
         "y" => 5.0,
     };
 
-    assert_eq!(mul_fn.apply(&args), Ok(120.0));
+    assert_eq!(mul_fn.apply(&args), Ok(20.0));
 }
 
 #[test]

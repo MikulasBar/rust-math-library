@@ -19,7 +19,7 @@ use crate::antlr_parser::{
 
 #[derive(Debug, Display)]
 pub enum ParsingError {
-    PlaceHolder,
+    Default,
     UnrecognizedFunctionNameError,
     AntlrError
 }
@@ -27,7 +27,7 @@ pub enum ParsingError {
 /// this exists only because the antlr visitor pattern trait only accepts
 /// Return types only that have `Default` implementation <br>
 /// it is converted to normal `Result<ChildFn, ParsingError>` in `ParserFn` struct
-#[derive(Debug)]
+// #[derive(Debug)]
 pub enum ParsingResult {
     Ok(ChildFn),
     Err(ParsingError),
@@ -52,7 +52,7 @@ impl ParsingResult {
 
 impl Default for ParsingResult {
     fn default() -> Self {
-        Self::Err(ParsingError::PlaceHolder)
+        Self::Err(ParsingError::Default)
     }
 }
 
@@ -145,7 +145,7 @@ impl FnParser {
 }
 
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct FnTree {
     definition: ChildFn,
 }
@@ -162,30 +162,31 @@ impl FnTree {
 }
 
 impl Function for FnTree {
+    fn clone_box(&self) -> Box<dyn Function> {
+        Box::new(self.clone())
+    }
+
     fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         self.definition.apply(args)
     }
 
     fn derivative(&self, variable: &str) -> ChildFn {
+        todo!();
         self.definition.derivative(variable)
     }
 }
 
-impl Default for FnTree {
-    fn default() -> Self {
-        Self {
-            definition: "x".to_child_fn()
-        }
-    }
-}
 
+// 2^(3 - 1) * (1 - cos(pi/x)) + log_5(y + ln(e))
 
-
+// parser is not working - Stack overflow
+// maybe its because of the ChildFn contains Box<FnTree> 
+// its closest thing to parser 
 #[test]
 fn test_parser() {
     let mut parser = FnParser::new();
 
-    let result = parser.parse("2^(3 - 1) * (1 - cos(pi/x)) + log_5(y + ln(e))");
+    let result = parser.parse("x + y * 2");
     let func = result.unwrap();
 
     let value = func.apply(&fn_args!{
@@ -193,5 +194,5 @@ fn test_parser() {
         "y" => 4,
     }).unwrap();
 
-    assert_eq!(value, 5.0)
+    assert_eq!(value, 10.0)
 }

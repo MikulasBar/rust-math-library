@@ -22,7 +22,7 @@ fn testing() {
 
     let f_type = f.get_type();
 
-    println!("{:#?}", f_type);
+    //println!("{:#?}", f_type);
 
     if f.depends_on("x") {
         println!("f depends on X !!!")
@@ -32,3 +32,4 @@ fn testing() {
         println!("f depends on Y !!!")
     }
 }
+
