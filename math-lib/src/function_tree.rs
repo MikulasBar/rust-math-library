@@ -1,4 +1,4 @@
-use derive_more::*;
+use derive_more::Display;
 use std::{
     f64::consts::{E, PI},
 };

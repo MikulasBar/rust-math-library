@@ -1,7 +1,7 @@
-use std::fmt::Binary;
 use std::{collections::HashMap};
 use std::f64::consts::{E, FRAC_PI_2};
 use core::fmt::Debug;
+
 use crate::function_tree::FnTree;
 use crate::{antlr_parser::mathlexer::mathLexer, utilities::ToChildFn};
 use ChildFn::*;
@@ -10,34 +10,41 @@ use ApplyError::*;
 
 pub type FnArgs<'a> = HashMap<&'a str, f64>;
 
-
-enum FunctionType<'a> {
+#[derive(Debug)]
+pub enum FunctionType<'a> {
     None,
     Unary(&'a ChildFn),
     Binary(&'a ChildFn, &'a ChildFn),
-    Other(&'a Vec<ChildFn>)
+    Variadic(&'a Vec<ChildFn>)
 }
 
 pub trait Function {
-    const TYPE: FunctionType<'static>;
-
     fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError>;
+    fn derivative(&self, variable: &str) -> ChildFn;
+
+    fn get_type(&self) -> FunctionType {
+        FunctionType::None
+    }
+
     fn depends_on(&self, variable: &str) -> bool {
-        match Self::TYPE {
+        match self.get_type() {
             FunctionType::Unary(c) => c.depends_on(variable),
             FunctionType::Binary(l, r) => {
                 let left = l.depends_on(variable);
                 let right = r.depends_on(variable);
                 left || right
             },
-            FunctionType::Other(v) =>  {
+            FunctionType::Variadic(v) =>  {
                 v.iter()
                     .any(|c| c.depends_on(variable))
             }
-            FunctionType::None => panic!("Functions of type `None` cannot uses implicit definition of the depends_on function")
+            FunctionType::None => panic!(
+                "Functions of type `None` cannot uses implicit definition of the `depends_on function`, \n
+                implement the `depends_on` function / change function type in `get_type` function"
+            )
         }
     }
-    fn derivative(&self, variable: &str) -> ChildFn;
+    
 }
 
 
@@ -93,8 +100,6 @@ impl ChildFn {
 }
 
 impl Function for ChildFn {
-    const TYPE: FunctionType<'static> = FunctionType::None;
-
     fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         match self {
             Fn(f) => f.apply(args),
@@ -160,7 +165,6 @@ impl AddFn {
 }
 
 impl Function for AddFn {
-    const TYPE: FunctionType<'static> = Binary();
     fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         let left = self.left.apply(args)?;
         let right = self.right.apply(args)?;
@@ -168,11 +172,8 @@ impl Function for AddFn {
         Ok(left + right)
     }
 
-    fn depends_on(&self, variable: &str) -> bool {
-        let left = self.left.depends_on(variable);
-        let right = self.right.depends_on(variable);
-
-        left || right
+    fn get_type(&self) -> FunctionType {
+        FunctionType::Binary(&self.left, &self.right)
     }
 
     fn derivative(&self, variable: &str) -> ChildFn {
@@ -211,11 +212,8 @@ impl Function for SubFn {
         Ok(left - right)
     }
 
-    fn depends_on(&self, variable: &str) -> bool {
-        let left = self.left.depends_on(variable);
-        let right = self.right.depends_on(variable);
-
-        left || right
+    fn get_type(&self) -> FunctionType {
+        FunctionType::Binary(&self.left, &self.right)
     }
 
     fn derivative(&self, variable: &str) -> ChildFn {
@@ -254,11 +252,8 @@ impl Function for MulFn {
         Ok(left * right)
     }
 
-    fn depends_on(&self, variable: &str) -> bool {
-        let left = self.left.depends_on(variable);
-        let right = self.right.depends_on(variable);
-
-        left || right
+    fn get_type(&self) -> FunctionType {
+        FunctionType::Binary(&self.left, &self.right)
     }
 
     fn derivative(&self, variable: &str) -> ChildFn {
@@ -310,11 +305,8 @@ impl Function for DivFn {
         Ok(num_value / den_value)
     }
 
-    fn depends_on(&self, variable: &str) -> bool {
-        let num = self.numerator.depends_on(variable);
-        let denom = self.denominator.depends_on(variable);
-
-        num || denom
+    fn get_type(&self) -> FunctionType {
+        FunctionType::Binary(&self.numerator, &self.denominator)
     }
 
     fn derivative(&self, variable: &str) -> ChildFn {
@@ -420,11 +412,8 @@ impl Function for ExpFn {
         Ok(base_value.powf(exp_value))
     }
 
-    fn depends_on(&self, variable: &str) -> bool {
-        let base = self.base.depends_on(variable);
-        let exp = self.exponent.depends_on(variable);
-
-        base || exp
+    fn get_type(&self) -> FunctionType {
+        FunctionType::Binary(&self.base, &self.exponent)
     }
 
     fn derivative(&self, variable: &str) -> ChildFn {
@@ -472,21 +461,16 @@ impl Function for LogFn {
         let base_value = self.base.apply(args)?;
         let arg_value = self.argument.apply(args)?;
 
-        if arg_value <= 0.0 {
-            return Err(NonPositiveLogArgError)
-        } else if base_value <= 0.0 {
-            return Err(NonPositiveLogBaseError)
-        } else if base_value == 1.0 {
-            return Err(LogBaseOneError)
+        match (base_value, arg_value) {
+            (_, a) if a <= 0.0 => Err(NonPositiveLogArgError),
+            (b, _) if b <= 0.0 => Err(NonPositiveLogBaseError),
+            (b, _) if b == 1.0 => Err(LogBaseOneError),
+            _ => Ok(arg_value.log(base_value))
         }
-        Ok(arg_value.log(base_value))
     }
 
-    fn depends_on(&self, variable: &str) -> bool {
-        let base = self.base.depends_on(variable);
-        let arg = self.argument.depends_on(variable);
-
-        base || arg
+    fn get_type(&self) -> FunctionType {
+        FunctionType::Binary(&self.base, &self.argument)
     }
 
     fn derivative(&self, variable: &str) -> ChildFn {
@@ -536,8 +520,8 @@ impl Function for SinFn {
             .map(f64::sin)
     }
 
-    fn depends_on(&self, variable: &str) -> bool {
-        self.child.depends_on(variable)
+    fn get_type(&self) -> FunctionType {
+        FunctionType::Unary(&self.child)
     }
 
     fn derivative(&self, variable: &str) -> ChildFn {
@@ -569,8 +553,13 @@ impl Function for CosFn {
             .map(f64::cos)
     }
 
+    fn get_type(&self) -> FunctionType {
+        FunctionType::Unary(&self.child)
+    }
+
     fn derivative(&self, variable: &str) -> ChildFn {
-        CoefFn::new(-1, SinFn::new(self.child)).to_child_fn()
+        ChildFn::default()
+        // CoefFn::new(-1, SinFn::new(self.child)).to_child_fn()
     }
 }
 
@@ -601,14 +590,21 @@ impl Function for TanFn {
         Ok(child_value.tan())
     }
 
+    fn get_type(&self) -> FunctionType {
+        FunctionType::Unary(&self.child)
+    }
+
     fn derivative(&self, variable: &str) -> ChildFn {
-        let denom = ExpFn::new(CosFn::new(self.child), 2.0);
-        DivFn::new(1.0, denom).to_child_fn()
+        ChildFn::default()
+        // let denom = ExpFn::new(CosFn::new(self.child), 2.0);
+        // DivFn::new(1.0, denom).to_child_fn()
     }
 }
 
 
 
+//Seq stands for sequence,
+// it means the function has arbitrary number of children 
 
 #[derive(Debug, Clone)]
 pub struct SeqAddFn {           
@@ -639,6 +635,10 @@ impl Function for SeqAddFn {
             result += child_result;
         }
         Ok(result)
+    }
+
+    fn get_type(&self) -> FunctionType {
+        FunctionType::Variadic(&self.children)
     }
 
     fn derivative(&self, variable: &str) -> ChildFn {
@@ -676,6 +676,10 @@ impl Function for SeqMulFn {
             result *= child_result;
         }
         Ok(result)
+    }
+
+    fn get_type(&self) -> FunctionType {
+        FunctionType::Variadic(&self.children)
     }
 
     fn derivative(&self, variable: &str) -> ChildFn {
