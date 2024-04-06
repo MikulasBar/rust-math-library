@@ -10,8 +10,7 @@ pub trait ToChildFn {
 
 impl<T: Function + 'static> ToChildFn for T {
     fn to_child_fn(self) -> ChildFn {
-        let tree = FnTree::new(self);
-        ChildFn::Fn(Box::new(tree))
+        ChildFn::Fn(Box::new(self))
     }
 }
 
