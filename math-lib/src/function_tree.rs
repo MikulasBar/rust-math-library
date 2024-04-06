@@ -162,7 +162,7 @@ impl FnTree {
 }
 
 impl Function for FnTree {
-    fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError> {
+    fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         self.definition.apply(args)
     }
 

@@ -1,22 +1,48 @@
+use std::fmt::Binary;
 use std::{collections::HashMap};
 use std::f64::consts::{E, FRAC_PI_2};
 use core::fmt::Debug;
+use crate::function_tree::FnTree;
 use crate::{antlr_parser::mathlexer::mathLexer, utilities::ToChildFn};
 use ChildFn::*;
-use FnApplyError::*;
+use ApplyError::*;
 
 
 pub type FnArgs<'a> = HashMap<&'a str, f64>;
 
 
-pub trait Function: Debug + Clone {
-    fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError>;
+enum FunctionType<'a> {
+    None,
+    Unary(&'a ChildFn),
+    Binary(&'a ChildFn, &'a ChildFn),
+    Other(&'a Vec<ChildFn>)
+}
+
+pub trait Function {
+    const TYPE: FunctionType<'static>;
+
+    fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError>;
+    fn depends_on(&self, variable: &str) -> bool {
+        match Self::TYPE {
+            FunctionType::Unary(c) => c.depends_on(variable),
+            FunctionType::Binary(l, r) => {
+                let left = l.depends_on(variable);
+                let right = r.depends_on(variable);
+                left || right
+            },
+            FunctionType::Other(v) =>  {
+                v.iter()
+                    .any(|c| c.depends_on(variable))
+            }
+            FunctionType::None => panic!("Functions of type `None` cannot uses implicit definition of the depends_on function")
+        }
+    }
     fn derivative(&self, variable: &str) -> ChildFn;
 }
 
 
 #[derive(Debug)]
-pub enum FnApplyError {
+pub enum ApplyError {
     DivisionByZeroError,
     NegativeEvenRootError,
     NonPositiveLogArgError,
@@ -28,7 +54,7 @@ pub enum FnApplyError {
     ParameterNotFoundError(Box<str>),
 }
 
-impl PartialEq for FnApplyError {
+impl PartialEq for ApplyError {
     fn eq(&self, other: &Self) -> bool {
         self == other
     }
@@ -38,15 +64,15 @@ impl PartialEq for FnApplyError {
 /// Type used for fields like `child` or `exponent` ...
 #[derive(Debug, Clone)]
 pub enum ChildFn {
-    Fn(Box<dyn Function>),
+    Fn(Box<FnTree>),
     Var(Box<str>),
     Const(f64)
 }
 
-impl ChildFn {
-    pub fn is_const(&self) -> bool {
+impl ChildFn {  
+    pub fn is_function(&self) -> bool {
         match *self {
-            Const(_) => true,
+            Fn(_) => true,
             _ => false
         }
     }
@@ -58,28 +84,37 @@ impl ChildFn {
         }
     }
 
-    pub fn is_function(&self) -> bool {
+    pub fn is_const(&self) -> bool {
         match *self {
-            Fn(_) => true,
+            Const(_) => true,
             _ => false
         }
     }
 }
 
 impl Function for ChildFn {
-    fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError> {
+    const TYPE: FunctionType<'static> = FunctionType::None;
+
+    fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         match self {
             Fn(f) => f.apply(args),
             Const(c) => Ok(*c),
-            Var(s) => {
-                match args.get(s.as_ref()) {
-                    Some(&v) => Ok(v),
+            Var(v) => {
+                match args.get(v.as_ref()) {
+                    Some(&value) => Ok(value),
                     _ => {
-                        //println!("Parameter {:#?} cannot be found", s);
-                        Err(ParameterNotFoundError(*s))
+                        Err(ParameterNotFoundError(v.clone()))
                     }
                 }
             },
+        }
+    }
+
+    fn depends_on(&self, variable: &str) -> bool {
+        match self {
+            Fn(f) => f.depends_on(variable),
+            Var(v) => **v == *variable,
+            Const(_) => false,
         }
     }
 
@@ -125,11 +160,19 @@ impl AddFn {
 }
 
 impl Function for AddFn {
-    fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError> {
+    const TYPE: FunctionType<'static> = Binary();
+    fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         let left = self.left.apply(args)?;
         let right = self.right.apply(args)?;
 
         Ok(left + right)
+    }
+
+    fn depends_on(&self, variable: &str) -> bool {
+        let left = self.left.depends_on(variable);
+        let right = self.right.depends_on(variable);
+
+        left || right
     }
 
     fn derivative(&self, variable: &str) -> ChildFn {
@@ -161,11 +204,18 @@ impl SubFn {
 }
 
 impl Function for SubFn {
-    fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError> {
+    fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         let left = self.left.apply(args)?;
         let right = self.right.apply(args)?;
 
         Ok(left - right)
+    }
+
+    fn depends_on(&self, variable: &str) -> bool {
+        let left = self.left.depends_on(variable);
+        let right = self.right.depends_on(variable);
+
+        left || right
     }
 
     fn derivative(&self, variable: &str) -> ChildFn {
@@ -197,19 +247,33 @@ impl MulFn {
 }
 
 impl Function for MulFn {
-    fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError> {
+    fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         let left = self.left.apply(args)?;
         let right = self.right.apply(args)?;
 
         Ok(left * right)
     }
 
+    fn depends_on(&self, variable: &str) -> bool {
+        let left = self.left.depends_on(variable);
+        let right = self.right.depends_on(variable);
+
+        left || right
+    }
+
     fn derivative(&self, variable: &str) -> ChildFn {
         let d_left = self.left.derivative(variable);
         let d_right = self.right.derivative(variable);
 
-        let result_left = MulFn::new(d_left, self.right);
-        let result_right = MulFn::new(d_right, self.left);
+        let result_left = MulFn::new(
+            d_left,
+            self.right.clone()
+        );
+
+        let result_right = MulFn::new(
+            d_right,
+            self.left.clone()
+        );
 
         AddFn::new(result_left, result_right).to_child_fn()
     }
@@ -236,7 +300,7 @@ impl DivFn {
 }
 
 impl Function for DivFn {
-    fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError> {
+    fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         let num_value = self.numerator.apply(args)?;
         let den_value = self.denominator.apply(args)?;
 
@@ -246,15 +310,37 @@ impl Function for DivFn {
         Ok(num_value / den_value)
     }
 
+    fn depends_on(&self, variable: &str) -> bool {
+        let num = self.numerator.depends_on(variable);
+        let denom = self.denominator.depends_on(variable);
+
+        num || denom
+    }
+
     fn derivative(&self, variable: &str) -> ChildFn {
         let d_num = self.numerator.derivative(variable);
         let d_denom = self.denominator.derivative(variable);
 
-        let num_first = MulFn::new(self.numerator, d_denom);
-        let num_second = MulFn::new(self.numerator, d_num);
+        let num_first = MulFn::new(
+            self.numerator.clone(),
+            d_denom
+        );
 
-        let result_num = SubFn::new(num_first, num_second);
-        let result_denom = ExpFn::new(self.denominator, 2.0);
+        let num_second = MulFn::new(
+            self.numerator.clone(),
+            d_num
+        );
+
+
+        let result_num = SubFn::new(
+            num_first,
+            num_second
+        );
+
+        let result_denom = ExpFn::new(
+            self.denominator.clone(),
+            2.0
+        );
 
         DivFn::new(result_num, result_denom).to_child_fn()
     }
@@ -282,14 +368,21 @@ impl CoefFn {
 }
 
 impl Function for CoefFn {
-    fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError> {
+    fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         let child_value = self.child.apply(args)?;
 
         Ok(self.coefficient * child_value)
     }
 
+    fn depends_on(&self, variable: &str) -> bool {
+        self.child.depends_on(variable)
+    }
+
     fn derivative(&self, variable: &str) -> ChildFn {
-        CoefFn::new(self.coefficient, self.derivative(variable)).to_child_fn()
+        CoefFn::new(
+            self.coefficient,
+            self.child.derivative(variable)
+        ).to_child_fn()
     }
 }
 
@@ -314,7 +407,7 @@ impl ExpFn {
 }
 
 impl Function for ExpFn {
-    fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError> {
+    fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         let base_value = self.base.apply(args)?;
         let exp_value = self.exponent.apply(args)?;
 
@@ -327,16 +420,30 @@ impl Function for ExpFn {
         Ok(base_value.powf(exp_value))
     }
 
+    fn depends_on(&self, variable: &str) -> bool {
+        let base = self.base.depends_on(variable);
+        let exp = self.exponent.depends_on(variable);
+
+        base || exp
+    }
+
     fn derivative(&self, variable: &str) -> ChildFn {
         let d_exp = self.exponent.derivative(variable);
         let d_base = self.base.derivative(variable);
 
-        let left_factor = MulFn::new(d_exp, LogFn::new(E, self.base));
-        let right_factor = DivFn::new(MulFn::new(self.exponent, d_base), self.base);
+        let left_factor = MulFn::new(
+            d_exp,
+            LogFn::new(E, self.base.clone())
+        );
+
+        let right_factor = DivFn::new(
+            MulFn::new(self.exponent.clone(), d_base), 
+            self.base.clone()
+        );
         
         let factor = AddFn::new(left_factor, right_factor);
 
-        MulFn::new(*self, factor).to_child_fn()
+        MulFn::new(self.clone(), factor).to_child_fn()
     }
 }
 
@@ -361,7 +468,7 @@ impl LogFn {
 }
 
 impl Function for LogFn {
-    fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError> {
+    fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         let base_value = self.base.apply(args)?;
         let arg_value = self.argument.apply(args)?;
 
@@ -375,16 +482,33 @@ impl Function for LogFn {
         Ok(arg_value.log(base_value))
     }
 
+    fn depends_on(&self, variable: &str) -> bool {
+        let base = self.base.depends_on(variable);
+        let arg = self.argument.depends_on(variable);
+
+        base || arg
+    }
+
     fn derivative(&self, variable: &str) -> ChildFn {
         let d_base = self.argument.derivative(variable);
         let d_arg = self.base.derivative(variable);
 
-        let left_term = DivFn::new(self.argument, d_arg);
-        let right_term = DivFn::new(MulFn::new(d_base, *self), self.base);
+        let left_term = DivFn::new(
+            self.argument.clone(),
+            d_arg
+        );
+
+        let right_term = DivFn::new(
+            MulFn::new(d_base, self.clone()),
+            self.base.clone()
+        );
 
         let factor = SubFn::new(left_term, right_term);
 
-        DivFn::new(factor, LogFn::new(E, self.base)).to_child_fn()
+        DivFn::new(
+            factor,
+            LogFn::new(E, self.base.clone())
+        ).to_child_fn()
     }
 }
 
@@ -406,14 +530,18 @@ impl SinFn {
 }
 
 impl Function for SinFn {
-    fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError> {
+    fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         self.child
             .apply(args)
             .map(f64::sin)
     }
 
+    fn depends_on(&self, variable: &str) -> bool {
+        self.child.depends_on(variable)
+    }
+
     fn derivative(&self, variable: &str) -> ChildFn {
-        CosFn::new(self.child).to_child_fn()
+        CosFn::new(self.child.clone()).to_child_fn()
     }
 }
 
@@ -435,7 +563,7 @@ impl CosFn {
 }
 
 impl Function for CosFn {
-    fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError> {
+    fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         self.child
             .apply(args)
             .map(f64::cos)
@@ -464,7 +592,7 @@ impl TanFn {
 }
 
 impl Function for TanFn {
-    fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError> {
+    fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         let child_value = self.child.apply(args)?;
 
         if child_value == FRAC_PI_2 {
@@ -503,7 +631,7 @@ impl SeqAddFn {
 }
 
 impl Function for SeqAddFn {
-    fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError> {
+    fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         let mut result: f64 = 0.0;
 
         for child in &self.children {
@@ -540,7 +668,7 @@ impl SeqMulFn {
 }
 
 impl Function for SeqMulFn {
-    fn apply(&self, args: &FnArgs) -> Result<f64, FnApplyError> {
+    fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         let mut result: f64 = 1.0;
 
         for child in &self.children {

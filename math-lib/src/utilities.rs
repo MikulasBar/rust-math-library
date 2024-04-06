@@ -1,6 +1,6 @@
 use std::any::Any;
 
-use crate::functions::*;
+use crate::{antlr_parser::mathparser::FunctionContextAttrs, function_tree::FnTree, functions::*};
 
 // trait for converting a type to a ChildFn
 // used instead of Into<ChildFn> because Into cannot be used to convert Function trait
@@ -10,7 +10,8 @@ pub trait ToChildFn {
 
 impl<T: Function + 'static> ToChildFn for T {
     fn to_child_fn(self) -> ChildFn {
-        ChildFn::Fn(Box::new(self))
+        let tree = FnTree::new(self);
+        ChildFn::Fn(Box::new(tree))
     }
 }
 
