@@ -1,12 +1,33 @@
 #![allow(non_snake_case, unused)]
 
 use crate::{
-    functions::*,
+    fn_args, functions::*
 };
 
 #[test]
-fn test_AddFn() {
+fn test_derivative_AddFn() {
+    let func = AddFn::new("x", "y");
+    let dfunc = func.derivative("x");
 
+    let args = fn_args!(
+        "x" => 8,
+        "y" => 6,
+    );
+
+    assert_eq!(func.apply(&args), Ok(14.0));
+    assert_eq!(dfunc.apply(&args), Ok(7.0));
+}
+
+#[test]
+fn test_derivative_CoefFn() {
+    let func = CoefFn::new(5.0, "x");
+    let dfunc = func.derivative("x");
+
+    let args = fn_args!(
+        "x" => 6
+    );
+
+    assert_eq!(func)
 }
 
 

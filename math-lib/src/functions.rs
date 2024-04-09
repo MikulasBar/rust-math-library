@@ -452,10 +452,10 @@ impl Function for CoefFn {
     }
 
     fn derivative(&self, variable: &str) -> ChildFn {
-        CoefFn::new(
-            self.coefficient,
-            self.child.derivative(variable)
-        ).to_child_fn()
+        if self.child.depends_on(variable) {
+            return self.child.derivative(variable)
+        }
+        0.0.to_child_fn()
     }
 }
 
