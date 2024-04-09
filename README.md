@@ -2,8 +2,8 @@
 
  - math engine with graphical plotting
  - in rust
- - egui for ui / flutter + rust API
- - ANTLR for text recognition 
+ - egui for UI
+ - ANTLR for text recognition
 
 ## plotting types:
 
