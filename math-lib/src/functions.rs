@@ -187,7 +187,7 @@ impl Function for ChildFn {
     fn derivative(&self, variable: &str) -> ChildFn {
         match self {
             Fn(f) => f.derivative(variable),
-            Const(c) => c.to_child_fn(),
+            Const(c) => 0.0.to_child_fn(),
             Var(v) => {
                 let mut value = 0.0;
                 if **v == *variable {
@@ -391,13 +391,13 @@ impl Function for DivFn {
         let d_denom = self.denominator.derivative(variable);
 
         let num_first = MulFn::new(
-            self.numerator.clone(),
-            d_denom
+            self.denominator.clone(),
+            d_num
         );
 
         let num_second = MulFn::new(
             self.numerator.clone(),
-            d_num
+            d_denom
         );
 
 
@@ -453,7 +453,10 @@ impl Function for CoefFn {
 
     fn derivative(&self, variable: &str) -> ChildFn {
         if self.child.depends_on(variable) {
-            return self.child.derivative(variable)
+            return CoefFn::new(
+                self.coefficient,
+                self.child.derivative(variable)
+            ).to_child_fn()
         }
         0.0.to_child_fn()
     }
@@ -563,20 +566,16 @@ impl Function for LogFn {
     }
 
     fn derivative(&self, variable: &str) -> ChildFn {
-        let d_base = self.argument.derivative(variable);
-        let d_arg = self.base.derivative(variable);
+        let d_base = self.base.derivative(variable);
+        let d_arg = self.argument.derivative(variable);
 
-        let left_term = DivFn::new(
-            self.argument.clone(),
-            d_arg
+        let left = DivFn::new(d_arg, self.argument.clone());
+        let right = MulFn::new(
+            self.clone(),
+            DivFn::new(d_base, self.base.clone())
         );
 
-        let right_term = DivFn::new(
-            MulFn::new(d_base, self.clone()),
-            self.base.clone()
-        );
-
-        let factor = SubFn::new(left_term, right_term);
+        let factor = SubFn::new(left, right); 
 
         DivFn::new(
             factor,
