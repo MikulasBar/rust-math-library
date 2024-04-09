@@ -1,6 +1,8 @@
-use std::any::Any;
+use std::any::type_name;
 
-use crate::{antlr_parser::mathparser::FunctionContextAttrs, function_tree::FnTree, functions::*};
+use crate::{
+    functions::*,
+};
 
 // trait for converting a type to a ChildFn
 // used instead of Into<ChildFn> because Into cannot be used to convert Function dynamic object
@@ -39,6 +41,12 @@ impl<T: Function + 'static> ToChildFn for Option<T> {
         }
         panic!("Cannot convert None to ChildFn")
     }
+}
+
+
+pub fn type_of<T>(_: T) -> &'static str {
+    let full_name = type_name::<T>();
+    full_name.split("::").last().unwrap()
 }
 
 

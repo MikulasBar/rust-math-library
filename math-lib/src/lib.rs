@@ -5,7 +5,8 @@ mod function_tree;
 mod antlr_parser;
 
 mod visitor;
-mod functions_test;
+mod test_functions;
+mod test_derivatives;
 
 
 
@@ -31,5 +32,8 @@ fn testing() {
     if f.depends_on("y") {
         println!("f depends on Y !!!")
     }
+
+
+    println!("Hello, this is formating ")
 }
 

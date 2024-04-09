@@ -137,10 +137,13 @@ impl FnParser {
         let root = root.unwrap();
         let parsing_result = self.visitor.visit(&*root);
 
-        match parsing_result {
-            ParsingResult::Ok(v) => Ok(FnTree::new(v)),
-            ParsingResult::Err(e) => Err(e),
-        }
+    
+        let function = match parsing_result {
+            ParsingResult::Ok(v) => FnTree::new(v),
+            ParsingResult::Err(e) => return Err(e),
+        };
+
+        Ok(function)
     }
 }
 
@@ -148,16 +151,20 @@ impl FnParser {
 #[derive(Clone)]
 pub struct FnTree {
     definition: ChildFn,
+    string_tree: String,
 }
 
 impl FnTree {
-    pub fn new<T>(definition: T) -> Self
+    pub fn new<T>(definition: T) -> Self 
     where
         T: ToChildFn
     {
-        Self {
-            definition: definition.to_child_fn()
-        }
+        let mut tree = Self {
+            definition: definition.to_child_fn(),
+            string_tree: "".to_string()
+        };
+        tree.string_tree = tree.definition.get_string_tree();
+        tree
     }
 }
 
@@ -170,6 +177,10 @@ impl Function for FnTree {
         self.definition.apply(args)
     }
 
+    fn get_string_tree(&self) -> String {
+        self.string_tree.clone()
+    }
+
     fn derivative(&self, variable: &str) -> ChildFn {
         todo!();
         self.definition.derivative(variable)
@@ -178,15 +189,11 @@ impl Function for FnTree {
 
 
 // 2^(3 - 1) * (1 - cos(pi/x)) + log_5(y + ln(e))
-
-// parser is not working - Stack overflow
-// maybe its because of the ChildFn contains Box<FnTree> 
-// its closest thing to parser 
 #[test]
 fn test_parser() {
     let mut parser = FnParser::new();
 
-    let result = parser.parse("x + y * 2");
+    let result = parser.parse("2^(3 - 1) * (1 - cos(pi/x)) + log_5(y + ln(e))");
     let func = result.unwrap();
 
     let value = func.apply(&fn_args!{
@@ -194,5 +201,7 @@ fn test_parser() {
         "y" => 4,
     }).unwrap();
 
-    assert_eq!(value, 10.0)
+    println!("{}", func.get_string_tree());
+
+    assert_eq!(value, 5.0)
 }

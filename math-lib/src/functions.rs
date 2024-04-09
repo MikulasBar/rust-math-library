@@ -1,10 +1,16 @@
-use std::process::Child;
-use std::{collections::HashMap};
-use std::f64::consts::{E, FRAC_PI_2};
+use std::{
+    collections::HashMap, f64::consts::{E, FRAC_PI_2}, fmt::format
+};
 use core::fmt::Debug;
 
-use crate::function_tree::FnTree;
-use crate::{antlr_parser::mathlexer::mathLexer, utilities::ToChildFn};
+use crate::{
+    antlr_parser::mathlexer::mathLexer,
+    function_tree::FnTree,
+    utilities::{
+        ToChildFn,
+        type_of,
+    },
+};
 use ChildFn::*;
 use ApplyError::*;
 
@@ -20,12 +26,43 @@ pub enum FunctionType<'a> {
 }
 
 pub trait Function {
+    /// This function needs to be implemented, so `ChildFn` can be cloned 
     fn clone_box(&self) -> Box<dyn Function>;
     fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError>;
     fn derivative(&self, variable: &str) -> ChildFn;
 
     fn get_type(&self) -> FunctionType {
         FunctionType::None
+    }
+
+    fn get_string_tree(&self) -> String {
+        let name = type_of(&self);
+        
+        let body = match self.get_type() {
+            FunctionType::Unary(c) => c.get_string_tree(),
+            FunctionType::Binary(l, r) => format!{
+                "{}, {}",
+                l.get_string_tree(),
+                r.get_string_tree(),
+            },
+            FunctionType::Variadic(v) => {
+                let mut result = "".to_string();
+
+                for c in v {
+                    result += &c.get_string_tree();
+                    result += ",";
+                }
+                result.truncate(result.len() - 1);
+
+                result
+            },
+            FunctionType::None => panic!(
+                "Functions of type None cannot uses implicit definition of the this function, \n
+                implement this function / change function type in get_type function"
+            )
+        };
+
+        format!("{} {{ {} }}", name, body)
     }
 
     fn depends_on(&self, variable: &str) -> bool {
@@ -41,12 +78,11 @@ pub trait Function {
                     .any(|c| c.depends_on(variable))
             }
             FunctionType::None => panic!(
-                "Functions of type `None` cannot uses implicit definition of the `depends_on function`, \n
-                implement the `depends_on` function / change function type in `get_type` function"
+                "Functions of type None cannot uses implicit definition of the this function, \n
+                implement this function / change function type in get_type function"
             )
         }
     }
-    
 }
 
 
@@ -70,27 +106,6 @@ impl PartialEq for ApplyError {
 }
 
 
-
-
-
-
-
-
-
-
-
-// impl<T> Function for T
-// where
-//     T: 'static + Function + Clone,
-// {
-//     fn clone_box(&self) -> Box<dyn Function> {
-//         Box::new(self.clone())
-//     }
-    
-// }
-
-
-
 impl Clone for ChildFn {
     fn clone(&self) -> Self {
         match self {
@@ -100,15 +115,6 @@ impl Clone for ChildFn {
         }
     }
 }
-
-
-
-
-
-
-
-
-
 
 
 /// Type used for fields like `child` or `exponent` ...
@@ -159,6 +165,14 @@ impl Function for ChildFn {
                     }
                 }
             },
+        }
+    }
+
+    fn get_string_tree(&self) -> String {
+        match self {
+            Const(c) => c.to_string(),
+            Var(v) => v.to_string(),
+            Fn(f) => f.get_string_tree(),
         }
     }
 
