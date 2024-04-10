@@ -159,12 +159,12 @@ impl FnTree {
     where
         T: ToChildFn
     {
-        let mut tree = Self {
+        let mut fn_tree = Self {
             definition: definition.to_child_fn(),
             string_tree: "".to_string()
         };
-        tree.string_tree = tree.definition.get_string_tree();
-        tree
+        fn_tree.string_tree = fn_tree.definition.get_string_tree();
+        fn_tree
     }
 }
 
@@ -173,7 +173,7 @@ impl Function for FnTree {
         Box::new(self.clone())
     }
 
-    fn evaluate(&self, args: &FnArgs) -> Result<f64, ApplyError> {
+    fn evaluate(&self, args: &FnArgs) -> Result<f64, EvalError> {
         self.definition.evaluate(args)
     }
 
@@ -182,7 +182,6 @@ impl Function for FnTree {
     }
 
     fn derivative(&self, variable: &str) -> ChildFn {
-        todo!();
         self.definition.derivative(variable)
     }
 }
@@ -192,16 +191,17 @@ impl Function for FnTree {
 #[test]
 fn test_parser() {
     let mut parser = FnParser::new();
+    let fn_result = parser.parse("2^(3 - 1) * (1 - cos(pi/x)) + log_5(y + ln(e))");
 
-    let result = parser.parse("2^(3 - 1) * (1 - cos(pi/x)) + log_5(y + ln(e))");
-    let func = result.unwrap();
+    let func = fn_result.unwrap();
+    let dfunc = func.derivative("x");
 
-    let value = func.evaluate(&fn_args!{
+    let args = fn_args!{
         "x" => 2,
         "y" => 4,
-    }).unwrap();
+    };
 
-    println!("{}", func.get_string_tree());
 
-    assert_eq!(value, 5.0)
+    assert_eq!(func.evaluate(&args), Ok(5.0));
+    assert_eq!(dfunc.evaluate(&args), Ok(-PI));
 }

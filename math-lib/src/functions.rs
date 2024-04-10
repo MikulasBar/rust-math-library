@@ -12,7 +12,7 @@ use crate::{
     },
 };
 use ChildFn::*;
-use ApplyError::*;
+use EvalError::*;
 
 
 pub type FnArgs<'a> = HashMap<&'a str, f64>;
@@ -28,7 +28,7 @@ pub enum FunctionType<'a> {
 pub trait Function {
     /// This function needs to be implemented, so `ChildFn` can be cloned 
     fn clone_box(&self) -> Box<dyn Function>;
-    fn evaluate(&self, args: &FnArgs) -> Result<f64, ApplyError>;
+    fn evaluate(&self, args: &FnArgs) -> Result<f64, EvalError>;
     fn derivative(&self, variable: &str) -> ChildFn;
 
     fn get_type(&self) -> FunctionType {
@@ -87,7 +87,7 @@ pub trait Function {
 
 
 #[derive(Debug)]
-pub enum ApplyError {
+pub enum EvalError {
     DivisionByZeroError,
     NegativeEvenRootError,
     NonPositiveLogArgError,
@@ -99,7 +99,7 @@ pub enum ApplyError {
     ParameterNotFoundError(Box<str>),
 }
 
-impl PartialEq for ApplyError {
+impl PartialEq for EvalError {
     fn eq(&self, other: &Self) -> bool {
         self == other
     }
@@ -153,7 +153,7 @@ impl Function for ChildFn {
         Box::new(self.clone())
     }
 
-    fn evaluate(&self, args: &FnArgs) -> Result<f64, ApplyError> {
+    fn evaluate(&self, args: &FnArgs) -> Result<f64, EvalError> {
         match self {
             Fn(f) => f.evaluate(args),
             Const(c) => Ok(*c),
@@ -230,7 +230,7 @@ impl Function for AddFn {
         Box::new(self.clone())
     }
 
-    fn evaluate(&self, args: &FnArgs) -> Result<f64, ApplyError> {
+    fn evaluate(&self, args: &FnArgs) -> Result<f64, EvalError> {
         let left = self.left.evaluate(args)?;
         let right = self.right.evaluate(args)?;
 
@@ -274,7 +274,7 @@ impl Function for SubFn {
         Box::new(self.clone())
     }
 
-    fn evaluate(&self, args: &FnArgs) -> Result<f64, ApplyError> {
+    fn evaluate(&self, args: &FnArgs) -> Result<f64, EvalError> {
         let left = self.left.evaluate(args)?;
         let right = self.right.evaluate(args)?;
 
@@ -318,7 +318,7 @@ impl Function for MulFn {
         Box::new(self.clone())
     }
 
-    fn evaluate(&self, args: &FnArgs) -> Result<f64, ApplyError> {
+    fn evaluate(&self, args: &FnArgs) -> Result<f64, EvalError> {
         let left = self.left.evaluate(args)?;
         let right = self.right.evaluate(args)?;
 
@@ -372,7 +372,7 @@ impl Function for DivFn {
         Box::new(self.clone())
     }
 
-    fn evaluate(&self, args: &FnArgs) -> Result<f64, ApplyError> {
+    fn evaluate(&self, args: &FnArgs) -> Result<f64, EvalError> {
         let num_value = self.numerator.evaluate(args)?;
         let den_value = self.denominator.evaluate(args)?;
 
@@ -441,7 +441,7 @@ impl Function for CoefFn {
         Box::new(self.clone())
     }
 
-    fn evaluate(&self, args: &FnArgs) -> Result<f64, ApplyError> {
+    fn evaluate(&self, args: &FnArgs) -> Result<f64, EvalError> {
         let child_value = self.child.evaluate(args)?;
 
         Ok(self.coefficient * child_value)
@@ -487,7 +487,7 @@ impl Function for ExpFn {
         Box::new(self.clone())
     }
 
-    fn evaluate(&self, args: &FnArgs) -> Result<f64, ApplyError> {
+    fn evaluate(&self, args: &FnArgs) -> Result<f64, EvalError> {
         let base_value = self.base.evaluate(args)?;
         let exp_value = self.exponent.evaluate(args)?;
 
@@ -549,7 +549,7 @@ impl Function for LogFn {
         Box::new(self.clone())
     }
 
-    fn evaluate(&self, args: &FnArgs) -> Result<f64, ApplyError> {
+    fn evaluate(&self, args: &FnArgs) -> Result<f64, EvalError> {
         let base_value = self.base.evaluate(args)?;
         let arg_value = self.argument.evaluate(args)?;
 
@@ -606,7 +606,7 @@ impl Function for SinFn {
         Box::new(self.clone())
     }
 
-    fn evaluate(&self, args: &FnArgs) -> Result<f64, ApplyError> {
+    fn evaluate(&self, args: &FnArgs) -> Result<f64, EvalError> {
         self.child
             .evaluate(args)
             .map(f64::sin)
@@ -646,7 +646,7 @@ impl Function for CosFn {
         Box::new(self.clone())
     }
 
-    fn evaluate(&self, args: &FnArgs) -> Result<f64, ApplyError> {
+    fn evaluate(&self, args: &FnArgs) -> Result<f64, EvalError> {
         self.child
             .evaluate(args)
             .map(f64::cos)
@@ -686,7 +686,7 @@ impl Function for TanFn {
         Box::new(self.clone())
     }
 
-    fn evaluate(&self, args: &FnArgs) -> Result<f64, ApplyError> {
+    fn evaluate(&self, args: &FnArgs) -> Result<f64, EvalError> {
         let child_value = self.child.evaluate(args)?;
 
         if child_value == FRAC_PI_2 {
@@ -739,7 +739,7 @@ impl Function for SeqAddFn {
         Box::new(self.clone())
     }
 
-    fn evaluate(&self, args: &FnArgs) -> Result<f64, ApplyError> {
+    fn evaluate(&self, args: &FnArgs) -> Result<f64, EvalError> {
         let mut result: f64 = 0.0;
 
         for child in &self.children {
@@ -789,7 +789,7 @@ impl Function for SeqMulFn {
         Box::new(self.clone())
     }
 
-    fn evaluate(&self, args: &FnArgs) -> Result<f64, ApplyError> {
+    fn evaluate(&self, args: &FnArgs) -> Result<f64, EvalError> {
         let mut result: f64 = 1.0;
 
         for child in &self.children {
