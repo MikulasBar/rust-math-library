@@ -700,15 +700,18 @@ impl Function for TanFn {
     }
 
     fn derivative(&self, variable: &str) -> ChildFn {
-        ChildFn::default()
-        // let denom = ExpFn::new(CosFn::new(self.child), 2.0);
-        // DivFn::new(1.0, denom).to_child_fn()
+        let denom = ExpFn::new(CosFn::new(self.child.clone()), 2.0);
+
+        DivFn::new(
+            self.child.derivative(variable),
+            denom
+        ).to_child_fn()
     }
 }
 
 
 
-//Seq stands for sequence,
+// Seq stands for sequence,
 // it means the function has arbitrary number of children 
 
 #[derive(Clone)]
@@ -751,7 +754,12 @@ impl Function for SeqAddFn {
     }
 
     fn derivative(&self, variable: &str) -> ChildFn {
-        todo!()
+        let children: Vec<_> = self.children.clone()
+            .into_iter()
+            .map(|c| c.derivative(variable))
+            .collect();
+
+        SeqAddFn::new(children).to_child_fn()
     }
 }
 

@@ -1,6 +1,6 @@
 #![allow(non_snake_case, unused)]
 
-use std::f64::{consts::{E, FRAC_PI_2}, EPSILON};
+use std::f64::{consts::{E, FRAC_PI_2, PI}, EPSILON};
 
 use crate::{
     fn_args, functions::*
@@ -133,4 +133,35 @@ fn test_derivative_CosFn() {
 
     assert!(result.abs() <= EPSILON);
     assert!((d_result + 1.0).abs() <= EPSILON);
+}
+
+#[test]
+fn test_derivative_TanFn() {
+    let func = TanFn::new("x");
+    let dfunc = func.derivative("x");
+
+    let args = fn_args!(
+        "x" => PI
+    );
+
+    let result = func.evaluate(&args).unwrap();
+    let d_result = dfunc.evaluate(&args).unwrap();
+
+    assert!(result.abs() <= EPSILON);
+    assert!((d_result - 1.0).abs() <= EPSILON);
+}
+
+#[test]
+fn test_derivative_SeqAddFn() {
+    let func = SeqAddFn::new(vec!["x", "y", "z", "x"]);
+    let dfunc = func.derivative("x");
+
+    let args = fn_args!(
+        "x" => 1,
+        "y" => 5,
+        "z" => 3
+    );
+
+    assert_eq!(func.evaluate(&args), Ok(10.0));
+    assert_eq!(dfunc.evaluate(&args), Ok(2.0));
 }
