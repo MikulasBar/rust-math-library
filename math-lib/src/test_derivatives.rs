@@ -1,6 +1,6 @@
 #![allow(non_snake_case, unused)]
 
-use std::f64::consts::{E};
+use std::f64::{consts::{E, FRAC_PI_2}, EPSILON};
 
 use crate::{
     fn_args, functions::*
@@ -16,8 +16,8 @@ fn test_derivative_AddFn() {
         "y" => 6
     );
 
-    assert_eq!(func.apply(&args), Ok(14.0));
-    assert_eq!(dfunc.apply(&args), Ok(1.0));
+    assert_eq!(func.evaluate(&args), Ok(14.0));
+    assert_eq!(dfunc.evaluate(&args), Ok(1.0));
 }
 
 #[test]
@@ -30,8 +30,8 @@ fn test_derivative_SubFn() {
         "y" => 6
     );
 
-    assert_eq!(func.apply(&args), Ok(2.0));
-    assert_eq!(dfunc.apply(&args), Ok(1.0));
+    assert_eq!(func.evaluate(&args), Ok(2.0));
+    assert_eq!(dfunc.evaluate(&args), Ok(1.0));
 }
 
 #[test]
@@ -44,8 +44,8 @@ fn test_derivative_MulFn() {
         "y" => 3
     );
 
-    assert_eq!(func.apply(&args), Ok(6.0));
-    assert_eq!(dfunc.apply(&args), Ok(3.0));
+    assert_eq!(func.evaluate(&args), Ok(6.0));
+    assert_eq!(dfunc.evaluate(&args), Ok(3.0));
 }
 
 #[test]
@@ -58,8 +58,8 @@ fn test_derivative_DivFn() {
         "y" => 10
     );
 
-    assert_eq!(func.apply(&args), Ok(5.0));
-    assert_eq!(dfunc.apply(&args), Ok(0.1));
+    assert_eq!(func.evaluate(&args), Ok(5.0));
+    assert_eq!(dfunc.evaluate(&args), Ok(0.1));
 }
 
 #[test]
@@ -71,8 +71,8 @@ fn test_derivative_CoefFn() {
         "x" => 6
     );
 
-    assert_eq!(func.apply(&args), Ok(30.0));
-    assert_eq!(dfunc.apply(&args), Ok(5.0));
+    assert_eq!(func.evaluate(&args), Ok(30.0));
+    assert_eq!(dfunc.evaluate(&args), Ok(5.0));
 }
 
 #[test]
@@ -85,8 +85,8 @@ fn test_derivative_ExpFn() {
         "y" => 5
     );
 
-    assert_eq!(func.apply(&args), Ok(32.0));
-    assert_eq!(dfunc.apply(&args), Ok(80.0));
+    assert_eq!(func.evaluate(&args), Ok(32.0));
+    assert_eq!(dfunc.evaluate(&args), Ok(80.0));
 }
 
 #[test]
@@ -99,6 +99,38 @@ fn test_derivative_LogFn() {
         "y" => E.powf(2.0)
     );
 
-    assert_eq!(func.apply(&args), Ok(2.0));
-    assert_eq!(dfunc.apply(&args), Ok(-2.0/E));
+    assert_eq!(func.evaluate(&args), Ok(2.0));
+    assert_eq!(dfunc.evaluate(&args), Ok(-2.0/E));
+}
+
+#[test]
+fn test_derivative_SinFn() {
+    let func = SinFn::new("x");
+    let dfunc = func.derivative("x");
+
+    let args = fn_args!(
+        "x" => FRAC_PI_2,
+    );
+
+    let result = func.evaluate(&args).unwrap();
+    let d_result = dfunc.evaluate(&args).unwrap();
+
+    assert!((result - 1.0).abs() <= EPSILON);
+    assert!(d_result.abs() <= EPSILON);
+}
+
+#[test]
+fn test_derivative_CosFn() {
+    let func = CosFn::new("x");
+    let dfunc = func.derivative("x");
+
+    let args = fn_args!(
+        "x" => FRAC_PI_2,
+    );
+
+    let result = func.evaluate(&args).unwrap();
+    let d_result = dfunc.evaluate(&args).unwrap();
+
+    assert!(result.abs() <= EPSILON);
+    assert!((d_result + 1.0).abs() <= EPSILON);
 }

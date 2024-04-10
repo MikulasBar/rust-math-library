@@ -18,7 +18,7 @@ fn test_AddFn() {
         "y" => 5.0,
     };
 
-    assert_eq!(func.apply(&args), Ok(9.0));
+    assert_eq!(func.evaluate(&args), Ok(9.0));
 }
 
 #[test]
@@ -30,7 +30,7 @@ fn test_MulFn() {
         "y" => 5.0,
     };
 
-    assert_eq!(func.apply(&args), Ok(20.0));
+    assert_eq!(func.evaluate(&args), Ok(20.0));
 }
 
 #[test]
@@ -42,7 +42,7 @@ fn test_DivFn() {
         "y" => 4.0,
     };
 
-    assert_eq!(func.apply(&args), Ok(12.0));
+    assert_eq!(func.evaluate(&args), Ok(12.0));
 }
 
 #[test]
@@ -53,7 +53,7 @@ fn test_CoefFn() {
         "x" => 6.0,
     };
 
-    assert_eq!(func.apply(&args), Ok(30.0));
+    assert_eq!(func.evaluate(&args), Ok(30.0));
 }
 
 #[test]
@@ -65,7 +65,7 @@ fn test_ExpFn() {
         "y" => 3.0,
     };
 
-    assert_eq!(func.apply(&args), Ok(125.0));
+    assert_eq!(func.evaluate(&args), Ok(125.0));
 }
 
 #[test]
@@ -77,7 +77,7 @@ fn test_LogFn() {
         "y" => 16.0,
     };
 
-    assert_eq!(func.apply(&args), Ok(4.0));
+    assert_eq!(func.evaluate(&args), Ok(4.0));
 }
 
 #[test]
@@ -87,7 +87,7 @@ fn test_SinFn() {
     let args = fn_args!{
         "x" => FRAC_PI_2,
     };
-    let value = func.apply(&args).unwrap() - 1f64;
+    let value = func.evaluate(&args).unwrap() - 1f64;
 
     assert!(value.abs() <= EPSILON);
 }
@@ -99,7 +99,7 @@ fn test_CosFn() {
     let args = fn_args!{
         "x" => FRAC_PI_2,
     };
-    let value = func.apply(&args).unwrap();
+    let value = func.evaluate(&args).unwrap();
 
     assert!(value <= EPSILON);
 }
@@ -111,7 +111,7 @@ fn test_TanFn() {
     let args = fn_args!{
         "x" => FRAC_PI_4,
     };
-    let value = func.apply(&args).unwrap() - 1f64;
+    let value = func.evaluate(&args).unwrap() - 1f64;
 
     assert!(value.abs() <= EPSILON);
 }

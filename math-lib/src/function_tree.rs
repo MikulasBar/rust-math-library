@@ -173,8 +173,8 @@ impl Function for FnTree {
         Box::new(self.clone())
     }
 
-    fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
-        self.definition.apply(args)
+    fn evaluate(&self, args: &FnArgs) -> Result<f64, ApplyError> {
+        self.definition.evaluate(args)
     }
 
     fn get_string_tree(&self) -> String {
@@ -196,7 +196,7 @@ fn test_parser() {
     let result = parser.parse("2^(3 - 1) * (1 - cos(pi/x)) + log_5(y + ln(e))");
     let func = result.unwrap();
 
-    let value = func.apply(&fn_args!{
+    let value = func.evaluate(&fn_args!{
         "x" => 2,
         "y" => 4,
     }).unwrap();

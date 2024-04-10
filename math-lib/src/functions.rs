@@ -28,7 +28,7 @@ pub enum FunctionType<'a> {
 pub trait Function {
     /// This function needs to be implemented, so `ChildFn` can be cloned 
     fn clone_box(&self) -> Box<dyn Function>;
-    fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError>;
+    fn evaluate(&self, args: &FnArgs) -> Result<f64, ApplyError>;
     fn derivative(&self, variable: &str) -> ChildFn;
 
     fn get_type(&self) -> FunctionType {
@@ -153,9 +153,9 @@ impl Function for ChildFn {
         Box::new(self.clone())
     }
 
-    fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
+    fn evaluate(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         match self {
-            Fn(f) => f.apply(args),
+            Fn(f) => f.evaluate(args),
             Const(c) => Ok(*c),
             Var(v) => {
                 match args.get(v.as_ref()) {
@@ -230,9 +230,9 @@ impl Function for AddFn {
         Box::new(self.clone())
     }
 
-    fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
-        let left = self.left.apply(args)?;
-        let right = self.right.apply(args)?;
+    fn evaluate(&self, args: &FnArgs) -> Result<f64, ApplyError> {
+        let left = self.left.evaluate(args)?;
+        let right = self.right.evaluate(args)?;
 
         Ok(left + right)
     }
@@ -274,9 +274,9 @@ impl Function for SubFn {
         Box::new(self.clone())
     }
 
-    fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
-        let left = self.left.apply(args)?;
-        let right = self.right.apply(args)?;
+    fn evaluate(&self, args: &FnArgs) -> Result<f64, ApplyError> {
+        let left = self.left.evaluate(args)?;
+        let right = self.right.evaluate(args)?;
 
         Ok(left - right)
     }
@@ -318,9 +318,9 @@ impl Function for MulFn {
         Box::new(self.clone())
     }
 
-    fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
-        let left = self.left.apply(args)?;
-        let right = self.right.apply(args)?;
+    fn evaluate(&self, args: &FnArgs) -> Result<f64, ApplyError> {
+        let left = self.left.evaluate(args)?;
+        let right = self.right.evaluate(args)?;
 
         Ok(left * right)
     }
@@ -372,9 +372,9 @@ impl Function for DivFn {
         Box::new(self.clone())
     }
 
-    fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
-        let num_value = self.numerator.apply(args)?;
-        let den_value = self.denominator.apply(args)?;
+    fn evaluate(&self, args: &FnArgs) -> Result<f64, ApplyError> {
+        let num_value = self.numerator.evaluate(args)?;
+        let den_value = self.denominator.evaluate(args)?;
 
         if den_value == 0.0 {
             return Err(DivisionByZeroError)
@@ -441,8 +441,8 @@ impl Function for CoefFn {
         Box::new(self.clone())
     }
 
-    fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
-        let child_value = self.child.apply(args)?;
+    fn evaluate(&self, args: &FnArgs) -> Result<f64, ApplyError> {
+        let child_value = self.child.evaluate(args)?;
 
         Ok(self.coefficient * child_value)
     }
@@ -487,9 +487,9 @@ impl Function for ExpFn {
         Box::new(self.clone())
     }
 
-    fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
-        let base_value = self.base.apply(args)?;
-        let exp_value = self.exponent.apply(args)?;
+    fn evaluate(&self, args: &FnArgs) -> Result<f64, ApplyError> {
+        let base_value = self.base.evaluate(args)?;
+        let exp_value = self.exponent.evaluate(args)?;
 
         if base_value < 0.0 && exp_value.fract() != 0.0 {
             return Err(NegativeBaseNonIntegerExponentError)
@@ -508,17 +508,17 @@ impl Function for ExpFn {
         let d_exp = self.exponent.derivative(variable);
         let d_base = self.base.derivative(variable);
 
-        let left_factor = MulFn::new(
+        let left_term = MulFn::new(
             d_exp,
             LogFn::new(E, self.base.clone())
         );
 
-        let right_factor = DivFn::new(
+        let right_term = DivFn::new(
             MulFn::new(self.exponent.clone(), d_base), 
             self.base.clone()
         );
         
-        let factor = AddFn::new(left_factor, right_factor);
+        let factor = AddFn::new(left_term, right_term);
 
         MulFn::new(self.clone(), factor).to_child_fn()
     }
@@ -549,9 +549,9 @@ impl Function for LogFn {
         Box::new(self.clone())
     }
 
-    fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
-        let base_value = self.base.apply(args)?;
-        let arg_value = self.argument.apply(args)?;
+    fn evaluate(&self, args: &FnArgs) -> Result<f64, ApplyError> {
+        let base_value = self.base.evaluate(args)?;
+        let arg_value = self.argument.evaluate(args)?;
 
         match (base_value, arg_value) {
             (_, a) if a <= 0.0 => Err(NonPositiveLogArgError),
@@ -606,9 +606,9 @@ impl Function for SinFn {
         Box::new(self.clone())
     }
 
-    fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
+    fn evaluate(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         self.child
-            .apply(args)
+            .evaluate(args)
             .map(f64::sin)
     }
 
@@ -617,7 +617,10 @@ impl Function for SinFn {
     }
 
     fn derivative(&self, variable: &str) -> ChildFn {
-        CosFn::new(self.child.clone()).to_child_fn()
+        MulFn::new(
+            CosFn::new(self.child.clone()),
+            self.child.derivative(variable)
+        ).to_child_fn()
     }
 }
 
@@ -643,9 +646,9 @@ impl Function for CosFn {
         Box::new(self.clone())
     }
 
-    fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
+    fn evaluate(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         self.child
-            .apply(args)
+            .evaluate(args)
             .map(f64::cos)
     }
 
@@ -654,8 +657,10 @@ impl Function for CosFn {
     }
 
     fn derivative(&self, variable: &str) -> ChildFn {
-        ChildFn::default()
-        // CoefFn::new(-1, SinFn::new(self.child)).to_child_fn()
+        MulFn::new(
+            CoefFn::new(-1, SinFn::new(self.child.clone())),
+            self.child.derivative(variable)
+        ).to_child_fn()
     }
 }
 
@@ -681,8 +686,8 @@ impl Function for TanFn {
         Box::new(self.clone())
     }
 
-    fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
-        let child_value = self.child.apply(args)?;
+    fn evaluate(&self, args: &FnArgs) -> Result<f64, ApplyError> {
+        let child_value = self.child.evaluate(args)?;
 
         if child_value == FRAC_PI_2 {
             return Err(TanAtPiOverTwoError)
@@ -731,11 +736,11 @@ impl Function for SeqAddFn {
         Box::new(self.clone())
     }
 
-    fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
+    fn evaluate(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         let mut result: f64 = 0.0;
 
         for child in &self.children {
-            let child_result = child.apply(args)?;
+            let child_result = child.evaluate(args)?;
             result += child_result;
         }
         Ok(result)
@@ -776,11 +781,11 @@ impl Function for SeqMulFn {
         Box::new(self.clone())
     }
 
-    fn apply(&self, args: &FnArgs) -> Result<f64, ApplyError> {
+    fn evaluate(&self, args: &FnArgs) -> Result<f64, ApplyError> {
         let mut result: f64 = 1.0;
 
         for child in &self.children {
-            let child_result = child.apply(args)?;
+            let child_result = child.evaluate(args)?;
             result *= child_result;
         }
         Ok(result)
