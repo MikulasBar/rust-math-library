@@ -804,7 +804,19 @@ impl Function for SeqMulFn {
     }
 
     fn derivative(&self, variable: &str) -> ChildFn {
-        todo!()
+        let terms: Vec<_> = self.children.clone()
+            .into_iter()
+            .map(|c|
+                DivFn::new(
+                    c.derivative(variable),
+                    c
+                )
+            ).collect();
+
+        MulFn::new(
+            self.clone(),
+            SeqAddFn::new(terms)
+        ).to_child_fn()
     }
 }
 

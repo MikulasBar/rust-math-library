@@ -165,3 +165,18 @@ fn test_derivative_SeqAddFn() {
     assert_eq!(func.evaluate(&args), Ok(10.0));
     assert_eq!(dfunc.evaluate(&args), Ok(2.0));
 }
+
+#[test]
+fn test_derivative_SeqMulFn() {
+    let func = SeqMulFn::new(vec!["x", "y", "z", "x"]);
+    let dfunc = func.derivative("x");
+
+    let args = fn_args!(
+        "x" => 2,
+        "y" => 5,
+        "z" => 3
+    );
+
+    assert_eq!(func.evaluate(&args), Ok(60.0));
+    assert_eq!(dfunc.evaluate(&args), Ok(60.0));
+}
