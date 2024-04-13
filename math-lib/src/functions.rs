@@ -1,5 +1,6 @@
 use std::{
-    collections::HashMap, f64::consts::{E, FRAC_PI_2}, fmt::format
+    collections::HashMap, f64::consts::{E, FRAC_PI_2},
+    ops::Range
 };
 use core::fmt::Debug;
 
@@ -11,12 +12,27 @@ use crate::{
         type_of,
     },
 };
+use maplit::hashmap;
 use ChildFn::*;
 use EvalError::*;
 
 
-pub type FnArgs<'a> = HashMap<&'a str, f64>;
 
+const FUNCTION_TYPE_ERROR: &str = "Functions of this type cannot use implicit definition of the this function, \n
+    implement this function / change function type in get_type function";
+const DEFUALT_VALUE_INFINITY: f64 = 10000.0;
+
+enum LimitValue {
+    PlusInfinity,
+    MinusInfinity,
+    Number(f64)
+}
+
+impl LimitValue {
+    fn value_of_infinity() -> f64 {
+        DEFUALT_VALUE_INFINITY
+    }
+}
 
 pub enum FunctionType<'a> {
     None,
@@ -28,12 +44,26 @@ pub enum FunctionType<'a> {
 pub trait Function {
     /// This function needs to be implemented, so `ChildFn` can be cloned 
     fn clone_box(&self) -> Box<dyn Function>;
-    fn evaluate(&self, args: &FnArgs) -> Result<f64, EvalError>;
+    fn evaluate(&self, args: &HashMap<&str, f64>) -> Result<f64, EvalError>;
     fn derivative(&self, variable: &str) -> ChildFn;
 
     fn get_type(&self) -> FunctionType {
         FunctionType::None
     }
+
+    // fn substitute(&self, args: &HashMap<&str, ChildFn>) -> ChildFn {
+    //     match self.get_type() {
+    //         FunctionType::Unary(c) => Self::c.substitute(args),
+    //         FunctionType::Binary(l, r) => {
+    //             l.substitute(args);
+    //             r.substitute(args);
+    //         },
+    //         FunctionType::Variadic(mut v) => {
+    //             v.iter_mut().map(|c| c.substitute(args));
+    //         },
+    //         FunctionType::None => panic!("{}", FUNCTION_TYPE_ERROR)
+    //     }
+    // }
 
     fn get_string_tree(&self) -> String {
         let name = type_of(&self);
@@ -56,10 +86,7 @@ pub trait Function {
 
                 result
             },
-            FunctionType::None => panic!(
-                "Functions of type None cannot uses implicit definition of the this function, \n
-                implement this function / change function type in get_type function"
-            )
+            FunctionType::None => panic!("{}", FUNCTION_TYPE_ERROR)
         };
 
         format!("{} {{ {} }}", name, body)
@@ -77,11 +104,20 @@ pub trait Function {
                 v.iter()
                     .any(|c| c.depends_on(variable))
             }
-            FunctionType::None => panic!(
-                "Functions of type None cannot uses implicit definition of the this function, \n
-                implement this function / change function type in get_type function"
-            )
+            FunctionType::None => panic!("{}", FUNCTION_TYPE_ERROR)
         }
+    }
+
+    fn sum(&self, variable: &str, range: Range<i32>) -> Result<f64, EvalError> {
+        let mut result = 0.0;
+
+        for i in range {
+            let args = hashmap! {
+                variable => i as f64
+            };
+            result += self.evaluate(&args)?;
+        }
+        Ok(result)
     }
 }
 
@@ -153,7 +189,7 @@ impl Function for ChildFn {
         Box::new(self.clone())
     }
 
-    fn evaluate(&self, args: &FnArgs) -> Result<f64, EvalError> {
+    fn evaluate(&self, args: &HashMap<&str, f64>) -> Result<f64, EvalError> {
         match self {
             Fn(f) => f.evaluate(args),
             Const(c) => Ok(*c),
@@ -230,7 +266,7 @@ impl Function for AddFn {
         Box::new(self.clone())
     }
 
-    fn evaluate(&self, args: &FnArgs) -> Result<f64, EvalError> {
+    fn evaluate(&self, args: &HashMap<&str, f64>) -> Result<f64, EvalError> {
         let left = self.left.evaluate(args)?;
         let right = self.right.evaluate(args)?;
 
@@ -274,7 +310,7 @@ impl Function for SubFn {
         Box::new(self.clone())
     }
 
-    fn evaluate(&self, args: &FnArgs) -> Result<f64, EvalError> {
+    fn evaluate(&self, args: &HashMap<&str, f64>) -> Result<f64, EvalError> {
         let left = self.left.evaluate(args)?;
         let right = self.right.evaluate(args)?;
 
@@ -318,7 +354,7 @@ impl Function for MulFn {
         Box::new(self.clone())
     }
 
-    fn evaluate(&self, args: &FnArgs) -> Result<f64, EvalError> {
+    fn evaluate(&self, args: &HashMap<&str, f64>) -> Result<f64, EvalError> {
         let left = self.left.evaluate(args)?;
         let right = self.right.evaluate(args)?;
 
@@ -372,7 +408,7 @@ impl Function for DivFn {
         Box::new(self.clone())
     }
 
-    fn evaluate(&self, args: &FnArgs) -> Result<f64, EvalError> {
+    fn evaluate(&self, args: &HashMap<&str, f64>) -> Result<f64, EvalError> {
         let num_value = self.numerator.evaluate(args)?;
         let den_value = self.denominator.evaluate(args)?;
 
@@ -441,7 +477,7 @@ impl Function for CoefFn {
         Box::new(self.clone())
     }
 
-    fn evaluate(&self, args: &FnArgs) -> Result<f64, EvalError> {
+    fn evaluate(&self, args: &HashMap<&str, f64>) -> Result<f64, EvalError> {
         let child_value = self.child.evaluate(args)?;
 
         Ok(self.coefficient * child_value)
@@ -487,7 +523,7 @@ impl Function for ExpFn {
         Box::new(self.clone())
     }
 
-    fn evaluate(&self, args: &FnArgs) -> Result<f64, EvalError> {
+    fn evaluate(&self, args: &HashMap<&str, f64>) -> Result<f64, EvalError> {
         let base_value = self.base.evaluate(args)?;
         let exp_value = self.exponent.evaluate(args)?;
 
@@ -549,7 +585,7 @@ impl Function for LogFn {
         Box::new(self.clone())
     }
 
-    fn evaluate(&self, args: &FnArgs) -> Result<f64, EvalError> {
+    fn evaluate(&self, args: &HashMap<&str, f64>) -> Result<f64, EvalError> {
         let base_value = self.base.evaluate(args)?;
         let arg_value = self.argument.evaluate(args)?;
 
@@ -606,7 +642,7 @@ impl Function for SinFn {
         Box::new(self.clone())
     }
 
-    fn evaluate(&self, args: &FnArgs) -> Result<f64, EvalError> {
+    fn evaluate(&self, args: &HashMap<&str, f64>) -> Result<f64, EvalError> {
         self.child
             .evaluate(args)
             .map(f64::sin)
@@ -646,7 +682,7 @@ impl Function for CosFn {
         Box::new(self.clone())
     }
 
-    fn evaluate(&self, args: &FnArgs) -> Result<f64, EvalError> {
+    fn evaluate(&self, args: &HashMap<&str, f64>) -> Result<f64, EvalError> {
         self.child
             .evaluate(args)
             .map(f64::cos)
@@ -686,7 +722,7 @@ impl Function for TanFn {
         Box::new(self.clone())
     }
 
-    fn evaluate(&self, args: &FnArgs) -> Result<f64, EvalError> {
+    fn evaluate(&self, args: &HashMap<&str, f64>) -> Result<f64, EvalError> {
         let child_value = self.child.evaluate(args)?;
 
         if child_value == FRAC_PI_2 {
@@ -739,7 +775,7 @@ impl Function for SeqAddFn {
         Box::new(self.clone())
     }
 
-    fn evaluate(&self, args: &FnArgs) -> Result<f64, EvalError> {
+    fn evaluate(&self, args: &HashMap<&str, f64>) -> Result<f64, EvalError> {
         let mut result: f64 = 0.0;
 
         for child in &self.children {
@@ -789,7 +825,7 @@ impl Function for SeqMulFn {
         Box::new(self.clone())
     }
 
-    fn evaluate(&self, args: &FnArgs) -> Result<f64, EvalError> {
+    fn evaluate(&self, args: &HashMap<&str, f64>) -> Result<f64, EvalError> {
         let mut result: f64 = 1.0;
 
         for child in &self.children {

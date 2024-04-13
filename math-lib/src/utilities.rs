@@ -1,4 +1,6 @@
-use std::any::type_name;
+use std::{
+    any::type_name,
+};
 
 use crate::{
     functions::*,
@@ -52,15 +54,15 @@ pub fn type_of<T>(_: T) -> &'static str {
 
 
 
-#[macro_export]
-macro_rules! fn_args {
-    ($($key:expr => $value:expr),* $(,)?) => {
-        {
-            let mut args = FnArgs::new();
-            $(
-                args.insert($key, $value as f64);
-            )*
-            args
-        }
-    };
-}
+// #[macro_export]
+// macro_rules! hashmap {
+//     ($($key:expr => $value:expr),* $(,)?) => {
+//         {
+//             let mut args: HashMap<&str, f64> = HashMap::new();
+//             $(
+//                 args.insert($key, $value as f64);
+//             )*
+//             args
+//         }
+//     };
+// }

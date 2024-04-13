@@ -1,5 +1,7 @@
 use derive_more::Display;
+use maplit::hashmap;
 use std::{
+    collections::HashMap,
     f64::consts::{E, PI},
 };
 use antlr_rust::{
@@ -7,13 +9,16 @@ use antlr_rust::{
     tree::{ParseTree, ParseTreeVisitorCompat},
     InputStream
 };
-use crate::{fn_args, visitor::MathVisitor};
-use crate::functions::*;
-use crate::utilities::*;
-use crate::antlr_parser::{
-    mathlexer::*,
-    mathparser::*,
-    mathvisitor::*,
+
+use crate::{
+    functions::*,
+    utilities::*,
+    visitor::MathVisitor,
+    antlr_parser::{
+        mathlexer::*,
+        mathparser::*,
+        mathvisitor::*,
+    }
 };
 
 
@@ -173,7 +178,7 @@ impl Function for FnTree {
         Box::new(self.clone())
     }
 
-    fn evaluate(&self, args: &FnArgs) -> Result<f64, EvalError> {
+    fn evaluate(&self, args: &HashMap<&str, f64>) -> Result<f64, EvalError> {
         self.definition.evaluate(args)
     }
 
@@ -196,11 +201,10 @@ fn test_parser() {
     let func = fn_result.unwrap();
     let dfunc = func.derivative("x");
 
-    let args = fn_args!{
-        "x" => 2,
-        "y" => 4,
+    let args = hashmap!{
+        "x" => 2.0,
+        "y" => 4.0,
     };
-
 
     assert_eq!(func.evaluate(&args), Ok(5.0));
     assert_eq!(dfunc.evaluate(&args), Ok(-PI));

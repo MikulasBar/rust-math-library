@@ -1,29 +1,27 @@
 // --> see visitor on https://github.com/rrevenantt/antlr4rust/blob/master/tests/visitors_tests.rs
 #![cfg_attr(test, warn(unused_imports))]
 
-use std::f64::consts::{E, PI};
-
 use antlr_rust::{
     common_token_stream::CommonTokenStream,
     tree::{ParseTree, ParseTreeVisitorCompat},
     InputStream
 };
 
-use crate::{antlr_parser::{
-    mathlexer::*,
-    mathparser::*,
-    mathvisitor::*
-}, function_tree::DefaultParsingRules, visitor};
 use crate::{
+    antlr_parser::{
+        mathlexer::*,
+        mathparser::*,
+        mathvisitor::*
+    },
+    functions::*,
+    utilities::*,
     function_tree::{
         ParsingResult,
         ParsingError,
         ParsingRules,
-    },
-    functions::*,
-    utilities::*,
-    fn_args,
+    }
 };
+
 
 
 pub struct MathVisitor{
