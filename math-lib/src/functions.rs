@@ -46,6 +46,7 @@ pub trait Function {
     fn clone_box(&self) -> Box<dyn Function>;
     fn evaluate(&self, args: &HashMap<&str, f64>) -> Result<f64, EvalError>;
     fn derivative(&self, variable: &str) -> ChildFn;
+    //fn simplify(&mut self);
 
     fn get_type(&self) -> FunctionType {
         FunctionType::None
@@ -233,6 +234,13 @@ impl Function for ChildFn {
             }
         }
     }
+
+    // fn simplify(&mut self) {
+    //     match self {
+    //         Fn(f) => f.simplify(),
+    //         _ => ()
+    //     }
+    // }
 }
 
 impl Default for ChildFn {

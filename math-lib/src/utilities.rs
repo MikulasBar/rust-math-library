@@ -50,19 +50,3 @@ pub fn type_of<T>(_: T) -> &'static str {
     let full_name = type_name::<T>();
     full_name.split("::").last().unwrap()
 }
-
-
-
-
-// #[macro_export]
-// macro_rules! hashmap {
-//     ($($key:expr => $value:expr),* $(,)?) => {
-//         {
-//             let mut args: HashMap<&str, f64> = HashMap::new();
-//             $(
-//                 args.insert($key, $value as f64);
-//             )*
-//             args
-//         }
-//     };
-// }
