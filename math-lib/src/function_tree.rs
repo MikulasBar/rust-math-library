@@ -119,13 +119,14 @@ pub struct FnParser {
 impl FnParser {
     pub fn new() -> Self {
         FnParser {
-            visitor: MathVisitor::new(
-                Box::new(DefaultParsingRules)
-            )
+            visitor: MathVisitor::new(DefaultParsingRules)
         }
     }
 
-    pub fn change_rules(&mut self, rules: Box<dyn ParsingRules>) {
+    pub fn change_rules<T>(&mut self, rules: T)
+    where
+        T: ParsingRules + 'static
+    {
         self.visitor = MathVisitor::new(rules);
     }
 

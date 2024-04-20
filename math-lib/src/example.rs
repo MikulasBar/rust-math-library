@@ -153,7 +153,6 @@ struct SecParsingRules;
 
 // implement ParsingRules trait for our custom rules 
 impl ParsingRules for SecParsingRules {
-
     // functions take string name and give specific value for it
     // this operation can fail
     // these function cannot be made into HashMap - trait would not be object safe
@@ -162,24 +161,20 @@ impl ParsingRules for SecParsingRules {
 
 
     fn get_constant(&self, name: &str) -> Option<f64> {
-        Some(
-            match name {
-                "pi" => PI,
-                _ => return None
-            }
-        )  
+        match name {
+            "pi" => Some(PI),
+            _ => return None
+        } 
     }
 
-    // takes arguments
     // this operation can fail because of the length of arguments
     fn get_function(&self, name: &str, mut args: Vec<ChildFn>) -> Option<ChildFn> {
-        Some(
-            if args.len() == 1 && name == "sec" {
-                args.pop().map(SecFn::new).to_child_fn() 
-            } else {
-                return None
-            }
-        )
+        if args.len() == 1 && name == "sec" {
+            return Some (
+                args.pop().map(SecFn::new).to_child_fn()
+            ) 
+        }
+        return None
     }
 }
 
@@ -191,7 +186,7 @@ fn complex_example() {
     let mut parser = FnParser::new();
 
     // change rules to your custom rules
-    parser.change_rules(Box::new(SecParsingRules));
+    parser.change_rules(SecParsingRules);
 
     let func = parser.parse("sec(pi * x)").unwrap();
 

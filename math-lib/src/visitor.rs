@@ -30,9 +30,12 @@ pub struct MathVisitor{
 }
 
 impl MathVisitor {
-    pub fn new(rules: Box<dyn ParsingRules>) -> Self {
+    pub fn new<T>(rules: T) -> Self
+    where
+        T: ParsingRules + 'static
+    {
         Self{
-            rules,
+            rules: Box::new(rules),
             temp: ParsingResult::default(),
         }  
     }
