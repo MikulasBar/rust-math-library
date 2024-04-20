@@ -20,19 +20,8 @@ use EvalError::*;
 
 const FUNCTION_TYPE_ERROR: &str = "Functions of this type cannot use implicit definition of the this function, \n
     implement this function / change function type in get_type function";
-const DEFUALT_VALUE_INFINITY: f64 = 10000.0;
 
-enum LimitValue {
-    PlusInfinity,
-    MinusInfinity,
-    Number(f64)
-}
 
-impl LimitValue {
-    fn value_of_infinity() -> f64 {
-        DEFUALT_VALUE_INFINITY
-    }
-}
 
 pub enum FunctionType<'a> {
     None,
@@ -41,42 +30,46 @@ pub enum FunctionType<'a> {
     Variadic(&'a Vec<ChildFn>)
 }
 
+// impl FunctionType<'_> {
+//     pub fn equal_to(&self, other: Self) -> bool {
+//         // use FunctionType::*;
+
+//         match other {
+//             // (None, None)
+//             // | (Unary(_), Unary(_))
+//             // | (Binary(_, _), Binary)=> true,
+//             // _ => false
+//             Self => true,
+//             _ => false
+//         }
+//     }
+// }
+
 pub trait Function {
     /// This function needs to be implemented, so `ChildFn` can be cloned 
     fn clone_box(&self) -> Box<dyn Function>;
     fn evaluate(&self, args: &HashMap<&str, f64>) -> Result<f64, EvalError>;
     fn derivative(&self, variable: &str) -> ChildFn;
-    //fn simplify(&mut self);
-
+    
     fn get_type(&self) -> FunctionType {
         FunctionType::None
     }
-
-    // fn substitute(&self, args: &HashMap<&str, ChildFn>) -> ChildFn {
-    //     match self.get_type() {
-    //         FunctionType::Unary(c) => Self::c.substitute(args),
-    //         FunctionType::Binary(l, r) => {
-    //             l.substitute(args);
-    //             r.substitute(args);
-    //         },
-    //         FunctionType::Variadic(mut v) => {
-    //             v.iter_mut().map(|c| c.substitute(args));
-    //         },
-    //         FunctionType::None => panic!("{}", FUNCTION_TYPE_ERROR)
-    //     }
-    // }
+    
+    fn substitute(&self, args: &HashMap<&str, ChildFn>) -> ChildFn;
 
     fn get_string_tree(&self) -> String {
+        use FunctionType::*;
+
         let name = type_of(&self);
         
         let body = match self.get_type() {
-            FunctionType::Unary(c) => c.get_string_tree(),
-            FunctionType::Binary(l, r) => format!{
+            Unary(c) => c.get_string_tree(),
+            Binary(l, r) => format!{
                 "{}, {}",
                 l.get_string_tree(),
                 r.get_string_tree(),
             },
-            FunctionType::Variadic(v) => {
+            Variadic(v) => {
                 let mut result = "".to_string();
 
                 for c in v {
@@ -87,25 +80,27 @@ pub trait Function {
 
                 result
             },
-            FunctionType::None => panic!("{}", FUNCTION_TYPE_ERROR)
+            None => panic!("{}", FUNCTION_TYPE_ERROR)
         };
 
         format!("{} {{ {} }}", name, body)
     }
 
     fn depends_on(&self, variable: &str) -> bool {
+        use FunctionType::*;
+
         match self.get_type() {
-            FunctionType::Unary(c) => c.depends_on(variable),
-            FunctionType::Binary(l, r) => {
+            Unary(c) => c.depends_on(variable),
+            Binary(l, r) => {
                 let left = l.depends_on(variable);
                 let right = r.depends_on(variable);
                 left || right
             },
-            FunctionType::Variadic(v) =>  {
+            Variadic(v) =>  {
                 v.iter()
                     .any(|c| c.depends_on(variable))
             }
-            FunctionType::None => panic!("{}", FUNCTION_TYPE_ERROR)
+            None => panic!("{}", FUNCTION_TYPE_ERROR)
         }
     }
 
@@ -146,9 +141,9 @@ impl PartialEq for EvalError {
 impl Clone for ChildFn {
     fn clone(&self) -> Self {
         match self {
-            ChildFn::Fn(f) => ChildFn::Fn(f.clone_box()),
-            ChildFn::Var(v) => ChildFn::Var(v.clone()),
-            ChildFn::Const(c) => ChildFn::Const(*c),
+            Fn(f) => ChildFn::Fn(f.clone_box()),
+            Var(v) => ChildFn::Var(v.clone()),
+            Const(c) => ChildFn::Const(*c),
         }
     }
 }
@@ -205,6 +200,19 @@ impl Function for ChildFn {
         }
     }
 
+    fn substitute(&self, args: &HashMap<&str, ChildFn>) -> ChildFn {
+        match self {
+            Const(_) => self.clone(),
+            Fn(f) => f.substitute(args),
+            Var(v) => {
+                if let Some(c) = args.get(&**v) {
+                    return c.clone().to_child_fn()
+                }
+                self.clone()
+            },
+        }
+    }
+
     fn get_string_tree(&self) -> String {
         match self {
             Const(c) => c.to_string(),
@@ -234,13 +242,6 @@ impl Function for ChildFn {
             }
         }
     }
-
-    // fn simplify(&mut self) {
-    //     match self {
-    //         Fn(f) => f.simplify(),
-    //         _ => ()
-    //     }
-    // }
 }
 
 impl Default for ChildFn {
@@ -279,6 +280,13 @@ impl Function for AddFn {
         let right = self.right.evaluate(args)?;
 
         Ok(left + right)
+    }
+
+    fn substitute(&self, args: &HashMap<&str, ChildFn>) -> ChildFn {
+        let left = self.left.substitute(args);
+        let right = self.right.substitute(args);
+
+        Self::new(left, right).to_child_fn()
     }
 
     fn get_type(&self) -> FunctionType {
@@ -325,6 +333,13 @@ impl Function for SubFn {
         Ok(left - right)
     }
 
+    fn substitute(&self, args: &HashMap<&str, ChildFn>) -> ChildFn {
+        let left = self.left.substitute(args);
+        let right = self.right.substitute(args);
+
+        Self::new(left, right).to_child_fn()
+    }
+
     fn get_type(&self) -> FunctionType {
         FunctionType::Binary(&self.left, &self.right)
     }
@@ -367,6 +382,13 @@ impl Function for MulFn {
         let right = self.right.evaluate(args)?;
 
         Ok(left * right)
+    }
+
+    fn substitute(&self, args: &HashMap<&str, ChildFn>) -> ChildFn {
+        let left = self.left.substitute(args);
+        let right = self.right.substitute(args);
+
+        Self::new(left, right).to_child_fn()
     }
 
     fn get_type(&self) -> FunctionType {
@@ -424,6 +446,13 @@ impl Function for DivFn {
             return Err(DivisionByZeroError)
         }
         Ok(num_value / den_value)
+    }
+
+    fn substitute(&self, args: &HashMap<&str, ChildFn>) -> ChildFn {
+        let num = self.numerator.substitute(args);
+        let denom = self.denominator.substitute(args);
+
+        Self::new(num, denom).to_child_fn()
     }
 
     fn get_type(&self) -> FunctionType {
@@ -491,6 +520,13 @@ impl Function for CoefFn {
         Ok(self.coefficient * child_value)
     }
 
+    fn substitute(&self, args: &HashMap<&str, ChildFn>) -> ChildFn {
+        let coef = self.coefficient.clone();
+        let child = self.child.substitute(args);
+
+        Self::new(coef, child).to_child_fn()
+    }
+
     fn depends_on(&self, variable: &str) -> bool {
         self.child.depends_on(variable)
     }
@@ -542,6 +578,13 @@ impl Function for ExpFn {
             return Err(NegativeEvenRootError)
         }
         Ok(base_value.powf(exp_value))
+    }
+
+    fn substitute(&self, args: &HashMap<&str, ChildFn>) -> ChildFn {
+        let base = self.base.substitute(args);
+        let exp = self.exponent.substitute(args);
+
+        Self::new(base, exp).to_child_fn()
     }
 
     fn get_type(&self) -> FunctionType {
@@ -605,6 +648,13 @@ impl Function for LogFn {
         }
     }
 
+    fn substitute(&self, args: &HashMap<&str, ChildFn>) -> ChildFn {
+        let base = self.base.substitute(args);
+        let arg = self.argument.substitute(args);
+
+        Self::new(base, arg).to_child_fn()
+    }
+
     fn get_type(&self) -> FunctionType {
         FunctionType::Binary(&self.base, &self.argument)
     }
@@ -656,6 +706,11 @@ impl Function for SinFn {
             .map(f64::sin)
     }
 
+    fn substitute(&self, args: &HashMap<&str, ChildFn>) -> ChildFn {
+        let child = self.child.substitute(args);
+        Self::new(child).to_child_fn()
+    }
+
     fn get_type(&self) -> FunctionType {
         FunctionType::Unary(&self.child)
     }
@@ -694,6 +749,11 @@ impl Function for CosFn {
         self.child
             .evaluate(args)
             .map(f64::cos)
+    }
+
+    fn substitute(&self, args: &HashMap<&str, ChildFn>) -> ChildFn {
+        let child = self.child.substitute(args);
+        Self::new(child).to_child_fn()
     }
 
     fn get_type(&self) -> FunctionType {
@@ -737,6 +797,11 @@ impl Function for TanFn {
             return Err(TanAtPiOverTwoError)
         }
         Ok(child_value.tan())
+    }
+
+    fn substitute(&self, args: &HashMap<&str, ChildFn>) -> ChildFn {
+        let child = self.child.substitute(args);
+        Self::new(child).to_child_fn()
     }
 
     fn get_type(&self) -> FunctionType {
@@ -793,6 +858,15 @@ impl Function for SeqAddFn {
         Ok(result)
     }
 
+    fn substitute(&self, args: &HashMap<&str, ChildFn>) -> ChildFn {
+        let children: Vec<ChildFn> = self.children.clone()
+            .into_iter()
+            .map(|c| c.substitute(args))
+            .collect();
+
+        Self::new(children).to_child_fn()
+    }
+
     fn get_type(&self) -> FunctionType {
         FunctionType::Variadic(&self.children)
     }
@@ -841,6 +915,15 @@ impl Function for SeqMulFn {
             result *= child_result;
         }
         Ok(result)
+    }
+
+    fn substitute(&self, args: &HashMap<&str, ChildFn>) -> ChildFn {
+        let children: Vec<ChildFn> = self.children.clone()
+            .into_iter()
+            .map(|c| c.substitute(args))
+            .collect();
+
+        Self::new(children).to_child_fn()
     }
 
     fn get_type(&self) -> FunctionType {

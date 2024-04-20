@@ -100,6 +100,11 @@ impl Function for SecFn {
         Ok(1.0 / denominator)
     }
 
+    fn substitute(&self, args: &HashMap<&str, ChildFn>) -> ChildFn {
+        let child = self.child.substitute(args);
+        Self::new(child).to_child_fn()
+    }
+
     // this function can be handy if your function is not special
     // automatically implements other functions for this type (get_string_tree, depends_on)
     // if you dont implement this function you cant use implicit definitions of function mentioned above
@@ -177,8 +182,6 @@ impl ParsingRules for SecParsingRules {
         )
     }
 }
-
-
 
 
 

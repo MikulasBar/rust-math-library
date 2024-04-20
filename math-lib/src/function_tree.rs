@@ -182,6 +182,10 @@ impl Function for FnTree {
         self.definition.evaluate(args)
     }
 
+    fn substitute(&self, args: &HashMap<&str, ChildFn>) -> ChildFn {
+        self.definition.substitute(args)
+    }
+
     fn get_string_tree(&self) -> String {
         self.string_tree.clone()
     }
