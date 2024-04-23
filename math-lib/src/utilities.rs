@@ -50,3 +50,13 @@ pub fn type_of<T>(_: T) -> &'static str {
     let full_name = type_name::<T>();
     full_name.split("::").last().unwrap()
 }
+
+
+
+
+// /// ```
+// /// assert!(5, 5);
+// /// 
+// /// 
+// /// ```
+// struct __Test;

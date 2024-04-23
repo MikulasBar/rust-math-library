@@ -1,62 +1,120 @@
+use core::fmt::Debug;
+use maplit::hashmap;
 use std::{
     collections::HashMap, f64::consts::{E, FRAC_PI_2},
-    ops::Range
 };
-use core::fmt::Debug;
 
-use crate::{
-    antlr_parser::mathlexer::mathLexer,
-    function_tree::FnTree,
-    utilities::{
-        ToChildFn,
-        type_of,
-    },
-};
-use maplit::hashmap;
+use crate::utilities::{type_of, ToChildFn};
 use ChildFn::*;
 use EvalError::*;
 
-
-
-const FUNCTION_TYPE_ERROR: &str = "Functions of this type cannot use implicit definition of the this function, \n
+/// Error you get if you use implicitly implemented function that only works if you implement `get_type` function in `Function` trait
+const FUNCTION_TYPE_ERROR: &str = "Function of this FunctionType cannot use implicit definition of the this function,
     implement this function / change function type in get_type function";
 
 
 
-pub enum FunctionType<'a> {
-    None,
-    Unary(&'a ChildFn),
-    Binary(&'a ChildFn, &'a ChildFn),
-    Variadic(&'a Vec<ChildFn>)
-}
-
-// impl FunctionType<'_> {
-//     pub fn equal_to(&self, other: Self) -> bool {
-//         // use FunctionType::*;
-
-//         match other {
-//             // (None, None)
-//             // | (Unary(_), Unary(_))
-//             // | (Binary(_, _), Binary)=> true,
-//             // _ => false
-//             Self => true,
-//             _ => false
-//         }
-//     }
-// }
-
+///# Functionality
+/// Implement this trait for your struct if you want to treat it like mathematical function
+/// 
+/// All functions that manipulates with objects should be implemented such that they will produce new object <br>
+/// Derive `Clone` trait for your struct <br>
+/// 
+/// Override implicit definition of `get_type` if you can <br>
+/// If you do that some functions don't have to be implemented
 pub trait Function {
-    /// This function needs to be implemented, so `ChildFn` can be cloned 
+
+    ///# Functionality
+    /// Clones `self` and wraps it in `Box`
+    /// 
+    /// Derive `Clone` trait for your struct, so you can implement this function <br> 
+    /// This function needs to be implemented, so `ChildFn` can be cloned
     fn clone_box(&self) -> Box<dyn Function>;
+
+    ///# Functionality 
+    /// Evaluate function with arguments <br>
+    /// Arguments are HashMap<&str, f64>
+    /// 
+    ///# Example
+    /// ```
+    /// let function = AddFn::new("x", "y");
+    /// 
+    /// // the args will substitute 2.0 for "x"
+    /// // and 3.0 for "y"
+    /// let args = hashmap!{
+    ///     "x" => 2.0,
+    ///     "y" => 3.0  
+    /// };
+    /// 
+    /// let result = function.evaluate(&args).unwrap();
+    /// let expected = 5.0;
+    /// 
+    /// assert_eq!(result, expected);
+    /// ```
     fn evaluate(&self, args: &HashMap<&str, f64>) -> Result<f64, EvalError>;
+
+    ///# Functionality
+    /// Takes derivative of function with respect to a variable <br>
+    /// All other variables will be treated like constants
+    /// 
+    /// The function shouldn't return self <br>
+    /// Instead use .clone() to make new object
+    /// 
+    ///# Example
+    /// ```
+    /// let function = AddFn::new("x", "y");
+    /// 
+    /// let derivative = function.derivative("x");
+    /// 
+    /// // derivative doesn't require any arguments
+    /// // since the derivative of x + y is 1 + 0
+    /// let args = hashmap!();
+    /// 
+    /// assert_eq!(1.0, derivative.evaluate(&args));
+    /// ```
     fn derivative(&self, variable: &str) -> ChildFn;
-    
+
+    ///# Functionality
+    /// Replace all matched variables with possibly non constant ChildFn
+    /// 
+    /// The function shouldn't return self <br>
+    /// Instead use .clone() to make new object
+    /// 
+    ///# Example
+    /// ```
+    /// let
+    /// ```
+    fn substitute(&self, args: &HashMap<&str, ChildFn>) -> ChildFn;
+
+    ///# Functionality
+    /// If you implement this function your self you don't have to implement some functions<br>
+    /// Functions that get_type will work on: `depends_on`, `get_string_tree`
+    /// 
+    /// In `get_type` function you have to specify type of your function <br>
+    /// The type depends on how many 'children' your struct can have
+    /// 
+    /// If you use implicit definition of function that requires get_type function to be implemented <br>
+    /// Or if this function returns `None` type your program will panic
+    /// 
+    ///# Example
+    /// ```
+    /// impl Function for AddFn {
+    ///     fn get_type(&self) -> FunctionType {
+    ///         // AddFn has binary type because it has two children: left + right side
+    ///         // You have to pass in the references to children, so other functions can use it
+    ///         FunctionType::Binary(&self.left, &self.right)
+    ///     }
+    ///     // ...
+    /// }
+    /// ```
     fn get_type(&self) -> FunctionType {
         FunctionType::None
     }
     
-    fn substitute(&self, args: &HashMap<&str, ChildFn>) -> ChildFn;
-
+    ///# Functionality
+    /// Simply returns string representation of `self` object
+    /// 
+    /// This function don't format the output (output has only 1 line)
     fn get_string_tree(&self) -> String {
         use FunctionType::*;
 
@@ -86,6 +144,21 @@ pub trait Function {
         format!("{} {{ {} }}", name, body)
     }
 
+    ///# Functionality
+    /// Checks if `self` object is dependent on variable
+    /// 
+    ///# Example
+    /// ```
+    /// let function = AddFn::new("x", "y");
+    /// 
+    /// let depends_on_x = function.depends_on("x");
+    /// let depends_on_z = function.depends_on("z");
+    /// 
+    /// assert!(depends_on_x);
+    /// 
+    /// // this assertion will fail
+    /// assert!(depends_on_z);
+    /// ```
     fn depends_on(&self, variable: &str) -> bool {
         use FunctionType::*;
 
@@ -104,20 +177,48 @@ pub trait Function {
         }
     }
 
-    fn sum(&self, variable: &str, range: Range<i32>) -> Result<f64, EvalError> {
-        let mut result = 0.0;
+    // fn sum(&self, variable: &str, range: Range<i32>) -> Result<f64, EvalError> {
+    //     let mut result = 0.0;
 
-        for i in range {
-            let args = hashmap! {
-                variable => i as f64
-            };
-            result += self.evaluate(&args)?;
-        }
-        Ok(result)
-    }
+    //     for i in range {
+    //         let args = hashmap! {
+    //             variable => i as f64
+    //         };
+    //         result += self.evaluate(&args)?;
+    //     }
+    //     Ok(result)
+    // }
 }
 
 
+
+
+///# Functionality
+/// Helps recognizing how many children struct has <br>
+/// Stores references to all the children
+pub enum FunctionType<'a> {
+
+    /// Default type of struct <br>
+    /// Struct with this type can't use implicit definitions of some functions in `Function` trait 
+    None,
+
+    /// Has only one child
+    Unary(&'a ChildFn),
+
+    /// Has two children <br>
+    /// often usecase is binary operators: `+ - * /`
+    Binary(&'a ChildFn, &'a ChildFn),
+
+    /// You can use it if you have 1 or more children <br>
+    /// Recommended only for structs that have 3 or more children <br>
+    /// 
+    /// Works even if number of children can be changed
+    Variadic(&'a Vec<ChildFn>)
+}
+
+///# Functionality
+/// Enum with all errors that can occur during evaluating function <br>
+/// contains only errors for elementary functions
 #[derive(Debug)]
 pub enum EvalError {
     DivisionByZeroError,
