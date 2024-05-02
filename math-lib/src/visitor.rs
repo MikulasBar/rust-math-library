@@ -23,13 +23,16 @@ use crate::{
 };
 
 
+/// Visitor for parsing math expressions
+pub struct Visitor {
 
-pub struct MathVisitor{
+    /// Parsing rules for visitor
+    /// Contains rules for parsing functions and constants
     rules: Box<dyn ParsingRules>,
     temp: ParsingResult
 }
 
-impl MathVisitor {
+impl Visitor {
     pub fn new<T>(rules: T) -> Self
     where
         T: ParsingRules + 'static
@@ -42,7 +45,7 @@ impl MathVisitor {
 }
 
 
-impl ParseTreeVisitorCompat<'_> for MathVisitor {
+impl ParseTreeVisitorCompat<'_> for Visitor {
     type Node = mathParserContextType;
     type Return = ParsingResult;
 
@@ -50,17 +53,19 @@ impl ParseTreeVisitorCompat<'_> for MathVisitor {
         &mut self.temp
     }
 
-    fn aggregate_results(&self, aggregate: Self::Return, next: Self::Return) -> Self::Return {
-        panic!("This should not be reacheble")
+    fn aggregate_results(&self, _: Self::Return, _: Self::Return) -> Self::Return {
+        unreachable!()
     }
 }
 
-impl mathVisitorCompat<'_> for MathVisitor {
+impl mathVisitorCompat<'_> for Visitor {
+    /// Visit root of the tree
     fn visit_root(&mut self, ctx: &RootContext<'_>) -> Self::Return {
         self.visit(&*ctx.expr().unwrap())
     }
     
-
+    /// Visit number <br>
+    /// Returns constant
     fn visit_number(&mut self, ctx: &NumberContext<'_>) -> Self::Return {
         ParsingResult::Ok(
             ChildFn::Const(
@@ -73,6 +78,10 @@ impl mathVisitorCompat<'_> for MathVisitor {
         )
     }
 
+    /// Visit variable <br>
+    /// Checks if variable is constant <br>
+    /// If it is constant, returns constant <br>
+    /// Else returns variable
     fn visit_var(&mut self, ctx: &VarContext<'_>) -> Self::Return {
         let name = ctx.ID()
             .unwrap()
@@ -88,10 +97,14 @@ impl mathVisitorCompat<'_> for MathVisitor {
         )
     }
 
+    /// Visit expression in parentheses <br>
+    /// Returns the expression
     fn visit_parens(&mut self, ctx: &ParensContext<'_>) -> Self::Return {
         self.visit(&*ctx.expr().unwrap())
     }
 
+    /// Visit addition or subtraction <br>
+    /// Returns `AddFn` or `SubFn` or `ParsingError`
     fn visit_add(&mut self, ctx: &AddContext<'_>) -> Self::Return {
         let left = self.visit(&*ctx.expr(0).unwrap());
         let right = self.visit(&*ctx.expr(1).unwrap());
@@ -115,6 +128,8 @@ impl mathVisitorCompat<'_> for MathVisitor {
         )
     }
 
+    /// Visit multiplication or division <br>
+    /// Returns `MulFn` or `DivFn` or `ParsingError`
     fn visit_multiply(&mut self, ctx: &MultiplyContext<'_>) -> Self::Return {
         let left = self.visit(&*ctx.expr(0).unwrap());
         let right = self.visit(&*ctx.expr(1).unwrap());
@@ -138,6 +153,8 @@ impl mathVisitorCompat<'_> for MathVisitor {
         )
     }
 
+    /// Visit exponentiation <br>
+    /// Returns `ExpFn` or `ParsingError`
     fn visit_power(&mut self, ctx: &PowerContext<'_>) -> Self::Return {
         let base = self.visit(&*ctx.expr(0).unwrap());
         let power = self.visit(&*ctx.expr(1).unwrap());
@@ -158,6 +175,8 @@ impl mathVisitorCompat<'_> for MathVisitor {
         )
     }
 
+    /// Visit logarithm <br>
+    /// Returns `LogFn` or `ParsingError`
     fn visit_log(&mut self, ctx: &LogContext<'_>) -> Self::Return {
         let base = self.visit(&*ctx.expr(0).unwrap());
         let arg = self.visit(&*ctx.expr(1).unwrap());
@@ -178,6 +197,9 @@ impl mathVisitorCompat<'_> for MathVisitor {
         )
     }
 
+    /// Visit custom function with arguments <br>
+    /// function is matched with rules of parsing <br>
+    /// Returns `ChildFn` or `ParsingError`
     fn visit_function(&mut self, ctx: &FunctionContext<'_>) -> Self::Return {
         let name = ctx.ID().unwrap().get_text();
         let result_args: Vec<ParsingResult> = ctx.expr_all()

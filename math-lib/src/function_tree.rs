@@ -13,7 +13,7 @@ use antlr_rust::{
 use crate::{
     functions::*,
     utilities::*,
-    visitor::MathVisitor,
+    visitor::Visitor,
     antlr_parser::{
         mathlexer::*,
         mathparser::*,
@@ -113,13 +113,13 @@ impl ParsingRules for DefaultParsingRules {
 
 
 pub struct FnParser {
-    visitor: MathVisitor,
+    visitor: Visitor,
 }
 
 impl FnParser {
     pub fn new() -> Self {
         FnParser {
-            visitor: MathVisitor::new(DefaultParsingRules)
+            visitor: Visitor::new(DefaultParsingRules)
         }
     }
 
@@ -127,7 +127,7 @@ impl FnParser {
     where
         T: ParsingRules + 'static
     {
-        self.visitor = MathVisitor::new(rules);
+        self.visitor = Visitor::new(rules);
     }
 
     pub fn parse(&mut self, input: &str) -> Result<FnTree, ParsingError> {

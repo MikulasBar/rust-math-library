@@ -1,13 +1,10 @@
-use std::{
-    any::type_name,
-};
+use std::any::type_name;
 
-use crate::{
-    functions::*,
-};
+use crate::functions::*;
 
-// trait for converting a type to a ChildFn
-// used instead of Into<ChildFn> because Into cannot be used to convert Function dynamic object
+
+/// Trait for converting a type to a ChildFn <br>
+/// Used instead of Into<ChildFn> because Into cannot be used to convert Function dynamic object
 pub trait ToChildFn {
     fn to_child_fn(self) -> ChildFn;
 }
@@ -26,13 +23,13 @@ impl ToChildFn for f64 {
 
 impl ToChildFn for &str {
     fn to_child_fn(self) -> ChildFn {
-        ChildFn::Var(Into::into(self))
+        ChildFn::Var(self.to_string())
     }
 }
 
 impl ToChildFn for String {
     fn to_child_fn(self) -> ChildFn {
-        ChildFn::Var(self.into_boxed_str())
+        ChildFn::Var(self)
     }
 }
 
@@ -45,7 +42,17 @@ impl<T: Function + 'static> ToChildFn for Option<T> {
     }
 }
 
-
+/// Get type name of a variable and converts it to string format <br>
+/// Example: <br>
+/// ```
+/// let a = 5;
+/// let b = "hello";
+/// let c = 5.0;
+/// 
+/// assert_eq!(type_of(a), "i32");
+/// assert_eq!(type_of(b), "&str");
+/// assert_eq!(type_of(c), "f64");
+/// ```
 pub fn type_of<T>(_: T) -> &'static str {
     let full_name = type_name::<T>();
     full_name.split("::").last().unwrap()
