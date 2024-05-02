@@ -52,11 +52,3 @@ pub fn type_of<T>(_: T) -> &'static str {
 }
 
 
-
-
-// /// ```
-// /// assert!(5, 5);
-// /// 
-// /// 
-// /// ```
-// struct __Test;

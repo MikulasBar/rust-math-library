@@ -1,5 +1,6 @@
 use core::fmt::Debug;
 use maplit::hashmap;
+use std::ops::Range;
 use std::{
     collections::HashMap, f64::consts::{E, FRAC_PI_2},
 };
@@ -73,6 +74,17 @@ pub trait Function {
     /// assert_eq!(1.0, derivative.evaluate(&args));
     /// ```
     fn derivative(&self, variable: &str) -> ChildFn;
+
+    ///# Functionality
+    /// Takes nth derivative of function with respect to a `variable` <br>
+    fn nth_derivative(&self, variable: &str, n: u32) -> ChildFn {
+        let mut result = self.derivative(variable);
+
+        for _ in 0..n-1 {
+            result = result.derivative(variable);
+        }
+        result.to_child_fn()
+    }
 
     ///# Functionality
     /// Replace all matched variables with possibly non constant ChildFn
@@ -177,17 +189,20 @@ pub trait Function {
         }
     }
 
-    // fn sum(&self, variable: &str, range: Range<i32>) -> Result<f64, EvalError> {
-    //     let mut result = 0.0;
+    ///# Functionality
+    /// Sums function over range of values <br>
+    /// evaluated function is treated as a function of `variable`
+    fn sum(&self, variable: &str, range: Range<i64>) -> Result<f64, EvalError> {
+        let mut result = 0.0;
 
-    //     for i in range {
-    //         let args = hashmap! {
-    //             variable => i as f64
-    //         };
-    //         result += self.evaluate(&args)?;
-    //     }
-    //     Ok(result)
-    // }
+        for i in range {
+            let args = hashmap! {
+                variable => i as f64
+            };
+            result += self.evaluate(&args)?;
+        }
+        Ok(result)
+    }
 }
 
 
@@ -221,15 +236,29 @@ pub enum FunctionType<'a> {
 /// contains only errors for elementary functions
 #[derive(Debug)]
 pub enum EvalError {
+    /// Error that occurs when you divide by zero
     DivisionByZeroError,
+
+    /// Error that occurs when you try to take square root of negative number
     NegativeEvenRootError,
+
+    /// Error that occurs when you try to take logarithm of non positive number
     NonPositiveLogArgError,
+
+    /// Error that occurs when you try to take logarithm with non positive base
     NonPositiveLogBaseError,
+
+    /// Error that occurs when you try to take logarithm with base 1
     LogBaseOneError,
+
+    /// Error that occurs when you try to take root of negative number with non integer exponent
     NegativeBaseNonIntegerExponentError,
+
+    /// Error that occurs when you try to take tangent of pi/2 or its multiples
     TanAtPiOverTwoError,
 
-    ParameterNotFoundError(Box<str>),
+    /// Error that occurs when you try to access parameter that doesn't exist
+    ParameterNotFoundError(String),
 }
 
 impl PartialEq for EvalError {
@@ -239,44 +268,47 @@ impl PartialEq for EvalError {
 }
 
 
+/// Type used for fields like `child` or `exponent` ... <br>
+/// Can store function, variable or constant
+pub enum ChildFn {
+    Fn(Box<dyn Function>),
+    Var(String),
+    Const(f64)
+}
+
+
+impl ChildFn {
+    ///# Functionality
+    /// checks if `self` is function
+    pub fn is_function(&self) -> bool {
+        matches!(self, Fn(_))
+    }
+
+    ///# Functionality
+    /// checks if `self` is variable
+    pub fn is_var(&self) -> bool {
+        matches!(self, Var(_))
+    }
+
+    ///# Functionality
+    /// checks if `self` is constant
+    pub fn is_const(&self) -> bool {
+        matches!(self, Const(_))
+    }
+}
+
+impl Default for ChildFn {
+    fn default() -> Self {
+        Const(0.0)
+    }
+}
+
 impl Clone for ChildFn {
     fn clone(&self) -> Self {
         match self {
             Fn(f) => ChildFn::Fn(f.clone_box()),
             Var(v) => ChildFn::Var(v.clone()),
             Const(c) => ChildFn::Const(*c),
-        }
-    }
-}
-
-
-/// Type used for fields like `child` or `exponent` ...
-pub enum ChildFn {
-    Fn(Box<dyn Function>),
-    Var(Box<str>),
-    Const(f64)
-}
-
-
-impl ChildFn {  
-    pub fn is_function(&self) -> bool {
-        match *self {
-            Fn(_) => true,
-            _ => false
-        }
-    }
-
-    pub fn is_var(&self) -> bool {
-        match *self {
-            Var(_) => true,
-            _ => false
-        }
-    }
-
-    pub fn is_const(&self) -> bool {
-        match *self {
-            Const(_) => true,
-            _ => false
         }
     }
 }
@@ -291,11 +323,9 @@ impl Function for ChildFn {
             Fn(f) => f.evaluate(args),
             Const(c) => Ok(*c),
             Var(v) => {
-                match args.get(v.as_ref()) {
+                match args.get(v.as_str()) {
                     Some(&value) => Ok(value),
-                    _ => {
-                        Err(ParameterNotFoundError(v.clone()))
-                    }
+                    _ => Err(ParameterNotFoundError(v.clone()))
                 }
             },
         }
@@ -345,13 +375,24 @@ impl Function for ChildFn {
     }
 }
 
-impl Default for ChildFn {
-    fn default() -> Self {
-        Const(0.0)
-    }
-}
 
-
+///# Functionality
+/// Struct that represents function that is sum of only two expressions
+/// 
+///# Example
+/// ```
+/// let function = AddFn::new("x", "y");
+/// 
+/// let args = hashmap!{
+///     "x" => 2.0,
+///     "y" => 3.0
+/// };
+/// 
+/// let result = function.evaluate(&args).unwrap();
+/// let expected = 5.0;
+/// 
+/// assert_eq!(result, expected);
+/// ```
 #[derive(Clone)]
 pub struct AddFn {
     left: ChildFn,
@@ -403,6 +444,23 @@ impl Function for AddFn {
 }
 
 
+///# Functionality
+/// Struct that represents function that is difference of only two expressions
+/// 
+/// # Example
+/// ```
+/// let function = SubFn::new("x", "y");
+/// 
+/// let args = hashmap!{
+///     "x" => 2.0,
+///     "y" => 3.0
+/// };
+/// 
+/// let result = function.evaluate(&args).unwrap();
+/// let expected = -1.0;
+/// 
+/// assert_eq!(result, expected);
+/// ```
 #[derive(Clone)]
 pub struct SubFn {
     left: ChildFn,
@@ -454,6 +512,23 @@ impl Function for SubFn {
 }
 
 
+///# Functionality
+/// Struct that represents function that is product of only two expressions
+/// 
+/// # Example
+/// ```
+/// let function = MulFn::new("x", "y");
+/// 
+/// let args = hashmap!{
+///     "x" => 2.0,
+///     "y" => 3.0
+/// };
+/// 
+/// let result = function.evaluate(&args).unwrap();
+/// let expected = 6.0;
+/// 
+/// assert_eq!(result, expected);
+/// ```
 #[derive(Clone)]
 pub struct MulFn {
     left: ChildFn,
@@ -515,6 +590,23 @@ impl Function for MulFn {
 }
 
 
+///# Functionality
+/// Struct that represents function that is division of only two expressions
+/// 
+/// # Example
+/// ```
+/// let function = DivFn::new("x", "y");
+/// 
+/// let args = hashmap!{
+///     "x" => 2.0,
+///     "y" => 3.0
+/// };
+/// 
+/// let result = function.evaluate(&args).unwrap();
+/// let expected = 2.0 / 3.0;
+/// 
+/// assert_eq!(result, expected);
+/// ```
 #[derive(Clone)]
 pub struct DivFn {
     numerator: ChildFn,
@@ -590,7 +682,22 @@ impl Function for DivFn {
 }
 
 
-/// This function is used for adding coefficient without using `SeqMulFn` <br>
+///# Functionality
+/// Struct that represents function that has coefficient in front of it
+/// 
+/// # Example
+/// ```
+/// let function = CoefFn::new(2.0, "x");
+/// 
+/// let args = hashmap!{
+///     "x" => 3.0
+/// };
+/// 
+/// let result = function.evaluate(&args).unwrap();
+/// let expected = 6.0;
+/// 
+/// assert_eq!(result, expected);
+/// ```
 #[derive(Clone)]
 pub struct CoefFn {
     coefficient: f64,
@@ -644,6 +751,22 @@ impl Function for CoefFn {
 }
 
 
+///# Functionality
+/// Struct that represents function that is exponentiation of two expressions
+/// 
+/// # Example
+/// ```
+/// let function = ExpFn::new("x", "y");
+/// 
+/// let args = hashmap!{
+///     "x" => 2.0,
+///     "y" => 3.0
+/// };
+/// 
+/// let result = function.evaluate(&args).unwrap();
+/// let expected = 8.0;
+/// 
+/// assert_eq!(result, expected);
 #[derive(Clone)]
 pub struct ExpFn {
     base: ChildFn,
@@ -713,6 +836,23 @@ impl Function for ExpFn {
 }
 
 
+///# Functionality
+/// Struct that represents function that is logarithm of expression with base
+/// 
+/// # Example
+/// ```
+/// let function = LogFn::new("x", "y");
+/// 
+/// let args = hashmap!{
+///     "x" => 2.0
+///     "y" => 8.0
+/// };
+/// 
+/// let result = function.evaluate(&args).unwrap();
+/// let expected = 3.0;
+/// 
+/// assert_eq!(result, expected);
+/// ```
 #[derive(Clone)]
 pub struct LogFn {
     base: ChildFn,
@@ -780,6 +920,22 @@ impl Function for LogFn {
 }
 
 
+///# Functionality
+/// Struct that represents function that is sine of expression
+/// 
+/// # Example
+/// ```
+/// let function = SinFn::new("x");
+/// 
+/// let args = hashmap!{
+///     "x" => 0.0
+/// };
+/// 
+/// let result = function.evaluate(&args).unwrap();
+/// let expected = 0.0;
+/// 
+/// assert_eq!(result, expected);
+/// ```
 #[derive(Clone)]
 pub struct SinFn {
     child: ChildFn
@@ -825,6 +981,22 @@ impl Function for SinFn {
 }
 
 
+///# Functionality
+/// Struct that represents function that is cosine of expression
+/// 
+/// # Example
+/// ```
+/// let function = CosFn::new("x");
+/// 
+/// let args = hashmap!{
+///     "x" => 0.0
+/// };
+/// 
+/// let result = function.evaluate(&args).unwrap();
+/// let expected = 1.0;
+/// 
+/// assert_eq!(result, expected);
+/// ```
 #[derive(Clone)]
 pub struct CosFn {
     child: ChildFn
@@ -870,6 +1042,22 @@ impl Function for CosFn {
 }
 
 
+///# Functionality
+/// Struct that represents function that is tangent of expression
+/// 
+/// # Example
+/// ```
+/// let function = TanFn::new("x");
+/// 
+/// let args = hashmap!{
+///     "x" => 0.0
+/// };
+/// 
+/// let result = function.evaluate(&args).unwrap();
+/// let expected = 0.0;
+/// 
+/// assert_eq!(result, expected);
+/// ```
 #[derive(Clone)]
 pub struct TanFn {
     child: ChildFn
@@ -924,6 +1112,24 @@ impl Function for TanFn {
 // Seq stands for sequence,
 // it means the function has arbitrary number of children 
 
+///# Functionality
+/// Struct that represents function that is sum of arbitrary number of expressions
+/// 
+/// # Example
+/// ```
+/// let function = SeqAddFn::new(vec!["x", "y", "z"]);
+/// 
+/// let args = hashmap!{
+///     "x" => 1.0,
+///     "y" => 2.0,
+///     "z" => 3.0
+/// };
+/// 
+/// let result = function.evaluate(&args).unwrap();
+/// let expected = 6.0;
+/// 
+/// assert_eq!(result, expected);
+/// ```
 #[derive(Clone)]
 pub struct SeqAddFn {           
     children: Vec<ChildFn>
@@ -983,6 +1189,24 @@ impl Function for SeqAddFn {
 }
 
 
+///# Functionality
+/// Struct that represents function that is product of arbitrary number of expressions
+/// 
+/// # Example
+/// ```
+/// let function = SeqMulFn::new(vec!["x", "y", "z"]);
+/// 
+/// let args = hashmap!{
+///     "x" => 1.0,
+///     "y" => 2.0,
+///     "z" => 3.0
+/// };
+/// 
+/// let result = function.evaluate(&args).unwrap();
+/// let expected = 6.0;
+/// 
+/// assert_eq!(result, expected);
+/// ```
 #[derive(Clone)]
 pub struct SeqMulFn {
     children: Vec<ChildFn>
