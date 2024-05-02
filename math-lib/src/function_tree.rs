@@ -22,6 +22,7 @@ use crate::{
 };
 
 
+/// Used for error handling in parsing
 #[derive(Debug, Display)]
 pub enum ParsingError {
     Default,
@@ -70,13 +71,17 @@ impl Into<Result<ChildFn, ParsingError>> for ParsingResult {
     }
 }
 
-
-
+/// Trait for parsing rules <br>
+/// Contains functions for getting functions and constants
+/// Implement this trait for your custom parsing rules
 pub trait ParsingRules {
     fn get_function(&self, name: &str, args: Vec<ChildFn>) -> Option<ChildFn>;
     fn get_constant(&self, name: &str) -> Option<f64>;
 }
 
+/// Default parsing rules <br>
+/// Contains sin, cos, tan, log, ln, pi, e <br>
+/// If you want to add custom functions or constants you have to implement them yourself
 #[derive(Clone)]
 pub struct DefaultParsingRules;
 
@@ -112,6 +117,9 @@ impl ParsingRules for DefaultParsingRules {
 }
 
 
+/// Parser for parsing functions from string <br>
+/// contains visitor for traversing AST
+/// Contained visitor contains parsing rules
 pub struct FnParser {
     visitor: Visitor,
 }
@@ -123,6 +131,10 @@ impl FnParser {
         }
     }
 
+    /// Change parsing rules
+    /// This is useful if you want to add custom functions or constants
+    /// If you want to use your custom function but you also want to use function like sin or cos <br>
+    /// you have to implement them yourself in your custom rules
     pub fn change_rules<T>(&mut self, rules: T)
     where
         T: ParsingRules + 'static
@@ -130,6 +142,11 @@ impl FnParser {
         self.visitor = Visitor::new(rules);
     }
 
+    /// Parse function from string <br>
+    /// Returns `FnTree` or `ParsingError`
+    /// use rules that are set in the parser
+    /// default rules are `DefaultParsingRules`
+    /// you can change rules with `change_rules` method
     pub fn parse(&mut self, input: &str) -> Result<FnTree, ParsingError> {
         let lexer = mathLexer::new(InputStream::new(input.into()));
         let token_source = CommonTokenStream::new(lexer);
@@ -154,6 +171,7 @@ impl FnParser {
 }
 
 
+/// Output of the parser
 #[derive(Clone)]
 pub struct FnTree {
     definition: ChildFn,
@@ -198,6 +216,7 @@ impl Function for FnTree {
 
 
 // 2^(3 - 1) * (1 - cos(pi/x)) + log_5(y + ln(e))
+
 #[test]
 fn test_parser() {
     let mut parser = FnParser::new();
