@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["typeid_of"],"macro":["tid","type_id"],"trait":["AnyExt","Tid","TidAble","TidExt"]};

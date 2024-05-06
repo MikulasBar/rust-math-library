@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["HIDDEN","TOKEN_DEFAULT_CHANNEL","TOKEN_EOF","TOKEN_EPSILON","TOKEN_HIDDEN_CHANNEL","TOKEN_INVALID_TYPE","TOKEN_MIN_USER_TOKEN_TYPE"],"struct":["GenericToken"],"trait":["Token"],"type":["CommonToken","OwningToken"]};
