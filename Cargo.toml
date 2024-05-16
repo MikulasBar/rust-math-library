@@ -1,5 +1,5 @@
 [package]
-name = "hs-math-lib"
+name = "math-lib"
 version = "0.1.0"
 edition = "2021"
 

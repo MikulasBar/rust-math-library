@@ -5,7 +5,7 @@ use maplit::hashmap;
 use crate::functions::{SeqMulFn, TanFn};
 use crate::{
     antlr_parser::mathlexer::mathLexer,
-    function_tree::{FnParser, ParsingRules},
+    function_tree::{Parser, ParsingRules},
     functions::{ChildFn, Function, EvalError, FunctionType}, utilities::ToChildFn
 };
 
@@ -18,7 +18,7 @@ use crate::{
 // example with default parsing rules
 #[test]
 fn simple_example() {
-    let mut parser = FnParser::new();
+    let mut parser = Parser::new();
 
     // parsing text format
     let func = parser.parse("sin(pi * x) + cos(pi / y)").unwrap();
@@ -183,7 +183,7 @@ impl ParsingRules for SecParsingRules {
 // example with custom rules
 #[test]
 fn complex_example() {
-    let mut parser = FnParser::new();
+    let mut parser = Parser::new();
 
     // change rules to your custom rules
     parser.change_rules(SecParsingRules);

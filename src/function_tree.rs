@@ -112,13 +112,13 @@ impl ParsingRules for DefaultParsingRules {
 }
 
 
-pub struct FnParser {
+pub struct Parser {
     visitor: Visitor,
 }
 
-impl FnParser {
+impl Parser {
     pub fn new() -> Self {
-        FnParser {
+        Parser {
             visitor: Visitor::new(DefaultParsingRules)
         }
     }
@@ -200,7 +200,7 @@ impl Function for FnTree {
 // 2^(3 - 1) * (1 - cos(pi/x)) + log_5(y + ln(e))
 #[test]
 fn test_parser() {
-    let mut parser = FnParser::new();
+    let mut parser = Parser::new();
     let fn_result = parser.parse("2^(3 - 1) * (1 - cos(pi/x)) + log_5(y + ln(e))");
 
     let func = fn_result.unwrap();
