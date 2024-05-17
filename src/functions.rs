@@ -1,19 +1,18 @@
 use core::fmt::Debug;
 use maplit::hashmap;
-use std::ops::{Range, RangeInclusive};
 use std::{
-    collections::HashMap, f64::consts::{E, FRAC_PI_2},
+    collections::HashMap,
+    f64::consts::{E, FRAC_PI_2},
+    ops::RangeInclusive,
 };
 
-use crate::utilities::{type_of, ToChildFn};
+use crate::utilities::{self, ToChildFn, type_of};
 use ChildFn::*;
 use EvalError::*;
 
 /// Error you get if you use implicitly implemented function that only works if you implement `get_type` function in `Function` trait
 const FUNCTION_TYPE_ERROR: &str = "Function of this FunctionType cannot use implicit definition of the this function,
     implement this function / change function type in get_type function";
-
-
 
 ///# Functionality
 /// Implement this trait for your struct if you want to treat it like mathematical function
@@ -961,6 +960,7 @@ impl Function for SinFn {
         self.child
             .evaluate(args)
             .map(f64::sin)
+            .map(utilities::round)
     }
 
     fn substitute(&self, args: &HashMap<&str, ChildFn>) -> ChildFn {
@@ -1022,6 +1022,7 @@ impl Function for CosFn {
         self.child
             .evaluate(args)
             .map(f64::cos)
+            .map(utilities::round)
     }
 
     fn substitute(&self, args: &HashMap<&str, ChildFn>) -> ChildFn {
@@ -1085,7 +1086,7 @@ impl Function for TanFn {
         if child_value == FRAC_PI_2 {
             return Err(TanAtPiOverTwoError)
         }
-        Ok(child_value.tan())
+        Ok(utilities::round(child_value.tan()))
     }
 
     fn substitute(&self, args: &HashMap<&str, ChildFn>) -> ChildFn {
