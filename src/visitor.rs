@@ -1,44 +1,26 @@
 // --> see visitor on https://github.com/rrevenantt/antlr4rust/blob/master/tests/visitors_tests.rs
-#![cfg_attr(test, warn(unused_imports))]
+//#![cfg_attr(test, warn(unused_imports))]
 
-use antlr_rust::{
-    common_token_stream::CommonTokenStream,
-    tree::{ParseTree, ParseTreeVisitorCompat},
-    InputStream
-};
+use antlr_rust::tree::{ParseTree, ParseTreeVisitorCompat};
 
 use crate::{
     antlr_parser::{
-        mathlexer::*,
         mathparser::*,
         mathvisitor::*
     },
-    functions::*,
-    utilities::*,
-    function_tree::{
-        ParsingResult,
-        ParsingError,
-        ParsingRules,
-    }
+    child::*,
+    parser::{ParsingError, ParsingResult},
+    functions::{AddFn, MulFn, SubFn, DivFn, ExpFn, LogFn},
 };
-
 
 /// Visitor for parsing math expressions
 pub struct Visitor {
-
-    /// Parsing rules for visitor
-    /// Contains rules for parsing functions and constants
-    rules: Box<dyn ParsingRules>,
     temp: ParsingResult
 }
 
 impl Visitor {
-    pub fn new<T>(rules: T) -> Self
-    where
-        T: ParsingRules + 'static
-    {
-        Self{
-            rules: Box::new(rules),
+    pub fn new() -> Self {
+        Self {
             temp: ParsingResult::default(),
         }  
     }
@@ -68,7 +50,7 @@ impl mathVisitorCompat<'_> for Visitor {
     /// Returns constant
     fn visit_number(&mut self, ctx: &NumberContext<'_>) -> Self::Return {
         ParsingResult::Ok(
-            ChildFn::Const(
+            Child::Const(
                 ctx.NUMBER()
                     .unwrap()
                     .get_text()
@@ -87,14 +69,15 @@ impl mathVisitorCompat<'_> for Visitor {
             .unwrap()
             .get_text();
 
-        let value = self.rules.get_constant(&name);
+        todo!();
 
-        ParsingResult::Ok(
-            match value {
-                Some(v) => v.to_child_fn(),
-                _ => name.to_child_fn()
-            }
-        )
+        // let value = self.rules.get_constant(&name);
+        // ParsingResult::Ok(
+        //     match value {
+        //         Some(v) => v.to_child(),
+        //         _ => name.to_child()
+        //     }
+        // )
     }
 
     /// Visit expression in parentheses <br>
@@ -122,8 +105,8 @@ impl mathVisitorCompat<'_> for Visitor {
 
         ParsingResult::Ok(
             match ctx.SUB() {
-                Some(_) => SubFn::new(left, right).to_child_fn(),
-                _ =>  AddFn::new(left, right).to_child_fn()
+                Some(_) => SubFn::new(left, right).to_child(),
+                _ =>  AddFn::new(left, right).to_child()
             }
         )
     }
@@ -147,8 +130,8 @@ impl mathVisitorCompat<'_> for Visitor {
 
         ParsingResult::Ok(
             match ctx.DIV() {
-                Some(_) => DivFn::new(left, right).to_child_fn(),
-                _ =>  MulFn::new(left, right).to_child_fn()
+                Some(_) => DivFn::new(left, right).to_child(),
+                _ =>  MulFn::new(left, right).to_child()
             }
         )
     }
@@ -171,7 +154,7 @@ impl mathVisitorCompat<'_> for Visitor {
         let power = power.unwrap();
 
         ParsingResult::Ok(
-            ExpFn::new(base, power).to_child_fn()
+            ExpFn::new(base, power).to_child()
         )
     }
 
@@ -193,13 +176,13 @@ impl mathVisitorCompat<'_> for Visitor {
         let arg = arg.unwrap();
 
         ParsingResult::Ok(
-            LogFn::new(base, arg).to_child_fn()
+            LogFn::new(base, arg).to_child()
         )
     }
 
     /// Visit custom function with arguments <br>
     /// function is matched with rules of parsing <br>
-    /// Returns `ChildFn` or `ParsingError`
+    /// Returns `Child` or `ParsingError`
     fn visit_function(&mut self, ctx: &FunctionContext<'_>) -> Self::Return {
         let name = ctx.ID().unwrap().get_text();
         let result_args: Vec<ParsingResult> = ctx.expr_all()
@@ -207,7 +190,7 @@ impl mathVisitorCompat<'_> for Visitor {
             .map(|x| self.visit(&*x))
             .collect();
 
-        let mut args: Vec<ChildFn> = vec![];
+        let mut args: Vec<Child> = vec![];
         for arg in result_args {
             if arg.is_err() {
                 return arg
@@ -215,9 +198,10 @@ impl mathVisitorCompat<'_> for Visitor {
             args.push(arg.unwrap())
         }
 
-        if let Some(result) = self.rules.get_function(&name, args) {
-            return ParsingResult::Ok(result)
-        }
+        todo!();
+        // if let Some(result) = self.rules.get_function(&name, args) {
+        //     return ParsingResult::Ok(result)
+        // }
 
         return ParsingResult::Err(
             ParsingError::UnrecognizedFunctionNameError

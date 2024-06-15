@@ -118,39 +118,39 @@
 
 
 <span class="doccomment">/// Trait for converting a type to a ChildFn &lt;br&gt;
-/// Used instead of Into&lt;ChildFn&gt; because Into cannot be used to convert Function dynamic object
+/// Used instead of Into&lt;ChildFn&gt; because Into cannot be used to convert FnBehaviour dynamic object
 </span><span class="kw">pub trait </span>ToChildFn {
-    <span class="kw">fn </span>to_child_fn(<span class="self">self</span>) -&gt; ChildFn;
+    <span class="kw">fn </span>to_child(<span class="self">self</span>) -&gt; ChildFn;
 }
 
-<span class="kw">impl</span>&lt;T: Function + <span class="lifetime">'static</span>&gt; ToChildFn <span class="kw">for </span>T {
-    <span class="kw">fn </span>to_child_fn(<span class="self">self</span>) -&gt; ChildFn {
+<span class="kw">impl</span>&lt;T: FnBehaviour + <span class="lifetime">'static</span>&gt; ToChildFn <span class="kw">for </span>T {
+    <span class="kw">fn </span>to_child(<span class="self">self</span>) -&gt; ChildFn {
         ChildFn::Fn(Box::new(<span class="self">self</span>))
     }
 }
 
 <span class="kw">impl </span>ToChildFn <span class="kw">for </span>f64 {
-    <span class="kw">fn </span>to_child_fn(<span class="self">self</span>) -&gt; ChildFn {
+    <span class="kw">fn </span>to_child(<span class="self">self</span>) -&gt; ChildFn {
         ChildFn::Const(<span class="self">self</span>)
     }
 }
 
 <span class="kw">impl </span>ToChildFn <span class="kw">for </span><span class="kw-2">&amp;</span>str {
-    <span class="kw">fn </span>to_child_fn(<span class="self">self</span>) -&gt; ChildFn {
+    <span class="kw">fn </span>to_child(<span class="self">self</span>) -&gt; ChildFn {
         ChildFn::Var(<span class="self">self</span>.to_string())
     }
 }
 
 <span class="kw">impl </span>ToChildFn <span class="kw">for </span>String {
-    <span class="kw">fn </span>to_child_fn(<span class="self">self</span>) -&gt; ChildFn {
+    <span class="kw">fn </span>to_child(<span class="self">self</span>) -&gt; ChildFn {
         ChildFn::Var(<span class="self">self</span>)
     }
 }
 
-<span class="kw">impl</span>&lt;T: Function + <span class="lifetime">'static</span>&gt; ToChildFn <span class="kw">for </span><span class="prelude-ty">Option</span>&lt;T&gt; {
-    <span class="kw">fn </span>to_child_fn(<span class="self">self</span>) -&gt; ChildFn {
+<span class="kw">impl</span>&lt;T: FnBehaviour + <span class="lifetime">'static</span>&gt; ToChildFn <span class="kw">for </span><span class="prelude-ty">Option</span>&lt;T&gt; {
+    <span class="kw">fn </span>to_child(<span class="self">self</span>) -&gt; ChildFn {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(res) = <span class="self">self </span>{
-            <span class="kw">return </span>res.to_child_fn()
+            <span class="kw">return </span>res.to_child()
         }
         <span class="macro">panic!</span>(<span class="string">"Cannot convert None to ChildFn"</span>)
     }
@@ -198,7 +198,7 @@
     <span class="kw">fn </span>get_function(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str, <span class="kw-2">mut </span>args: Vec&lt;ChildFn&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;ChildFn&gt; {
         <span class="kw">if </span>args.len() == <span class="number">1 </span>&amp;&amp; name == <span class="string">"sin" </span>{
             <span class="kw">return </span><span class="prelude-val">Some </span>(
-                args.pop().map(SinFn::new).to_child_fn()
+                args.pop().map(SinFn::new).to_child()
             ) 
         }
         <span class="kw">return </span><span class="prelude-val">None

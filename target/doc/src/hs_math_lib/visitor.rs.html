@@ -319,8 +319,8 @@
 
         ParsingResult::Ok(
             <span class="kw">match </span>value {
-                <span class="prelude-val">Some</span>(v) =&gt; v.to_child_fn(),
-                <span class="kw">_ </span>=&gt; name.to_child_fn()
+                <span class="prelude-val">Some</span>(v) =&gt; v.to_child(),
+                <span class="kw">_ </span>=&gt; name.to_child()
             }
         )
     }
@@ -350,8 +350,8 @@
 
         ParsingResult::Ok(
             <span class="kw">match </span>ctx.SUB() {
-                <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; SubFn::new(left, right).to_child_fn(),
-                <span class="kw">_ </span>=&gt;  AddFn::new(left, right).to_child_fn()
+                <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; SubFn::new(left, right).to_child(),
+                <span class="kw">_ </span>=&gt;  AddFn::new(left, right).to_child()
             }
         )
     }
@@ -375,8 +375,8 @@
 
         ParsingResult::Ok(
             <span class="kw">match </span>ctx.DIV() {
-                <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; DivFn::new(left, right).to_child_fn(),
-                <span class="kw">_ </span>=&gt;  MulFn::new(left, right).to_child_fn()
+                <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; DivFn::new(left, right).to_child(),
+                <span class="kw">_ </span>=&gt;  MulFn::new(left, right).to_child()
             }
         )
     }
@@ -399,7 +399,7 @@
         <span class="kw">let </span>power = power.unwrap();
 
         ParsingResult::Ok(
-            ExpFn::new(base, power).to_child_fn()
+            ExpFn::new(base, power).to_child()
         )
     }
 
@@ -421,7 +421,7 @@
         <span class="kw">let </span>arg = arg.unwrap();
 
         ParsingResult::Ok(
-            LogFn::new(base, arg).to_child_fn()
+            LogFn::new(base, arg).to_child()
         )
     }
 

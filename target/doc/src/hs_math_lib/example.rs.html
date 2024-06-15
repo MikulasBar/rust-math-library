@@ -209,7 +209,7 @@
 <span class="kw">use crate</span>::{
     antlr_parser::mathlexer::mathLexer,
     function_tree::{FnParser, ParsingRules},
-    functions::{ChildFn, Function, EvalError, FunctionType}, utilities::ToChildFn
+    functions::{ChildFn, Function, EvalError, FnType}, utilities::ToChildFn
 };
 
 
@@ -275,8 +275,8 @@
         </span><span class="kw">where </span>T: ToChildFn
     {
         <span class="self">Self </span>{
-            <span class="comment">// use to_child_fn() to convert types to ChildFn
-            </span>child: child.to_child_fn()
+            <span class="comment">// use to_child() to convert types to ChildFn
+            </span>child: child.to_child()
         }
     }
 }
@@ -305,7 +305,7 @@
 
     <span class="kw">fn </span>substitute(<span class="kw-2">&amp;</span><span class="self">self</span>, args: <span class="kw-2">&amp;</span>HashMap&lt;<span class="kw-2">&amp;</span>str, ChildFn&gt;) -&gt; ChildFn {
         <span class="kw">let </span>child = <span class="self">self</span>.child.substitute(args);
-        <span class="self">Self</span>::new(child).to_child_fn()
+        <span class="self">Self</span>::new(child).to_child()
     }
 
     <span class="comment">// this function can be handy if your function is not special
@@ -315,13 +315,13 @@
     // implement this function if your type is struct and has one child or more
     // you have to pass reference to all children of your type
     // if your type is enum or its somehow special dont implement this function at all
-    </span><span class="kw">fn </span>get_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FunctionType {
+    </span><span class="kw">fn </span>get_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FnType {
         <span class="comment">// you can choose between
         // unary (1 child)
         // binary (2 children)
         // variadic (any number of children - in vector)
         // none (default option)
-        </span>FunctionType::Unary(<span class="kw-2">&amp;</span><span class="self">self</span>.child)
+        </span>FnType::Unary(<span class="kw-2">&amp;</span><span class="self">self</span>.child)
     }
 
     <span class="comment">// returns derivative of self
@@ -338,11 +338,11 @@
         <span class="comment">// Seq stands for sequence - is capable of having more than 2 children
         </span>SeqMulFn::new(
             <span class="macro">vec!</span>[
-                tan.to_child_fn(),
-                sec.to_child_fn(),
+                tan.to_child(),
+                sec.to_child(),
                 d_child
             ]
-        ).to_child_fn()
+        ).to_child()
     }
 }
 
@@ -374,7 +374,7 @@
     </span><span class="kw">fn </span>get_function(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str, <span class="kw-2">mut </span>args: Vec&lt;ChildFn&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;ChildFn&gt; {
         <span class="kw">if </span>args.len() == <span class="number">1 </span>&amp;&amp; name == <span class="string">"sec" </span>{
             <span class="kw">return </span><span class="prelude-val">Some </span>(
-                args.pop().map(SecFn::new).to_child_fn()
+                args.pop().map(SecFn::new).to_child()
             ) 
         }
         <span class="kw">return </span><span class="prelude-val">None

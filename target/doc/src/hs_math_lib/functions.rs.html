@@ -1286,7 +1286,7 @@
 <span class="kw">use </span>EvalError::<span class="kw-2">*</span>;
 
 <span class="doccomment">/// Error you get if you use implicitly implemented function that only works if you implement `get_type` function in `Function` trait
-</span><span class="kw">const </span>FUNCTION_TYPE_ERROR: <span class="kw-2">&amp;</span>str = <span class="string">"Function of this FunctionType cannot use implicit definition of the this function,
+</span><span class="kw">const </span>FUNCTION_TYPE_ERROR: <span class="kw-2">&amp;</span>str = <span class="string">"Function of this FnType cannot use implicit definition of the this function,
     implement this function / change function type in get_type function"</span>;
 
 
@@ -1359,7 +1359,7 @@
         <span class="kw">for _ in </span><span class="number">0</span>..n-<span class="number">1 </span>{
             result = result.derivative(variable);
         }
-        result.to_child_fn()
+        result.to_child()
     }
 
     <span class="doccomment">///# Functionality
@@ -1386,17 +1386,17 @@
     /// 
     ///# Example
     /// ```
-    /// impl Function for AddFn {
-    ///     fn get_type(&amp;self) -&gt; FunctionType {
+    /// impl FnBehaviour for AddFn {
+    ///     fn get_type(&amp;self) -&gt; FnType {
     ///         // AddFn has binary type because it has two children: left + right side
     ///         // You have to pass in the references to children, so other functions can use it
-    ///         FunctionType::Binary(&amp;self.left, &amp;self.right)
+    ///         FnType::Binary(&amp;self.left, &amp;self.right)
     ///     }
     ///     // ...
     /// }
     /// ```
-    </span><span class="kw">fn </span>get_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FunctionType {
-        FunctionType::None
+    </span><span class="kw">fn </span>get_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FnType {
+        FnType::None
     }
     
     <span class="doccomment">///# Functionality
@@ -1404,7 +1404,7 @@
     /// 
     /// This function don't format the output (output has only 1 line)
     </span><span class="kw">fn </span>get_string_tree(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
-        <span class="kw">use </span>FunctionType::<span class="kw-2">*</span>;
+        <span class="kw">use </span>FnType::<span class="kw-2">*</span>;
 
         <span class="kw">let </span>name = type_of(<span class="kw-2">&amp;</span><span class="self">self</span>);
         
@@ -1448,7 +1448,7 @@
     /// assert!(depends_on_z);
     /// ```
     </span><span class="kw">fn </span>depends_on(<span class="kw-2">&amp;</span><span class="self">self</span>, variable: <span class="kw-2">&amp;</span>str) -&gt; bool {
-        <span class="kw">use </span>FunctionType::<span class="kw-2">*</span>;
+        <span class="kw">use </span>FnType::<span class="kw-2">*</span>;
 
         <span class="kw">match </span><span class="self">self</span>.get_type() {
             Unary(c) =&gt; c.depends_on(variable),
@@ -1487,7 +1487,7 @@
 <span class="doccomment">///# Functionality
 /// Helps recognizing how many children struct has &lt;br&gt;
 /// Stores references to all the children
-</span><span class="kw">pub enum </span>FunctionType&lt;<span class="lifetime">'a</span>&gt; {
+</span><span class="kw">pub enum </span>FnType&lt;<span class="lifetime">'a</span>&gt; {
 
     <span class="doccomment">/// Default type of struct &lt;br&gt;
     /// Struct with this type can't use implicit definitions of some functions in `Function` trait 
@@ -1613,7 +1613,7 @@
             Fn(f) =&gt; f.substitute(args),
             Var(v) =&gt; {
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(c) = args.get(<span class="kw-2">&amp;**</span>v) {
-                    <span class="kw">return </span>c.clone().to_child_fn()
+                    <span class="kw">return </span>c.clone().to_child()
                 }
                 <span class="self">self</span>.clone()
             },
@@ -1639,13 +1639,13 @@
     <span class="kw">fn </span>derivative(<span class="kw-2">&amp;</span><span class="self">self</span>, variable: <span class="kw-2">&amp;</span>str) -&gt; ChildFn {
         <span class="kw">match </span><span class="self">self </span>{
             Fn(f) =&gt; f.derivative(variable),
-            Const(c) =&gt; <span class="number">0.0</span>.to_child_fn(),
+            Const(c) =&gt; <span class="number">0.0</span>.to_child(),
             Var(v) =&gt; {
                 <span class="kw">let </span><span class="kw-2">mut </span>value = <span class="number">0.0</span>;
                 <span class="kw">if </span><span class="kw-2">**</span>v == <span class="kw-2">*</span>variable {
                     value = <span class="number">1.0</span>;
                 }
-                value.to_child_fn()
+                value.to_child()
             }
         }
     }
@@ -1682,8 +1682,8 @@
         U: ToChildFn
     {
         <span class="self">Self </span>{
-            left: left.to_child_fn(),
-            right: right.to_child_fn()
+            left: left.to_child(),
+            right: right.to_child()
         }
     }
 }
@@ -1704,18 +1704,18 @@
         <span class="kw">let </span>left = <span class="self">self</span>.left.substitute(args);
         <span class="kw">let </span>right = <span class="self">self</span>.right.substitute(args);
 
-        <span class="self">Self</span>::new(left, right).to_child_fn()
+        <span class="self">Self</span>::new(left, right).to_child()
     }
 
-    <span class="kw">fn </span>get_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FunctionType {
-        FunctionType::Binary(<span class="kw-2">&amp;</span><span class="self">self</span>.left, <span class="kw-2">&amp;</span><span class="self">self</span>.right)
+    <span class="kw">fn </span>get_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FnType {
+        FnType::Binary(<span class="kw-2">&amp;</span><span class="self">self</span>.left, <span class="kw-2">&amp;</span><span class="self">self</span>.right)
     }
 
     <span class="kw">fn </span>derivative(<span class="kw-2">&amp;</span><span class="self">self</span>, variable: <span class="kw-2">&amp;</span>str) -&gt; ChildFn {
         <span class="kw">let </span>left = <span class="self">self</span>.left.derivative(variable);
         <span class="kw">let </span>right = <span class="self">self</span>.right.derivative(variable);
 
-        AddFn::new(left, right).to_child_fn()
+        AddFn::new(left, right).to_child()
     }
 }
 
@@ -1750,8 +1750,8 @@
         U: ToChildFn
     {
         <span class="self">Self </span>{
-            left: left.to_child_fn(),
-            right: right.to_child_fn()
+            left: left.to_child(),
+            right: right.to_child()
         }
     }
 }
@@ -1772,18 +1772,18 @@
         <span class="kw">let </span>left = <span class="self">self</span>.left.substitute(args);
         <span class="kw">let </span>right = <span class="self">self</span>.right.substitute(args);
 
-        <span class="self">Self</span>::new(left, right).to_child_fn()
+        <span class="self">Self</span>::new(left, right).to_child()
     }
 
-    <span class="kw">fn </span>get_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FunctionType {
-        FunctionType::Binary(<span class="kw-2">&amp;</span><span class="self">self</span>.left, <span class="kw-2">&amp;</span><span class="self">self</span>.right)
+    <span class="kw">fn </span>get_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FnType {
+        FnType::Binary(<span class="kw-2">&amp;</span><span class="self">self</span>.left, <span class="kw-2">&amp;</span><span class="self">self</span>.right)
     }
 
     <span class="kw">fn </span>derivative(<span class="kw-2">&amp;</span><span class="self">self</span>, variable: <span class="kw-2">&amp;</span>str) -&gt; ChildFn {
         <span class="kw">let </span>left = <span class="self">self</span>.left.derivative(variable);
         <span class="kw">let </span>right = <span class="self">self</span>.right.derivative(variable);
 
-        SubFn::new(left, right).to_child_fn()
+        SubFn::new(left, right).to_child()
     }
 }
 
@@ -1818,8 +1818,8 @@
         U: ToChildFn
     {
         <span class="self">Self </span>{
-            left: left.to_child_fn(),
-            right: right.to_child_fn()
+            left: left.to_child(),
+            right: right.to_child()
         }
     }
 }
@@ -1840,11 +1840,11 @@
         <span class="kw">let </span>left = <span class="self">self</span>.left.substitute(args);
         <span class="kw">let </span>right = <span class="self">self</span>.right.substitute(args);
 
-        <span class="self">Self</span>::new(left, right).to_child_fn()
+        <span class="self">Self</span>::new(left, right).to_child()
     }
 
-    <span class="kw">fn </span>get_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FunctionType {
-        FunctionType::Binary(<span class="kw-2">&amp;</span><span class="self">self</span>.left, <span class="kw-2">&amp;</span><span class="self">self</span>.right)
+    <span class="kw">fn </span>get_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FnType {
+        FnType::Binary(<span class="kw-2">&amp;</span><span class="self">self</span>.left, <span class="kw-2">&amp;</span><span class="self">self</span>.right)
     }
 
     <span class="kw">fn </span>derivative(<span class="kw-2">&amp;</span><span class="self">self</span>, variable: <span class="kw-2">&amp;</span>str) -&gt; ChildFn {
@@ -1861,7 +1861,7 @@
             <span class="self">self</span>.left.clone()
         );
 
-        AddFn::new(result_left, result_right).to_child_fn()
+        AddFn::new(result_left, result_right).to_child()
     }
 }
 
@@ -1896,8 +1896,8 @@
         U: ToChildFn,
     {
         <span class="self">Self </span>{
-            numerator: num.to_child_fn(),
-            denominator: denom.to_child_fn(),
+            numerator: num.to_child(),
+            denominator: denom.to_child(),
         }
     }
 }
@@ -1921,11 +1921,11 @@
         <span class="kw">let </span>num = <span class="self">self</span>.numerator.substitute(args);
         <span class="kw">let </span>denom = <span class="self">self</span>.denominator.substitute(args);
 
-        <span class="self">Self</span>::new(num, denom).to_child_fn()
+        <span class="self">Self</span>::new(num, denom).to_child()
     }
 
-    <span class="kw">fn </span>get_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FunctionType {
-        FunctionType::Binary(<span class="kw-2">&amp;</span><span class="self">self</span>.numerator, <span class="kw-2">&amp;</span><span class="self">self</span>.denominator)
+    <span class="kw">fn </span>get_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FnType {
+        FnType::Binary(<span class="kw-2">&amp;</span><span class="self">self</span>.numerator, <span class="kw-2">&amp;</span><span class="self">self</span>.denominator)
     }
 
     <span class="kw">fn </span>derivative(<span class="kw-2">&amp;</span><span class="self">self</span>, variable: <span class="kw-2">&amp;</span>str) -&gt; ChildFn {
@@ -1953,7 +1953,7 @@
             <span class="number">2.0
         </span>);
 
-        DivFn::new(result_num, result_denom).to_child_fn()
+        DivFn::new(result_num, result_denom).to_child()
     }
 }
 
@@ -1988,7 +1988,7 @@
     {
         <span class="self">Self </span>{
             coefficient: coeff.into(),
-            child: child.to_child_fn()
+            child: child.to_child()
         }
     }
 }
@@ -2008,7 +2008,7 @@
         <span class="kw">let </span>coef = <span class="self">self</span>.coefficient.clone();
         <span class="kw">let </span>child = <span class="self">self</span>.child.substitute(args);
 
-        <span class="self">Self</span>::new(coef, child).to_child_fn()
+        <span class="self">Self</span>::new(coef, child).to_child()
     }
 
     <span class="kw">fn </span>depends_on(<span class="kw-2">&amp;</span><span class="self">self</span>, variable: <span class="kw-2">&amp;</span>str) -&gt; bool {
@@ -2020,9 +2020,9 @@
             <span class="kw">return </span>CoefFn::new(
                 <span class="self">self</span>.coefficient,
                 <span class="self">self</span>.child.derivative(variable)
-            ).to_child_fn()
+            ).to_child()
         }
-        <span class="number">0.0</span>.to_child_fn()
+        <span class="number">0.0</span>.to_child()
     }
 }
 
@@ -2056,8 +2056,8 @@
         U: ToChildFn,
     {
         <span class="self">Self </span>{
-            base: base.to_child_fn(),
-            exponent: exp.to_child_fn(),
+            base: base.to_child(),
+            exponent: exp.to_child(),
         }
     }
 }
@@ -2084,11 +2084,11 @@
         <span class="kw">let </span>base = <span class="self">self</span>.base.substitute(args);
         <span class="kw">let </span>exp = <span class="self">self</span>.exponent.substitute(args);
 
-        <span class="self">Self</span>::new(base, exp).to_child_fn()
+        <span class="self">Self</span>::new(base, exp).to_child()
     }
 
-    <span class="kw">fn </span>get_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FunctionType {
-        FunctionType::Binary(<span class="kw-2">&amp;</span><span class="self">self</span>.base, <span class="kw-2">&amp;</span><span class="self">self</span>.exponent)
+    <span class="kw">fn </span>get_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FnType {
+        FnType::Binary(<span class="kw-2">&amp;</span><span class="self">self</span>.base, <span class="kw-2">&amp;</span><span class="self">self</span>.exponent)
     }
 
     <span class="kw">fn </span>derivative(<span class="kw-2">&amp;</span><span class="self">self</span>, variable: <span class="kw-2">&amp;</span>str) -&gt; ChildFn {
@@ -2107,7 +2107,7 @@
         
         <span class="kw">let </span>factor = AddFn::new(left_term, right_term);
 
-        MulFn::new(<span class="self">self</span>.clone(), factor).to_child_fn()
+        MulFn::new(<span class="self">self</span>.clone(), factor).to_child()
     }
 }
 
@@ -2142,8 +2142,8 @@
         U: ToChildFn,
     {
         <span class="self">Self </span>{
-            base: base.to_child_fn(),
-            argument: arg.to_child_fn(),
+            base: base.to_child(),
+            argument: arg.to_child(),
         }
     }
 }
@@ -2169,11 +2169,11 @@
         <span class="kw">let </span>base = <span class="self">self</span>.base.substitute(args);
         <span class="kw">let </span>arg = <span class="self">self</span>.argument.substitute(args);
 
-        <span class="self">Self</span>::new(base, arg).to_child_fn()
+        <span class="self">Self</span>::new(base, arg).to_child()
     }
 
-    <span class="kw">fn </span>get_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FunctionType {
-        FunctionType::Binary(<span class="kw-2">&amp;</span><span class="self">self</span>.base, <span class="kw-2">&amp;</span><span class="self">self</span>.argument)
+    <span class="kw">fn </span>get_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FnType {
+        FnType::Binary(<span class="kw-2">&amp;</span><span class="self">self</span>.base, <span class="kw-2">&amp;</span><span class="self">self</span>.argument)
     }
 
     <span class="kw">fn </span>derivative(<span class="kw-2">&amp;</span><span class="self">self</span>, variable: <span class="kw-2">&amp;</span>str) -&gt; ChildFn {
@@ -2191,7 +2191,7 @@
         DivFn::new(
             factor,
             LogFn::new(E, <span class="self">self</span>.base.clone())
-        ).to_child_fn()
+        ).to_child()
     }
 }
 
@@ -2223,7 +2223,7 @@
         </span>T: ToChildFn,
     {
         <span class="self">Self </span>{
-            child: child.to_child_fn()
+            child: child.to_child()
         }
     }
 }
@@ -2241,18 +2241,18 @@
 
     <span class="kw">fn </span>substitute(<span class="kw-2">&amp;</span><span class="self">self</span>, args: <span class="kw-2">&amp;</span>HashMap&lt;<span class="kw-2">&amp;</span>str, ChildFn&gt;) -&gt; ChildFn {
         <span class="kw">let </span>child = <span class="self">self</span>.child.substitute(args);
-        <span class="self">Self</span>::new(child).to_child_fn()
+        <span class="self">Self</span>::new(child).to_child()
     }
 
-    <span class="kw">fn </span>get_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FunctionType {
-        FunctionType::Unary(<span class="kw-2">&amp;</span><span class="self">self</span>.child)
+    <span class="kw">fn </span>get_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FnType {
+        FnType::Unary(<span class="kw-2">&amp;</span><span class="self">self</span>.child)
     }
 
     <span class="kw">fn </span>derivative(<span class="kw-2">&amp;</span><span class="self">self</span>, variable: <span class="kw-2">&amp;</span>str) -&gt; ChildFn {
         MulFn::new(
             CosFn::new(<span class="self">self</span>.child.clone()),
             <span class="self">self</span>.child.derivative(variable)
-        ).to_child_fn()
+        ).to_child()
     }
 }
 
@@ -2284,7 +2284,7 @@
         </span>T: ToChildFn,
     {
         <span class="self">Self </span>{
-            child: child.to_child_fn()
+            child: child.to_child()
         }
     }
 }
@@ -2302,18 +2302,18 @@
 
     <span class="kw">fn </span>substitute(<span class="kw-2">&amp;</span><span class="self">self</span>, args: <span class="kw-2">&amp;</span>HashMap&lt;<span class="kw-2">&amp;</span>str, ChildFn&gt;) -&gt; ChildFn {
         <span class="kw">let </span>child = <span class="self">self</span>.child.substitute(args);
-        <span class="self">Self</span>::new(child).to_child_fn()
+        <span class="self">Self</span>::new(child).to_child()
     }
 
-    <span class="kw">fn </span>get_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FunctionType {
-        FunctionType::Unary(<span class="kw-2">&amp;</span><span class="self">self</span>.child)
+    <span class="kw">fn </span>get_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FnType {
+        FnType::Unary(<span class="kw-2">&amp;</span><span class="self">self</span>.child)
     }
 
     <span class="kw">fn </span>derivative(<span class="kw-2">&amp;</span><span class="self">self</span>, variable: <span class="kw-2">&amp;</span>str) -&gt; ChildFn {
         MulFn::new(
             CoefFn::new(-<span class="number">1</span>, SinFn::new(<span class="self">self</span>.child.clone())),
             <span class="self">self</span>.child.derivative(variable)
-        ).to_child_fn()
+        ).to_child()
     }
 }
 
@@ -2345,7 +2345,7 @@
         </span>T: ToChildFn,
     {
         <span class="self">Self </span>{
-            child: child.to_child_fn()
+            child: child.to_child()
         }
     }
 }
@@ -2366,11 +2366,11 @@
 
     <span class="kw">fn </span>substitute(<span class="kw-2">&amp;</span><span class="self">self</span>, args: <span class="kw-2">&amp;</span>HashMap&lt;<span class="kw-2">&amp;</span>str, ChildFn&gt;) -&gt; ChildFn {
         <span class="kw">let </span>child = <span class="self">self</span>.child.substitute(args);
-        <span class="self">Self</span>::new(child).to_child_fn()
+        <span class="self">Self</span>::new(child).to_child()
     }
 
-    <span class="kw">fn </span>get_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FunctionType {
-        FunctionType::Unary(<span class="kw-2">&amp;</span><span class="self">self</span>.child)
+    <span class="kw">fn </span>get_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FnType {
+        FnType::Unary(<span class="kw-2">&amp;</span><span class="self">self</span>.child)
     }
 
     <span class="kw">fn </span>derivative(<span class="kw-2">&amp;</span><span class="self">self</span>, variable: <span class="kw-2">&amp;</span>str) -&gt; ChildFn {
@@ -2379,7 +2379,7 @@
         DivFn::new(
             <span class="self">self</span>.child.derivative(variable),
             denom
-        ).to_child_fn()
+        ).to_child()
     }
 }
 
@@ -2420,7 +2420,7 @@
         <span class="self">Self </span>{
             children: children
                 .into_iter()
-                .map(|c| c.to_child_fn())
+                .map(|c| c.to_child())
                 .collect(),
         }
     }
@@ -2447,11 +2447,11 @@
             .map(|c| c.substitute(args))
             .collect();
 
-        <span class="self">Self</span>::new(children).to_child_fn()
+        <span class="self">Self</span>::new(children).to_child()
     }
 
-    <span class="kw">fn </span>get_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FunctionType {
-        FunctionType::Variadic(<span class="kw-2">&amp;</span><span class="self">self</span>.children)
+    <span class="kw">fn </span>get_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FnType {
+        FnType::Variadic(<span class="kw-2">&amp;</span><span class="self">self</span>.children)
     }
 
     <span class="kw">fn </span>derivative(<span class="kw-2">&amp;</span><span class="self">self</span>, variable: <span class="kw-2">&amp;</span>str) -&gt; ChildFn {
@@ -2460,7 +2460,7 @@
             .map(|c| c.derivative(variable))
             .collect();
 
-        SeqAddFn::new(children).to_child_fn()
+        SeqAddFn::new(children).to_child()
     }
 }
 
@@ -2497,7 +2497,7 @@
         <span class="self">Self </span>{
             children: children
                 .into_iter()
-                .map(|c| c.to_child_fn())
+                .map(|c| c.to_child())
                 .collect(),
         }
     }
@@ -2524,11 +2524,11 @@
             .map(|c| c.substitute(args))
             .collect();
 
-        <span class="self">Self</span>::new(children).to_child_fn()
+        <span class="self">Self</span>::new(children).to_child()
     }
 
-    <span class="kw">fn </span>get_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FunctionType {
-        FunctionType::Variadic(<span class="kw-2">&amp;</span><span class="self">self</span>.children)
+    <span class="kw">fn </span>get_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FnType {
+        FnType::Variadic(<span class="kw-2">&amp;</span><span class="self">self</span>.children)
     }
 
     <span class="kw">fn </span>derivative(<span class="kw-2">&amp;</span><span class="self">self</span>, variable: <span class="kw-2">&amp;</span>str) -&gt; ChildFn {
@@ -2544,7 +2544,7 @@
         MulFn::new(
             <span class="self">self</span>.clone(),
             SeqAddFn::new(terms)
-        ).to_child_fn()
+        ).to_child()
     }
 }
 

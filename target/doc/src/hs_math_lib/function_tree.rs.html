@@ -325,16 +325,16 @@
     <span class="kw">fn </span>get_function(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str, <span class="kw-2">mut </span>args: Vec&lt;ChildFn&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;ChildFn&gt; {
         <span class="prelude-val">Some </span>(
             <span class="kw">match </span>name {
-                <span class="string">"sin" </span>=&gt; args.pop().map(SinFn::new).to_child_fn(),
-                <span class="string">"cos" </span>=&gt; args.pop().map(CosFn::new).to_child_fn(),
-                <span class="string">"tan" </span>=&gt; args.pop().map(TanFn::new).to_child_fn(),
+                <span class="string">"sin" </span>=&gt; args.pop().map(SinFn::new).to_child(),
+                <span class="string">"cos" </span>=&gt; args.pop().map(CosFn::new).to_child(),
+                <span class="string">"tan" </span>=&gt; args.pop().map(TanFn::new).to_child(),
                 <span class="string">"log" </span>=&gt; {
                     <span class="kw">let </span>arg = args.pop()<span class="question-mark">?</span>;
-                    LogFn::new(<span class="number">10.0</span>, arg).to_child_fn()
+                    LogFn::new(<span class="number">10.0</span>, arg).to_child()
                 },
                 <span class="string">"ln" </span>=&gt; {
                     <span class="kw">let </span>arg = args.pop()<span class="question-mark">?</span>;
-                    LogFn::new(E, arg).to_child_fn()
+                    LogFn::new(E, arg).to_child()
                 },
                 <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">None
             </span>}
@@ -420,7 +420,7 @@
         </span>T: ToChildFn
     {
         <span class="kw">let </span><span class="kw-2">mut </span>fn_tree = <span class="self">Self </span>{
-            definition: definition.to_child_fn(),
+            definition: definition.to_child(),
             string_tree: <span class="string">""</span>.to_string()
         };
         fn_tree.string_tree = fn_tree.definition.get_string_tree();

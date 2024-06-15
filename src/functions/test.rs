@@ -8,8 +8,8 @@ use std::{
     },
     collections::HashMap,
 };
-
-use crate::functions::*;
+use crate::fn_behaviour::FnBehaviour;
+use super::*;
 
 #[test]
 fn test_AddFn() {
