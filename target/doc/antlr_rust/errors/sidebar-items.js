@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["ANTLRError"],"struct":["BaseRecognitionError","FailedPredicateError","InputMisMatchError","NoViableAltError"]};

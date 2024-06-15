@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["InputStream"],"type":["ByteStream","CodePoint16BitCharStream","CodePoint32BitCharStream","CodePoint8BitCharStream"]};

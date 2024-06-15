@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["ArenaFactory","CommonTokenFactory","OwningTokenFactory"],"trait":["TokenFactory"],"type":["ArenaCommonFactory","ArenaOwningFactory"]};
