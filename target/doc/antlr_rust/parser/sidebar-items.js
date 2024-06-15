@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["BaseParser","ListenerId"],"trait":["Parser","ParserNodeType","ParserRecog"]};

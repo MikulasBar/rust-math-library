@@ -1,1 +1,0 @@
-window.ALL_CRATES = ["antlr_rust","better_any","bit_set","bit_vec","byteorder","cfg_if","convert_case","derive_more","hs_math_lib","instant","lazy_static","lock_api","maplit","murmur3","once_cell","parking_lot","parking_lot_core","proc_macro2","quote","scopeguard","smallvec","syn","typed_arena","unicode_ident","uuid","winapi","winapi_x86_64_pc_windows_gnu"];

@@ -1,1 +1,0 @@
-mathparser::mathParser<'_, CommonTokenStream<'_, mathlexer::mathLexer<'_, InputStream<&str>>>, DefaultErrorStrategy<'_, mathparser::mathParserContextType>>
