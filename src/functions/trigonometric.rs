@@ -2,201 +2,126 @@ use std::collections::HashMap;
 use std::f64::consts::FRAC_PI_2;
 
 use crate::{
-    fn_behaviour::*,
+    function::*,
     child::*,
     utils,
 };
 
-use super::{MulFn, DivFn, CoefFn, ExpFn};
+use super::basic::{MulFn, DivFn};
+
+use crate::function::Function::*;
+use crate::unary_new;
 
 
-
-
-///# Functionality
-/// Struct that represents function that is sine of expression
-/// 
-/// # Example
-/// ```
-/// let function = SinFn::new("x");
-/// 
-/// let args = hashmap!{
-///     "x" => 0.0
-/// };
-/// 
-/// let result = function.evaluate(&args).unwrap();
-/// let expected = 0.0;
-/// 
-/// assert_eq!(result, expected);
-/// ```
-#[derive(Clone)]
-pub struct SinFn {
-    child: Child
-}
+pub struct SinFn;
 
 impl SinFn {
-    pub fn new<T>(child: T) -> Self
-    where 
-        T: ToChild,
-    {
-        Self {
-            child: child.to_child()
-        }
-    }
-}
+    unary_new!{Sin, child}
 
-impl FnBehaviour for SinFn {
-    fn clone_box(&self) -> Box<dyn FnBehaviour> {
-        Box::new(self.clone())
-    }
-
-    fn evaluate(&self, args: &HashMap<&str, f64>) -> Result<f64, EvalError> {
-        self.child
-            .evaluate(args)
+    pub fn eval(child: &Child, args: &HashMap<&str, f64>) -> Result<f64, EvalError> {
+        child.eval(args)
             .map(f64::sin)
             .map(utils::round)
     }
 
-    fn substitute(&self, args: &HashMap<&str, Child>) -> Child {
-        let child = self.child.substitute(args);
-        Self::new(child).to_child()
+    // fn substitute(&self, args: &HashMap<&str, Child>) -> Child {
+    //     let child = self.child.substitute(args);
+    //     Self::new(child).to_child()
+    // }
+
+    // fn get_type(&self) -> FnType {
+    //     FnType::Unary(&self.child)
+    // }
+
+    pub fn derivative(child: &Child, var: &str) -> Child {
+        let d_child = child.derivative(var);
+        let cos = Cos(child.clone()).to_child();
+
+        Mul(cos, d_child).to_child()
     }
 
-    fn get_type(&self) -> FnType {
-        FnType::Unary(&self.child)
-    }
-
-    fn derivative(&self, variable: &str) -> Child {
-        MulFn::new(
-            CosFn::new(self.child.clone()),
-            self.child.derivative(variable)
-        ).to_child()
+    pub fn to_string(child: &Child) -> String {
+        format!("sin{}", child.to_string())
     }
 }
 
 
-///# Functionality
-/// Struct that represents function that is cosine of expression
-/// 
-/// # Example
-/// ```
-/// let function = CosFn::new("x");
-/// 
-/// let args = hashmap!{
-///     "x" => 0.0
-/// };
-/// 
-/// let result = function.evaluate(&args).unwrap();
-/// let expected = 1.0;
-/// 
-/// assert_eq!(result, expected);
-/// ```
-#[derive(Clone)]
-pub struct CosFn {
-    child: Child
-}
+
+pub struct CosFn;
 
 impl CosFn {
-    pub fn new<T>(child: T) -> Self
-    where 
-        T: ToChild,
-    {
-        Self {
-            child: child.to_child()
-        }
-    }
-}
+    unary_new!{Cos, child}
 
-impl FnBehaviour for CosFn {
-    fn clone_box(&self) -> Box<dyn FnBehaviour> {
-        Box::new(self.clone())
-    }
-
-    fn evaluate(&self, args: &HashMap<&str, f64>) -> Result<f64, EvalError> {
-        self.child
-            .evaluate(args)
+    pub fn eval(child: &Child, args: &HashMap<&str, f64>) -> Result<f64, EvalError> {
+        child.eval(args)
             .map(f64::cos)
             .map(utils::round)
     }
 
-    fn substitute(&self, args: &HashMap<&str, Child>) -> Child {
-        let child = self.child.substitute(args);
-        Self::new(child).to_child()
+    // fn substitute(&self, args: &HashMap<&str, Child>) -> Child {
+    //     let child = self.child.substitute(args);
+    //     Self::new(child).to_child()
+    // }
+
+    // fn get_type(&self) -> FnType {
+    //     FnType::Unary(&self.child)
+    // }
+
+    pub fn derivative(child: &Child, var: &str) -> Child {
+        let d_child = child.derivative(var);
+
+        let coef = (-1.0).to_child();
+
+        let child_copy = child.clone();
+        let sin = Sin(child_copy).to_child();
+
+        let d_coef = Mul(coef, d_child).to_child();
+
+        Mul(d_coef, sin).to_child()
     }
 
-    fn get_type(&self) -> FnType {
-        FnType::Unary(&self.child)
-    }
-
-    fn derivative(&self, variable: &str) -> Child {
-        MulFn::new(
-            CoefFn::new(-1, SinFn::new(self.child.clone())),
-            self.child.derivative(variable)
-        ).to_child()
+    pub fn to_string(child: &Child) -> String {
+        format!("cos{}", child.to_string())
     }
 }
 
 
-///# Functionality
-/// Struct that represents function that is tangent of expression
-/// 
-/// # Example
-/// ```
-/// let function = TanFn::new("x");
-/// 
-/// let args = hashmap!{
-///     "x" => 0.0
-/// };
-/// 
-/// let result = function.evaluate(&args).unwrap();
-/// let expected = 0.0;
-/// 
-/// assert_eq!(result, expected);
-/// ```
-#[derive(Clone)]
-pub struct TanFn {
-    child: Child
-}
+pub struct TanFn;
 
 impl TanFn {
-    pub fn new<T>(child: T) -> Self
-    where 
-        T: ToChild,
-    {
-        Self {
-            child: child.to_child()
+    unary_new!{Tan, child}
+
+    pub fn eval(child: &Child, args: &HashMap<&str, f64>) -> Result<f64, EvalError> {
+        let child = child.eval(args)?;
+
+        if child == FRAC_PI_2 {
+            return Err(EvalError::TanAtPiOverTwo)
         }
-    }
-}
-
-impl FnBehaviour for TanFn {
-    fn clone_box(&self) -> Box<dyn FnBehaviour> {
-        Box::new(self.clone())
+        Ok(utils::round(child.tan()))
     }
 
-    fn evaluate(&self, args: &HashMap<&str, f64>) -> Result<f64, EvalError> {
-        let child_value = self.child.evaluate(args)?;
+    // fn substitute(&self, args: &HashMap<&str, Child>) -> Child {
+    //     let child = self.child.substitute(args);
+    //     Self::new(child).to_child()
+    // }
 
-        if child_value == FRAC_PI_2 {
-            return Err(EvalError::TanAtPiOverTwoError)
-        }
-        Ok(utils::round(child_value.tan()))
+    // fn get_type(&self) -> FnType {
+    //     FnType::Unary(&self.child)
+    // }
+
+    pub fn derivative(child: &Child, var: &str) -> Child {
+        let d_child = child.derivative(var);
+
+        let child_copy = child.clone();
+        let den = Cos(child_copy).to_child();
+
+        let ratio = Div(d_child, den).to_child();
+        let pow = 2.0.to_child();
+
+        Exp(ratio, pow).to_child()
     }
 
-    fn substitute(&self, args: &HashMap<&str, Child>) -> Child {
-        let child = self.child.substitute(args);
-        Self::new(child).to_child()
-    }
-
-    fn get_type(&self) -> FnType {
-        FnType::Unary(&self.child)
-    }
-
-    fn derivative(&self, variable: &str) -> Child {
-        let denom = ExpFn::new(CosFn::new(self.child.clone()), 2.0);
-
-        DivFn::new(
-            self.child.derivative(variable),
-            denom
-        ).to_child()
+    pub fn to_string(child: &Child) -> String {
+        format!("tan{}", child.to_string())
     }
 }
