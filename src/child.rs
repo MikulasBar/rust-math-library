@@ -104,6 +104,13 @@ pub trait ToChild {
     fn to_child(self) -> Child;
 }
 
+impl ToChild for Child {
+    #[inline]
+    fn to_child(self) -> Child {
+        self
+    }
+}
+
 impl ToChild for Function {
     #[inline]
     fn to_child(self) -> Child {

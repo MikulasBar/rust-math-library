@@ -9,12 +9,14 @@ use crate::{
         mathvisitor::*
     },
     child::*,
-    parser::{ParsingError, ParsingResult},
+    parsing_result::{ParsingError, ParsingResult},
     functions::{AddFn, MulFn, SubFn, DivFn, ExpFn, LogFn},
+    function::*,
 };
 
-/// Visitor for parsing math expressions
+
 pub struct Visitor {
+    /// this value isn't really used, but it's required by the trait
     temp: ParsingResult
 }
 
@@ -41,53 +43,34 @@ impl ParseTreeVisitorCompat<'_> for Visitor {
 }
 
 impl mathVisitorCompat<'_> for Visitor {
-    /// Visit root of the tree
     fn visit_root(&mut self, ctx: &RootContext<'_>) -> Self::Return {
         self.visit(&*ctx.expr().unwrap())
     }
     
-    /// Visit number <br>
-    /// Returns constant
     fn visit_number(&mut self, ctx: &NumberContext<'_>) -> Self::Return {
-        ParsingResult::Ok(
-            Child::Const(
-                ctx.NUMBER()
-                    .unwrap()
-                    .get_text()
-                    .parse()
-                    .unwrap()
-            )
-        )
-    }
-
-    /// Visit variable <br>
-    /// Checks if variable is constant <br>
-    /// If it is constant, returns constant <br>
-    /// Else returns variable
-    fn visit_var(&mut self, ctx: &VarContext<'_>) -> Self::Return {
-        let name = ctx.ID()
+        ctx.NUMBER()
             .unwrap()
-            .get_text();
-
-        todo!();
-
-        // let value = self.rules.get_constant(&name);
-        // ParsingResult::Ok(
-        //     match value {
-        //         Some(v) => v.to_child(),
-        //         _ => name.to_child()
-        //     }
-        // )
+            .get_text()
+            .parse::<f64>()
+            .unwrap()
+            .to_child()
+            .into()
     }
 
-    /// Visit expression in parentheses <br>
-    /// Returns the expression
+    // we don't check if its constant like pi - it will be checked in the function by `Context`
+    fn visit_var(&mut self, ctx: &VarContext<'_>) -> Self::Return {
+        ctx.ID()
+            .unwrap()
+            .get_text()
+            .to_child()
+            .into()
+    }
+
     fn visit_parens(&mut self, ctx: &ParensContext<'_>) -> Self::Return {
         self.visit(&*ctx.expr().unwrap())
     }
 
-    /// Visit addition or subtraction <br>
-    /// Returns `AddFn` or `SubFn` or `ParsingError`
+    // returns 'Add' or 'Sub' Function
     fn visit_add(&mut self, ctx: &AddContext<'_>) -> Self::Return {
         let left = self.visit(&*ctx.expr(0).unwrap());
         let right = self.visit(&*ctx.expr(1).unwrap());
@@ -102,17 +85,16 @@ impl mathVisitorCompat<'_> for Visitor {
 
         let left = left.unwrap();
         let right = right.unwrap();
-
-        ParsingResult::Ok(
-            match ctx.SUB() {
-                Some(_) => SubFn::new(left, right).to_child(),
-                _ =>  AddFn::new(left, right).to_child()
-            }
-        )
+        
+        match ctx.SUB() {
+            Some(_) => SubFn::new(left, right),
+            _ =>  AddFn::new(left, right)
+        }
+        .to_child()
+        .into()
     }
 
-    /// Visit multiplication or division <br>
-    /// Returns `MulFn` or `DivFn` or `ParsingError`
+    // returns 'Mul' or 'Div' Function
     fn visit_multiply(&mut self, ctx: &MultiplyContext<'_>) -> Self::Return {
         let left = self.visit(&*ctx.expr(0).unwrap());
         let right = self.visit(&*ctx.expr(1).unwrap());
@@ -128,16 +110,14 @@ impl mathVisitorCompat<'_> for Visitor {
         let left = left.unwrap();
         let right = right.unwrap();
 
-        ParsingResult::Ok(
-            match ctx.DIV() {
-                Some(_) => DivFn::new(left, right).to_child(),
-                _ =>  MulFn::new(left, right).to_child()
-            }
-        )
+        match ctx.DIV() {
+            Some(_) => DivFn::new(left, right),
+            _ =>  MulFn::new(left, right)
+        }
+        .to_child()
+        .into()
     }
 
-    /// Visit exponentiation <br>
-    /// Returns `ExpFn` or `ParsingError`
     fn visit_power(&mut self, ctx: &PowerContext<'_>) -> Self::Return {
         let base = self.visit(&*ctx.expr(0).unwrap());
         let power = self.visit(&*ctx.expr(1).unwrap());
@@ -153,13 +133,11 @@ impl mathVisitorCompat<'_> for Visitor {
         let base = base.unwrap();
         let power = power.unwrap();
 
-        ParsingResult::Ok(
-            ExpFn::new(base, power).to_child()
-        )
+        ExpFn::new(base, power)
+            .to_child()
+            .into()
     }
 
-    /// Visit logarithm <br>
-    /// Returns `LogFn` or `ParsingError`
     fn visit_log(&mut self, ctx: &LogContext<'_>) -> Self::Return {
         let base = self.visit(&*ctx.expr(0).unwrap());
         let arg = self.visit(&*ctx.expr(1).unwrap());
@@ -175,27 +153,23 @@ impl mathVisitorCompat<'_> for Visitor {
         let base = base.unwrap();
         let arg = arg.unwrap();
 
-        ParsingResult::Ok(
-            LogFn::new(base, arg).to_child()
-        )
+        LogFn::new(base, arg)
+            .to_child()
+            .into()
     }
 
-    /// Visit custom function with arguments <br>
-    /// function is matched with rules of parsing <br>
-    /// Returns `Child` or `ParsingError`
+    // Visit function with arguments (sin, tan, your custom function)
     fn visit_function(&mut self, ctx: &FunctionContext<'_>) -> Self::Return {
         let name = ctx.ID().unwrap().get_text();
-        let result_args: Vec<ParsingResult> = ctx.expr_all()
-            .into_iter()
-            .map(|x| self.visit(&*x))
-            .collect();
-
         let mut args: Vec<Child> = vec![];
-        for arg in result_args {
-            if arg.is_err() {
-                return arg
+        
+        for expr in ctx.expr_all() {
+            let visited = self.visit(&*expr);
+            // checks if the result is an error - returns the first error
+            if visited.is_err() {
+                return visited
             }
-            args.push(arg.unwrap())
+            args.push(visited.unwrap())
         }
 
         todo!();
@@ -204,7 +178,7 @@ impl mathVisitorCompat<'_> for Visitor {
         // }
 
         return ParsingResult::Err(
-            ParsingError::UnrecognizedFunctionNameError
+            ParsingError::UnrecognizedFunctionName
         )
     }
 }
