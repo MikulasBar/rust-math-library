@@ -4,7 +4,6 @@ use std::f64::consts::FRAC_PI_2;
 use crate::{
     function::*,
     child::*,
-    utils,
 };
 
 use super::basic::{MulFn, DivFn};
@@ -21,7 +20,7 @@ impl SinFn {
     pub fn eval(child: &Child, args: &HashMap<&str, f64>) -> Result<f64, EvalError> {
         child.eval(args)
             .map(f64::sin)
-            .map(utils::round)
+            .map(Function::round)
     }
 
     // fn substitute(&self, args: &HashMap<&str, Child>) -> Child {
@@ -55,7 +54,7 @@ impl CosFn {
     pub fn eval(child: &Child, args: &HashMap<&str, f64>) -> Result<f64, EvalError> {
         child.eval(args)
             .map(f64::cos)
-            .map(utils::round)
+            .map(Function::round)
     }
 
     // fn substitute(&self, args: &HashMap<&str, Child>) -> Child {
@@ -97,7 +96,7 @@ impl TanFn {
         if child == FRAC_PI_2 {
             return Err(EvalError::TanAtPiOverTwo)
         }
-        Ok(utils::round(child.tan()))
+        Ok(Function::round(child.tan()))
     }
 
     // fn substitute(&self, args: &HashMap<&str, Child>) -> Child {

@@ -3,8 +3,7 @@ use std::ops::RangeInclusive;
 use maplit::hashmap;
 
 use crate::child::*;
-use crate::utils::type_of;
-use std::f64::consts::FRAC_PI_2;
+use std::f64::{EPSILON, consts::FRAC_PI_2};
 
 use crate::functions::basic::*;
 use crate::functions::trigonometric::*;
@@ -295,6 +294,23 @@ pub enum Function {
     Sin(Child),
     Cos(Child),
     Tan(Child),
+}
+
+
+// utility functions
+impl Function {
+    /// Check if a number is zero <br>
+    /// Uses `f64::EPSILON` as the threshold
+    pub fn is_zero(num: f64) -> bool {
+        num.abs() < EPSILON
+    }
+
+    /// Use to result from goniometric or other non-precise functions <br>
+    /// Rounds only if the fractional part is less than `f64::EPSILON`
+    pub fn round(num: f64) -> f64 {
+        let small_part = (num.fract() * 1e15).fract() * 1e-15;
+        num - small_part
+    }
 }
 
 impl Function {

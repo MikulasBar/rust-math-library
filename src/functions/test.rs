@@ -116,11 +116,8 @@ fn test_SinFn() {
         "x" => FRAC_PI_2,
     };
 
-    let result = func.eval(&args).unwrap();
-    let d_result = dfunc.eval(&args).unwrap();
-
-    assert!((result - 1.0).abs() <= EPSILON);
-    assert!(d_result.abs() <= EPSILON);
+    assert_eq!(func.eval(&args), Ok(1.0));
+    assert_eq!(dfunc.eval(&args), Ok(0.0));
 }
 
 #[test]
@@ -132,11 +129,8 @@ fn test_CosFn() {
         "x" => FRAC_PI_2,
     };
 
-    let result = func.eval(&args).unwrap();
-    let d_result = dfunc.eval(&args).unwrap();
-
-    assert!(result.abs() <= EPSILON);
-    assert!((d_result + 1.0).abs() <= EPSILON);
+    assert_eq!(func.eval(&args), Ok(0.0));
+    assert_eq!(dfunc.eval(&args), Ok(-1.0));
 }
 
 #[test]
@@ -148,11 +142,8 @@ fn test_TanFn() {
         "x" => PI
     };
 
-    let result = func.eval(&args).unwrap();
-    let d_result = dfunc.eval(&args).unwrap();
-
-    assert!(result.abs() <= EPSILON);
-    assert!((d_result - 1.0).abs() <= EPSILON);
+    assert_eq!(func.eval(&args), Ok(0.0));
+    assert_eq!(dfunc.eval(&args), Ok(1.0));
 }
 
 // #[test]

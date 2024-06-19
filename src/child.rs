@@ -20,17 +20,17 @@ pub enum Child {
 
 
 impl Child {
-    pub fn is_function(&self) -> bool {
-        matches!(self, Fn(_))
-    }
+    // pub fn is_function(&self) -> bool {
+    //     matches!(self, Fn(_))
+    // }
 
-    pub fn is_var(&self) -> bool {
-        matches!(self, Var(_))
-    }
+    // pub fn is_var(&self) -> bool {
+    //     matches!(self, Var(_))
+    // }
 
-    pub fn is_const(&self) -> bool {
-        matches!(self, Const(_))
-    }
+    // pub fn is_const(&self) -> bool {
+    //     matches!(self, Const(_))
+    // }
 
     pub fn to_string(&self) -> String {
         match self {
