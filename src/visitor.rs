@@ -4,13 +4,13 @@
 use antlr_rust::tree::{ParseTree, ParseTreeVisitorCompat};
 
 use crate::{
-    antlr_parser::{
+    antlr::{
         mathparser::*,
         mathvisitor::*
     },
     child::*,
     parsing_result::ParsingResult,
-    functions::{AddFn, MulFn, SubFn, DivFn, ExpFn, LogFn},
+    functions::{basic::*, advanced::*},
 };
 
 

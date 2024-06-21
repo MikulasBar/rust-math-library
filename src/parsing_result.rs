@@ -86,6 +86,5 @@ impl From<String> for ParsingResult {
 #[derive(Debug, Display)]
 pub enum ParsingError {
     Placeholder,
-    UnrecognizedFunctionName,
     Antlr
 }

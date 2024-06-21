@@ -1,11 +1,14 @@
 use std::collections::HashMap;
 use std::f64::EPSILON;
 
-use crate::child::*;
-
-use crate::functions::basic::*;
-use crate::functions::trigonometric::*;
-use crate::functions::advanced::*;
+use crate::{
+    child::Child,
+    functions::{
+        basic::*,
+        trigonometric::*,
+        advanced::*,
+    },
+};
 
 
 
@@ -32,7 +35,7 @@ pub enum EvalError {
     TanAtPiOverTwo,
 
     /// Error that occurs when you try to evaluate parameter that doesn't exist
-    ParameterNotFound(String),
+    ParameterNotFound(Box<str>),
 
     ZeroToZero,
 }

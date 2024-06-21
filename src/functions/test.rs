@@ -2,7 +2,11 @@
 use maplit::hashmap;
 use std::f64::consts::{E, FRAC_PI_2, PI};
 
-use super::*;
+use super::{
+    basic::*,
+    trigonometric::*,
+    advanced::*,
+};
 
 #[test]
 fn add() {

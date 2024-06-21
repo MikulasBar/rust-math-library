@@ -3,7 +3,7 @@ mod function;
 mod child;
 
 
-mod antlr_parser;
+mod antlr;
 mod visitor;
 mod parser;
 mod parsing_result;

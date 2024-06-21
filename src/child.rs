@@ -14,11 +14,10 @@ use Child::*;
 #[derive(Debug, PartialEq, Clone)]
 pub enum Child {
     Fn(Box<Function>),
-    Var(String),
+    Var(Box<str>),
     Const(f64),
 
     // NamedFn(String, Vec<Child>),
-    NamedConst(String),
 }
 
 impl Default for Child {
@@ -33,11 +32,8 @@ impl Child {
             Fn(f) => f.eval(args),
             Const(c) => Ok(*c),
             Var(v) => {
-                args.get(v.as_str()).copied()
+                args.get(v.as_ref()).copied()
                     .ok_or(EvalError::ParameterNotFound(v.clone()))
-            },
-            NamedConst(name) => {
-                todo!()
             },
         }
     }
@@ -63,18 +59,15 @@ impl Child {
     //     }
     // }
 
-    pub fn derivative(&self, variable: &str) -> Child {
+    pub fn derivative(&self, var: &str) -> Child {
         match self {
-            Fn(f) => f.derivative(variable),
+            Fn(f) => f.derivative(var),
             Const(_) => (0.0).into(),
             Var(v) => {
-                match *v == *variable {
+                match v.as_ref() == var {
                     true => 1.0,
                     false => 0.0,
                 }.into()
-            },
-            NamedConst(name) => {
-                todo!()
             },
             // NamedFn(name, args) => {
             //     let args = args.iter()
@@ -98,7 +91,6 @@ impl Child {
             //         .join(", ");
             //     format!("{}({})", name, args)
             // },
-            NamedConst(name) => name.to_string(),
         }
     }
 }
@@ -124,14 +116,14 @@ impl From<f64> for Child {
 impl From<&str> for Child {
     #[inline]
     fn from(v: &str) -> Self {
-        Child::Var(v.to_string())
+        Child::Var(Box::from(v))
     }
 }
 
 impl From<String> for Child {
     #[inline]
     fn from(v: String) -> Self {
-        Child::Var(v)
+        Child::Var(v.into_boxed_str())
     }
 }
 
