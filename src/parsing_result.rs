@@ -1,5 +1,5 @@
 use derive_more::Display;
-use crate::child::Child;
+use crate::{child::Child, function::Function};
 
 
 
@@ -50,11 +50,37 @@ impl Into<Result<Child, ParsingError>> for ParsingResult {
     }
 }
 
-impl Into<ParsingResult> for Child {
-    fn into(self) -> ParsingResult {
-        ParsingResult::Ok(self)
+impl From<Child> for ParsingResult {
+    fn from(c: Child) -> Self {
+        Self::Ok(c)
     }
 }
+
+impl From<Function> for ParsingResult {
+    fn from(f: Function) -> Self {
+        Child::from(f).into()
+    }
+}
+
+// impl From<ParsingError> for ParsingResult {
+//     fn from(e: ParsingError) -> Self {
+//         Self::Err(e)
+//     }
+// }
+
+impl From<f64> for ParsingResult {
+    fn from(f: f64) -> Self {
+        Child::from(f).into()
+    }
+}
+
+impl From<String> for ParsingResult {
+    fn from(s: String) -> Self {
+        Child::from(s).into()
+    }
+}
+
+
 
 
 #[derive(Debug, Display)]

@@ -15,33 +15,13 @@ use Child::*;
 pub enum Child {
     Fn(Box<Function>),
     Var(String),
-    Const(f64)
+    Const(f64),
+
+    // NamedFn(String, Vec<Child>),
+    NamedConst(String),
 }
 
-
-impl Child {
-    // pub fn is_function(&self) -> bool {
-    //     matches!(self, Fn(_))
-    // }
-
-    // pub fn is_var(&self) -> bool {
-    //     matches!(self, Var(_))
-    // }
-
-    // pub fn is_const(&self) -> bool {
-    //     matches!(self, Const(_))
-    // }
-
-    pub fn to_string(&self) -> String {
-        match self {
-            Const(c) => c.to_string(),
-            Var(v) => v.to_string(),
-            Fn(f) => f.to_string(),
-        }
-    }
-}
-
-impl<'a> Default for Child {
+impl Default for Child {
     fn default() -> Self {
         Const(0.0)
     }
@@ -56,6 +36,9 @@ impl Child {
                 args.get(v.as_str()).copied()
                     .ok_or(EvalError::ParameterNotFound(v.clone()))
             },
+            NamedConst(name) => {
+                todo!()
+            },
         }
     }
 
@@ -65,7 +48,7 @@ impl Child {
     //         Fn(f) => f.substitute(args),
     //         Var(v) => {
     //             if let Some(c) = args.get(v) {
-    //                 return c.clone().to_child()
+    //                 return c.clone().into()
     //             }
     //             self.clone()
     //         },
@@ -83,13 +66,39 @@ impl Child {
     pub fn derivative(&self, variable: &str) -> Child {
         match self {
             Fn(f) => f.derivative(variable),
-            Const(_) => (0.0).to_child(),
+            Const(_) => (0.0).into(),
             Var(v) => {
                 match *v == *variable {
                     true => 1.0,
                     false => 0.0,
-                }.to_child()
-            }
+                }.into()
+            },
+            NamedConst(name) => {
+                todo!()
+            },
+            // NamedFn(name, args) => {
+            //     let args = args.iter()
+            //         .map(|a| a.derivative(variable))
+            //         .collect();
+            //     NamedFn(name.clone(), args)
+            // },
+        }
+    }
+
+    pub fn to_string(&self) -> String {
+        match self {
+            Const(c) => c.to_string(),
+            Var(v) => v.to_string(),
+            Fn(f) => f.to_string(),
+            
+            // NamedFn(name, args) => {
+            //     let args = args.iter()
+            //         .map(|a| a.to_string())
+            //         .collect::<Vec<String>>()
+            //         .join(", ");
+            //     format!("{}({})", name, args)
+            // },
+            NamedConst(name) => name.to_string(),
         }
     }
 }
@@ -98,43 +107,72 @@ impl Child {
 
 
 
-/// Trait for converting a type to a Child <br>
-/// Used instead of Into<Child> because Into cannot be used to convert FnBehaviour dynamic object
-pub trait ToChild {
-    fn to_child(self) -> Child;
-}
-
-impl ToChild for Child {
+impl From<Function> for Child {
     #[inline]
-    fn to_child(self) -> Child {
-        self
+    fn from(f: Function) -> Self {
+        Child::Fn(Box::new(f))
     }
 }
 
-impl ToChild for Function {
+impl From<f64> for Child {
     #[inline]
-    fn to_child(self) -> Child {
-        Child::Fn(Box::new(self))
+    fn from(c: f64) -> Self {
+        Child::Const(c)
     }
 }
 
-impl ToChild for f64 {
+impl From<&str> for Child {
     #[inline]
-    fn to_child(self) -> Child {
-        Child::Const(self)
+    fn from(v: &str) -> Self {
+        Child::Var(v.to_string())
     }
 }
 
-impl ToChild for &str {
+impl From<String> for Child {
     #[inline]
-    fn to_child(self) -> Child {
-        Child::Var(self.to_string())
+    fn from(v: String) -> Self {
+        Child::Var(v)
     }
 }
 
-impl ToChild for String {
-    #[inline]
-    fn to_child(self) -> Child {
-        Child::Var(self)
-    }
-}
+
+
+// pub trait ToChild {
+//     fn into(self) -> Child;
+// }
+
+// impl ToChild for Child {
+//     #[inline]
+//     fn into(self) -> Child {
+//         self
+//     }
+// }
+
+// impl ToChild for Function {
+//     #[inline]
+//     fn into(self) -> Child {
+//         Child::Fn(Box::new(self))
+//     }
+// }
+
+// impl ToChild for f64 {
+//     #[inline]
+//     fn into(self) -> Child {
+//         Child::Const(self)
+//     }
+// }
+
+// impl ToChild for &str {
+//     #[inline]
+//     fn into(self) -> Child {
+//         Child::Var(self.to_string())
+//     }
+// }
+
+// impl ToChild for String {
+//     #[inline]
+//     fn into(self) -> Child {
+//         Child::Var(self)
+//     }
+// }
+

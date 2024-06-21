@@ -6,7 +6,6 @@ use crate::{
     child::*,
 };
 
-use super::basic::{MulFn, DivFn};
 
 use crate::function::Function::*;
 use crate::unary_new;
@@ -25,7 +24,7 @@ impl SinFn {
 
     // fn substitute(&self, args: &HashMap<&str, Child>) -> Child {
     //     let child = self.child.substitute(args);
-    //     Self::new(child).to_child()
+    //     Self::new(child).into()
     // }
 
     // fn get_type(&self) -> FnType {
@@ -34,9 +33,9 @@ impl SinFn {
 
     pub fn derivative(child: &Child, var: &str) -> Child {
         let d_child = child.derivative(var);
-        let cos = Cos(child.clone()).to_child();
+        let cos = Cos(child.clone()).into();
 
-        Mul(cos, d_child).to_child()
+        Mul(cos, d_child).into()
     }
 
     pub fn to_string(child: &Child) -> String {
@@ -59,7 +58,7 @@ impl CosFn {
 
     // fn substitute(&self, args: &HashMap<&str, Child>) -> Child {
     //     let child = self.child.substitute(args);
-    //     Self::new(child).to_child()
+    //     Self::new(child).into()
     // }
 
     // fn get_type(&self) -> FnType {
@@ -69,14 +68,14 @@ impl CosFn {
     pub fn derivative(child: &Child, var: &str) -> Child {
         let d_child = child.derivative(var);
 
-        let coef = (-1.0).to_child();
+        let coef = (-1.0).into();
 
         let child_copy = child.clone();
-        let sin = Sin(child_copy).to_child();
+        let sin = Sin(child_copy).into();
 
-        let d_coef = Mul(coef, d_child).to_child();
+        let d_coef = Mul(coef, d_child).into();
 
-        Mul(d_coef, sin).to_child()
+        Mul(d_coef, sin).into()
     }
 
     pub fn to_string(child: &Child) -> String {
@@ -101,7 +100,7 @@ impl TanFn {
 
     // fn substitute(&self, args: &HashMap<&str, Child>) -> Child {
     //     let child = self.child.substitute(args);
-    //     Self::new(child).to_child()
+    //     Self::new(child).into()
     // }
 
     // fn get_type(&self) -> FnType {
@@ -112,12 +111,12 @@ impl TanFn {
         let d_child = child.derivative(var);
 
         let child_copy = child.clone();
-        let den = Cos(child_copy).to_child();
+        let den = Cos(child_copy).into();
 
-        let ratio = Div(d_child, den).to_child();
-        let pow = 2.0.to_child();
+        let ratio = Div(d_child, den).into();
+        let pow = 2.0.into();
 
-        Exp(ratio, pow).to_child()
+        Exp(ratio, pow).into()
     }
 
     pub fn to_string(child: &Child) -> String {

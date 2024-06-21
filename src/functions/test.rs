@@ -1,17 +1,11 @@
-#![allow(non_snake_case, unused)]
 
 use maplit::hashmap;
-use std::{
-    f64::{
-        consts::{E, FRAC_PI_2, PI},
-        EPSILON
-    },
-    collections::HashMap,
-};
+use std::f64::consts::{E, FRAC_PI_2, PI};
+
 use super::*;
 
 #[test]
-fn test_AddFn() {
+fn add() {
     let func = AddFn::new("x", "y");
     let dfunc = func.derivative("x");
 
@@ -25,7 +19,7 @@ fn test_AddFn() {
 }
 
 #[test]
-fn test_SubFn() {
+fn sub() {
     let func = SubFn::new("x", "y");
     let dfunc = func.derivative("x");
 
@@ -39,7 +33,7 @@ fn test_SubFn() {
 }
 
 #[test]
-fn test_MulFn() {
+fn mul() {
     let func = MulFn::new("x", "y");
     let dfunc = func.derivative("x");
 
@@ -53,7 +47,7 @@ fn test_MulFn() {
 }
 
 #[test]
-fn test_DivFn() {
+fn div() {
     let func = DivFn::new("x", "y");
     let dfunc = func.derivative("x");
 
@@ -66,21 +60,8 @@ fn test_DivFn() {
     assert_eq!(dfunc.eval(&args), Ok(0.1));
 }
 
-// #[test]
-// fn test_CoefFn() {
-//     let func = CoefFn::new(5.0, "x");
-//     let dfunc = func.derivative("x");
-
-//     let args = hashmap!{
-//         "x" => 6.0
-//     };
-
-//     assert_eq!(func.evaluate(&args), Ok(30.0));
-//     assert_eq!(dfunc.evaluate(&args), Ok(5.0));
-// }
-
 #[test]
-fn test_ExpFn() {
+fn exp() {
     let func = ExpFn::new("x", "y");
     let dfunc = func.derivative("x");
 
@@ -94,7 +75,7 @@ fn test_ExpFn() {
 }
 
 #[test]
-fn test_LogFn() {
+fn log() {
     let func = LogFn::new("x", "y");
     let dfunc = func.derivative("x");
 
@@ -108,7 +89,7 @@ fn test_LogFn() {
 }
 
 #[test]
-fn test_SinFn() {
+fn sin() {
     let func = SinFn::new("x");
     let dfunc = func.derivative("x");
 
@@ -121,7 +102,7 @@ fn test_SinFn() {
 }
 
 #[test]
-fn test_CosFn() {
+fn cos() {
     let func = CosFn::new("x");
     let dfunc = func.derivative("x");
 
@@ -134,7 +115,7 @@ fn test_CosFn() {
 }
 
 #[test]
-fn test_TanFn() {
+fn tan() {
     let func = TanFn::new("x");
     let dfunc = func.derivative("x");
 
@@ -145,33 +126,3 @@ fn test_TanFn() {
     assert_eq!(func.eval(&args), Ok(0.0));
     assert_eq!(dfunc.eval(&args), Ok(1.0));
 }
-
-// #[test]
-// fn test_SeqAddFn() {
-//     let func = SeqAddFn::new(vec!["x", "y", "z", "x"]);
-//     let dfunc = func.derivative("x");
-
-//     let args = hashmap!{
-//         "x" => 1.0,
-//         "y" => 5.0,
-//         "z" => 3.0
-//     };
-
-//     assert_eq!(func.evaluate(&args), Ok(10.0));
-//     assert_eq!(dfunc.evaluate(&args), Ok(2.0));
-// }
-
-// #[test]
-// fn test_SeqMulFn() {
-//     let func = SeqMulFn::new(vec!["x", "y", "z", "x"]);
-//     let dfunc = func.derivative("x");
-
-//     let args = hashmap!{
-//         "x" => 2.0,
-//         "y" => 5.0,
-//         "z" => 3.0
-//     };
-
-//     assert_eq!(func.evaluate(&args), Ok(60.0));
-//     assert_eq!(dfunc.evaluate(&args), Ok(60.0));
-// }

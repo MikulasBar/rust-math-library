@@ -1,6 +1,4 @@
-use derive_more::Display;
-use maplit::hashmap;
-use std::f64::consts::PI;
+#![allow(dead_code)]
 
 use antlr_rust::{
     common_token_stream::CommonTokenStream,
@@ -13,11 +11,9 @@ use crate::{
     antlr_parser::{
         mathlexer::*,
         mathparser::*,
-        mathvisitor::*
     },
     visitor::*,
     child::*,
-    function::*,
     parsing_result::*,
 };
 
@@ -55,11 +51,14 @@ impl Parser {
 
 #[cfg(test)]
 mod test {
-    use super::*;
+    use maplit::hashmap;
+    use std::f64::consts::PI;
+    
+    use super::Parser;
 
     // 2^(3 - 1) * (1 - cos(pi/x)) + log_5(y + ln(e))
     #[test]
-    fn test_parser() {
+    fn parser() {
         let mut parser = Parser::new();
         let fn_result = parser.parse("2^(3 - 1) * (1 - cos(pi/x)) + log_5(y + ln(e))");
 

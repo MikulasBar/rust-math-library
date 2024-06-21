@@ -32,7 +32,7 @@ impl ExpFn {
     //     let base = self.base.substitute(args);
     //     let exp = self.exponent.substitute(args);
 
-    //     Self::new(base, exp).to_child()
+    //     Self::new(base, exp).into()
     // }
 
     // fn get_type(&self) -> FnType {
@@ -43,16 +43,16 @@ impl ExpFn {
         let d_base = base.derivative(var);
         let d_exp = exp.derivative(var);
 
-        let ln_base = Log(base.clone(), E.to_child()).to_child();
-        let ratio = Div(exp.clone(), base.clone()).to_child();
+        let ln_base = Log(base.clone(), E.into()).into();
+        let ratio = Div(exp.clone(), base.clone()).into();
 
-        let left = Mul(d_exp, ln_base).to_child();
-        let right = Mul(d_base, ratio).to_child();
+        let left = Mul(d_exp, ln_base).into();
+        let right = Mul(d_base, ratio).into();
 
-        let self_copy = Exp(base.clone(), exp.clone()).to_child();
-        let factor = Add(left, right).to_child();
+        let self_copy = Exp(base.clone(), exp.clone()).into();
+        let factor = Add(left, right).into();
 
-        Mul(self_copy, factor).to_child()
+        Mul(self_copy, factor).into()
     }
 
     pub fn to_string(base: &Child, exp: &Child) -> String {
@@ -85,7 +85,7 @@ impl LogFn {
     //     let base = self.base.substitute(args);
     //     let arg = self.argument.substitute(args);
 
-    //     Self::new(base, arg).to_child()
+    //     Self::new(base, arg).into()
     // }
 
     // fn get_type(&self) -> FnType {
@@ -96,14 +96,14 @@ impl LogFn {
         let d_base = base.derivative(variable);
         let d_arg = arg.derivative(variable);
 
-        let base_ratio = Div(d_base, base.clone()).to_child();
-        let arg_ratio = Div(d_arg, arg.clone()).to_child();
+        let base_ratio = Div(d_base, base.clone()).into();
+        let arg_ratio = Div(d_arg, arg.clone()).into();
 
-        let self_copy = Log(base.clone(), arg.clone()).to_child();
+        let self_copy = Log(base.clone(), arg.clone()).into();
 
-        let term = Mul(base_ratio, self_copy).to_child(); 
+        let term = Mul(base_ratio, self_copy).into(); 
 
-        Sub(arg_ratio, term).to_child()
+        Sub(arg_ratio, term).into()
     }
 
     pub fn to_string(base: &Child, arg: &Child) -> String {
@@ -130,7 +130,7 @@ impl LogFn {
 //         Self {
 //             children: children
 //                 .into_iter()
-//                 .map(|c| c.to_child())
+//                 .map(|c| c.into())
 //                 .collect(),
 //         }
 //     }
@@ -157,7 +157,7 @@ impl LogFn {
 //             .map(|c| c.substitute(args))
 //             .collect();
 
-//         Self::new(children).to_child()
+//         Self::new(children).into()
 //     }
 
 //     fn get_type(&self) -> FnType {
@@ -170,7 +170,7 @@ impl LogFn {
 //             .map(|c| c.derivative(variable))
 //             .collect();
 
-//         SeqAddFn::new(children).to_child()
+//         SeqAddFn::new(children).into()
 //     }
 // }
 
@@ -189,7 +189,7 @@ impl LogFn {
 //         Self {
 //             children: children
 //                 .into_iter()
-//                 .map(|c| c.to_child())
+//                 .map(|c| c.into())
 //                 .collect(),
 //         }
 //     }
@@ -216,7 +216,7 @@ impl LogFn {
 //             .map(|c| c.substitute(args))
 //             .collect();
 
-//         Self::new(children).to_child()
+//         Self::new(children).into()
 //     }
 
 //     fn get_type(&self) -> FnType {
@@ -236,7 +236,7 @@ impl LogFn {
 //         MulFn::new(
 //             self.clone(),
 //             SeqAddFn::new(terms)
-//         ).to_child()
+//         ).into()
 //     }
 // }
 

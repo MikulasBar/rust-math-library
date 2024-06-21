@@ -9,9 +9,8 @@ use crate::{
         mathvisitor::*
     },
     child::*,
-    parsing_result::{ParsingError, ParsingResult},
+    parsing_result::ParsingResult,
     functions::{AddFn, MulFn, SubFn, DivFn, ExpFn, LogFn},
-    function::*,
 };
 
 
@@ -53,7 +52,6 @@ impl mathVisitorCompat<'_> for Visitor {
             .get_text()
             .parse::<f64>()
             .unwrap()
-            .to_child()
             .into()
     }
 
@@ -62,7 +60,6 @@ impl mathVisitorCompat<'_> for Visitor {
         ctx.ID()
             .unwrap()
             .get_text()
-            .to_child()
             .into()
     }
 
@@ -90,7 +87,6 @@ impl mathVisitorCompat<'_> for Visitor {
             Some(_) => SubFn::new(left, right),
             _ =>  AddFn::new(left, right)
         }
-        .to_child()
         .into()
     }
 
@@ -114,7 +110,6 @@ impl mathVisitorCompat<'_> for Visitor {
             Some(_) => DivFn::new(left, right),
             _ =>  MulFn::new(left, right)
         }
-        .to_child()
         .into()
     }
 
@@ -134,7 +129,6 @@ impl mathVisitorCompat<'_> for Visitor {
         let power = power.unwrap();
 
         ExpFn::new(base, power)
-            .to_child()
             .into()
     }
 
@@ -154,18 +148,18 @@ impl mathVisitorCompat<'_> for Visitor {
         let arg = arg.unwrap();
 
         LogFn::new(base, arg)
-            .to_child()
             .into()
     }
 
     // Visit function with arguments (sin, tan, your custom function)
+    // if there are errors then returns the first one
     fn visit_function(&mut self, ctx: &FunctionContext<'_>) -> Self::Return {
         let name = ctx.ID().unwrap().get_text();
         let mut args: Vec<Child> = vec![];
         
         for expr in ctx.expr_all() {
             let visited = self.visit(&*expr);
-            // checks if the result is an error - returns the first error
+
             if visited.is_err() {
                 return visited
             }
@@ -176,10 +170,6 @@ impl mathVisitorCompat<'_> for Visitor {
         // if let Some(result) = self.rules.get_function(&name, args) {
         //     return ParsingResult::Ok(result)
         // }
-
-        return ParsingResult::Err(
-            ParsingError::UnrecognizedFunctionName
-        )
     }
 }
 

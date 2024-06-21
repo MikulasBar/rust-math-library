@@ -1,9 +1,7 @@
 use std::collections::HashMap;
-use std::ops::RangeInclusive;
-use maplit::hashmap;
+use std::f64::EPSILON;
 
 use crate::child::*;
-use std::f64::{EPSILON, consts::FRAC_PI_2};
 
 use crate::functions::basic::*;
 use crate::functions::trigonometric::*;
@@ -69,7 +67,7 @@ pub enum Function {
 
     // Named {
     //     name: String,
-    //     body: Child,
+    //     body: Function,
     // },
 }
 
@@ -89,11 +87,11 @@ impl Function {
 
         let scaled_fract = num.fract() * SCALE_FACTOR;
 
-        // this is part on the number that is less than EPSILON
+        // this is part on the number that is less than EPSILON ->
         // we move all digits to the left by 15 places
         // and takes the fractional part
         // this will ensure that we extract only the small part of the number
-        // then we divide it by SCALE_FACTOR to get the real value
+        // then we must divide it by SCALE_FACTOR to get the real value back
         let small_part = scaled_fract.fract() / SCALE_FACTOR;
 
         // we round the number by removing the small part

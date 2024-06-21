@@ -1,5 +1,7 @@
+#![allow(dead_code)]
+
 use std::collections::HashMap;
-use crate::child::{Child, ToChild};
+use crate::child::Child;
 use crate::function::{Function, EvalError};
 
 use Function::*;
@@ -21,7 +23,7 @@ impl AddFn {
     pub fn derivative(left: &Child, right: &Child, var: &str) -> Child {
         let left = left.derivative(var);
         let right = right.derivative(var);
-        Add(left, right).to_child()
+        Add(left, right).into()
     }
 
     pub fn to_string(left: &Child, right: &Child) -> String {
@@ -44,7 +46,7 @@ impl SubFn {
     pub fn derivative(left: &Child, right: &Child, var: &str) -> Child {
         let d_left = left.derivative(var);
         let d_right = right.derivative(var);
-        Sub(d_left, d_right).to_child()
+        Sub(d_left, d_right).into()
     }
 
     pub fn to_string(left: &Child, right: &Child) -> String {
@@ -68,10 +70,10 @@ impl MulFn {
         let d_left = left.derivative(var);
         let d_right = right.derivative(var);
 
-        let first_term = Mul(d_left, right.clone()).to_child();
-        let second_term = Mul(left.clone(), d_right).to_child();
+        let first_term = Mul(d_left, right.clone()).into();
+        let second_term = Mul(left.clone(), d_right).into();
 
-        Add(first_term, second_term).to_child()
+        Add(first_term, second_term).into()
     }
 
     pub fn to_string(left: &Child, right: &Child) -> String {
@@ -99,13 +101,13 @@ impl DivFn {
         let d_num = num.derivative(var);
         let d_den = den.derivative(var);
 
-        let left = Mul(d_num, den.clone()).to_child();
-        let right = Mul(num.clone(), d_den).to_child();
+        let left = Mul(d_num, den.clone()).into();
+        let right = Mul(num.clone(), d_den).into();
 
-        let res_num = Sub(left, right).to_child();
-        let res_den = Exp(den.clone(), 2.0.to_child()).to_child();
+        let res_num = Sub(left, right).into();
+        let res_den = Exp(den.clone(), 2.0.into()).into();
 
-        Div(res_num, res_den).to_child()
+        Div(res_num, res_den).into()
     }
 
     pub fn to_string(num: &Child, den: &Child) -> String {
