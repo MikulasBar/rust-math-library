@@ -1,6 +1,6 @@
 // --> see visitor on https://github.com/rrevenantt/antlr4rust/blob/master/tests/visitors_tests.rs
 //#![cfg_attr(test, warn(unused_imports))]
-
+use std::cell::Cell;
 use antlr_rust::tree::{ParseTree, ParseTreeVisitorCompat};
 
 use crate::{
@@ -16,13 +16,13 @@ use crate::{
 
 pub struct Visitor {
     /// this value isn't really used, but it's required by the trait
-    temp: ParsingResult
+    tmp: ParsingResult
 }
 
 impl Visitor {
     pub fn new() -> Self {
         Self {
-            temp: ParsingResult::default(),
+            tmp: ParsingResult::default(),
         }  
     }
 }
@@ -33,7 +33,7 @@ impl ParseTreeVisitorCompat<'_> for Visitor {
     type Return = ParsingResult;
 
     fn temp_result(&mut self) -> &mut Self::Return {
-        &mut self.temp
+        &mut self.tmp
     }
 
     fn aggregate_results(&self, _: Self::Return, _: Self::Return) -> Self::Return {
