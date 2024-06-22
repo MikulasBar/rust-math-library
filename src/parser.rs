@@ -21,13 +21,13 @@ use crate::{
 
 
 pub struct Parser {
-    visitor: RefCell<Visitor>,
+    visitor: *mut Visitor,
 }
 
 impl Parser {
     pub fn new() -> Self {
         Self {
-            visitor: RefCell::new(Visitor::new())
+            visitor: Box::into_raw(Box::new(Visitor::new())),
         }
     }
 
@@ -43,9 +43,17 @@ impl Parser {
         }
 
         let root = root.unwrap();
-        let result = self.visitor.borrow_mut().visit(&*root);
+        let result = unsafe{&mut *self.visitor}.visit(&*root);
 
         result.into()
+    }
+}
+
+impl Drop for Parser {
+    fn drop(&mut self) {
+        unsafe {
+            let _ = Box::from_raw(self.visitor);
+        }
     }
 }
 
