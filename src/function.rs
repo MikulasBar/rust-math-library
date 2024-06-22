@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::f64::EPSILON;
 
 use crate::{
@@ -100,35 +99,19 @@ impl Function {
 }
 
 impl Function {
-    pub fn eval(&self, args: &HashMap<&str, f64>) -> Result<f64, EvalError> {
+    pub fn eval(&self, ctx: &Context) -> Result<f64, EvalError> {
         use Function::*;
 
         match self {
-            Add(a, b) =>    AddFn::eval(a, b, args),
-            Sub(a, b) =>    SubFn::eval(a, b, args),
-            Mul(a, b) =>    MulFn::eval(a, b, args),
-            Div(a, b) =>    DivFn::eval(a, b, args),
-            Exp(a, b) =>    ExpFn::eval(a, b, args),
-            Log(a, b) =>    LogFn::eval(a, b, args),
-            Sin(c) =>       SinFn::eval(c, args),
-            Cos(c) =>       CosFn::eval(c, args),
-            Tan(c) =>       TanFn::eval(c, args),
-        }
-    }
-
-    pub fn ctx_eval(&self, ctx: &Context) -> Result<f64, EvalError> {
-        use Function::*;
-
-        match self {
-            Add(a, b) =>    AddFn::ctx_eval(a, b, ctx),
-            Sub(a, b) =>    SubFn::ctx_eval(a, b, ctx),
-            Mul(a, b) =>    MulFn::ctx_eval(a, b, ctx),
-            Div(a, b) =>    DivFn::ctx_eval(a, b, ctx),
-            Exp(a, b) =>    ExpFn::ctx_eval(a, b, ctx),
-            Log(a, b) =>    LogFn::ctx_eval(a, b, ctx),
-            Sin(c) =>       SinFn::ctx_eval(c, ctx),
-            Cos(c) =>       CosFn::ctx_eval(c, ctx),
-            Tan(c) =>       TanFn::ctx_eval(c, ctx),
+            Add(a, b) =>    AddFn::eval(a, b, ctx),
+            Sub(a, b) =>    SubFn::eval(a, b, ctx),
+            Mul(a, b) =>    MulFn::eval(a, b, ctx),
+            Div(a, b) =>    DivFn::eval(a, b, ctx),
+            Exp(a, b) =>    ExpFn::eval(a, b, ctx),
+            Log(a, b) =>    LogFn::eval(a, b, ctx),
+            Sin(c) =>       SinFn::eval(c, ctx),
+            Cos(c) =>       CosFn::eval(c, ctx),
+            Tan(c) =>       TanFn::eval(c, ctx),
         }
     }
 

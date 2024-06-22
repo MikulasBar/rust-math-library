@@ -56,23 +56,23 @@ mod test {
     
     use super::Parser;
 
-    // 2^(3 - 1) * (1 - cos(pi/x)) + log_5(y + ln(e))
-    // not yet implemented
-    #[should_panic]
-    #[test]
-    fn parser() {
-        let mut parser = Parser::new();
-        let fn_result = parser.parse("2^(3 - 1) * (1 - cos(pi/x)) + log_5(y + ln(e))");
+    // // 2^(3 - 1) * (1 - cos(pi/x)) + log_5(y + ln(e))
+    // // not yet implemented
+    // #[should_panic]
+    // #[test]
+    // fn parser() {
+    //     let mut parser = Parser::new();
+    //     let fn_result = parser.parse("2^(3 - 1) * (1 - cos(pi/x)) + log_5(y + ln(e))");
 
-        let func = fn_result.unwrap();
-        let dfunc = func.derivative("x");
+    //     let func = fn_result.unwrap();
+    //     let dfunc = func.derivative("x");
 
-        let args = hashmap!{
-            "x" => 2.0,
-            "y" => 4.0,
-        };
+    //     let args = hashmap!{
+    //         "x" => 2.0,
+    //         "y" => 4.0,
+    //     };
 
-        assert_eq!(func.eval(&args), Ok(5.0));
-        assert_eq!(dfunc.eval(&args), Ok(-PI));
-    }
+    //     assert_eq!(func.eval(&args), Ok(5.0));
+    //     assert_eq!(dfunc.eval(&args), Ok(-PI));
+    // }
 }

@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::function::{
     Function,
     EvalError
@@ -27,20 +25,9 @@ impl Default for Child {
 }
 
 impl Child {
-    pub fn eval(&self, args: &HashMap<&str, f64>) -> Result<f64, EvalError> {
+    pub fn eval(&self, ctx: &Context) -> Result<f64, EvalError> {
         match self {
-            Fn(f) => f.eval(args),
-            Const(c) => Ok(*c),
-            Var(v) => {
-                args.get(v.as_ref()).copied()
-                    .ok_or(EvalError::VariableNotDefined(v.clone()))
-            },
-        }
-    }
-
-    pub fn ctx_eval(&self, ctx: &Context) -> Result<f64, EvalError> {
-        match self {
-            Fn(f) => todo!(),
+            Fn(f) => f.eval(ctx),
             Const(c) => Ok(*c),
             Var(v) => {
                 ctx.get_var(v.as_ref())
@@ -48,19 +35,6 @@ impl Child {
             },
         }
     }
-
-    // fn substitute(&self, args: &HashMap<&str, Child>) -> Child {
-    //     match self {
-    //         Const(_) => self.clone(),
-    //         Fn(f) => f.substitute(args),
-    //         Var(v) => {
-    //             if let Some(c) = args.get(v) {
-    //                 return c.clone().into()
-    //             }
-    //             self.clone()
-    //         },
-    //     }
-    // }
 
     // fn depends_on(&self, variable: &str) -> bool {
     //     match self {

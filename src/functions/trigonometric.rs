@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 use std::f64::consts::FRAC_PI_2;
 
+use crate::context::Context;
 use crate::{
     function::*,
     child::*,
@@ -16,20 +16,11 @@ pub struct SinFn;
 impl SinFn {
     unary_new!{Sin, child}
 
-    pub fn eval(child: &Child, args: &HashMap<&str, f64>) -> Result<f64, EvalError> {
-        child.eval(args)
+    pub fn eval(child: &Child, ctx: &Context) -> Result<f64, EvalError> {
+        child.eval(ctx)
             .map(f64::sin)
             .map(Function::round)
     }
-
-    // fn substitute(&self, args: &HashMap<&str, Child>) -> Child {
-    //     let child = self.child.substitute(args);
-    //     Self::new(child).into()
-    // }
-
-    // fn get_type(&self) -> FnType {
-    //     FnType::Unary(&self.child)
-    // }
 
     pub fn derivative(child: &Child, var: &str) -> Child {
         let d_child = child.derivative(var);
@@ -50,20 +41,11 @@ pub struct CosFn;
 impl CosFn {
     unary_new!{Cos, child}
 
-    pub fn eval(child: &Child, args: &HashMap<&str, f64>) -> Result<f64, EvalError> {
-        child.eval(args)
+    pub fn eval(child: &Child, ctx: &Context) -> Result<f64, EvalError> {
+        child.eval(ctx)
             .map(f64::cos)
             .map(Function::round)
     }
-
-    // fn substitute(&self, args: &HashMap<&str, Child>) -> Child {
-    //     let child = self.child.substitute(args);
-    //     Self::new(child).into()
-    // }
-
-    // fn get_type(&self) -> FnType {
-    //     FnType::Unary(&self.child)
-    // }
 
     pub fn derivative(child: &Child, var: &str) -> Child {
         let d_child = child.derivative(var);
@@ -89,8 +71,8 @@ pub struct TanFn;
 impl TanFn {
     unary_new!{Tan, child}
 
-    pub fn eval(child: &Child, args: &HashMap<&str, f64>) -> Result<f64, EvalError> {
-        let child = child.eval(args)?;
+    pub fn eval(child: &Child, ctx: &Context) -> Result<f64, EvalError> {
+        let child = child.eval(ctx)?;
 
         if child == FRAC_PI_2 {
             return Err(EvalError::TanAtPiOverTwo)
