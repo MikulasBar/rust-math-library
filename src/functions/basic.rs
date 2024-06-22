@@ -7,6 +7,7 @@ use crate::function::{Function, EvalError};
 use Function::*;
 
 use crate::binary_new;
+use crate::context::Context;
 
 
 pub struct AddFn;
@@ -28,6 +29,14 @@ impl AddFn {
 
     pub fn to_string(left: &Child, right: &Child) -> String {
         format!("({} + {})", left.to_string(), right.to_string())
+    }
+
+
+    pub fn ctx_eval(left: &Child, right: &Child, ctx: &Context) -> Result<f64, EvalError> {
+        let left = left.ctx_eval(ctx)?;
+        let right = right.ctx_eval(ctx)?;
+
+        Ok(left + right)
     }
 }
 
@@ -51,6 +60,13 @@ impl SubFn {
 
     pub fn to_string(left: &Child, right: &Child) -> String {
         format!("({} - {})", left.to_string(), right.to_string())
+    }
+
+    pub fn ctx_eval(left: &Child, right: &Child, ctx: &Context) -> Result<f64, EvalError> {
+        let left = left.ctx_eval(ctx)?;
+        let right = right.ctx_eval(ctx)?;
+
+        Ok(left - right)
     }
 }
 
@@ -78,6 +94,12 @@ impl MulFn {
 
     pub fn to_string(left: &Child, right: &Child) -> String {
         format!("({} * {})", left.to_string(), right.to_string())
+    }
+
+    pub fn ctx_eval(left: &Child, right: &Child, ctx: &Context) -> Result<f64, EvalError> {
+        let left = left.ctx_eval(ctx)?;
+        let right = right.ctx_eval(ctx)?;
+        Ok(left * right)
     }
 }
 
@@ -112,6 +134,16 @@ impl DivFn {
 
     pub fn to_string(num: &Child, den: &Child) -> String {
         format!("({} / {})", num.to_string(), den.to_string())
+    }
+
+    pub fn ctx_eval(num: &Child, den: &Child, ctx: &Context) -> Result<f64, EvalError> {
+        let num = num.ctx_eval(ctx)?;
+        let den = den.ctx_eval(ctx)?;
+
+        if den == 0.0 {
+            return Err(EvalError::DivisionByZero)
+        }
+        Ok(num / den)
     }
 }
 

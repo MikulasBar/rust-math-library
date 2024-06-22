@@ -1,4 +1,3 @@
-target
-.vscode
-math-lib
+/target
+/.vscode
 Cargo.lock

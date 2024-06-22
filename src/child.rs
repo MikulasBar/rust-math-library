@@ -6,7 +6,7 @@ use crate::function::{
 };
 
 use Child::*;
-
+use crate::context::Context;
 
 
 /// Type used for fields like `child` or `exponent` ... <br>
@@ -33,7 +33,18 @@ impl Child {
             Const(c) => Ok(*c),
             Var(v) => {
                 args.get(v.as_ref()).copied()
-                    .ok_or(EvalError::ParameterNotFound(v.clone()))
+                    .ok_or(EvalError::VariableNotDefined(v.clone()))
+            },
+        }
+    }
+
+    pub fn ctx_eval(&self, ctx: &Context) -> Result<f64, EvalError> {
+        match self {
+            Fn(f) => todo!(),
+            Const(c) => Ok(*c),
+            Var(v) => {
+                ctx.get_var(v.as_ref())
+                    .ok_or(EvalError::VariableNotDefined(v.clone()))
             },
         }
     }

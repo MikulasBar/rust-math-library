@@ -2,12 +2,9 @@ use std::collections::HashMap;
 use std::f64::EPSILON;
 
 use crate::{
-    child::Child,
-    functions::{
-        basic::*,
-        trigonometric::*,
-        advanced::*,
-    },
+    child::Child, context::Context, functions::{
+        advanced::*, basic::*, trigonometric::*
+    }
 };
 
 
@@ -35,7 +32,7 @@ pub enum EvalError {
     TanAtPiOverTwo,
 
     /// Error that occurs when you try to evaluate parameter that doesn't exist
-    ParameterNotFound(Box<str>),
+    VariableNotDefined(Box<str>),
 
     ZeroToZero,
 }
@@ -116,6 +113,22 @@ impl Function {
             Sin(c) =>       SinFn::eval(c, args),
             Cos(c) =>       CosFn::eval(c, args),
             Tan(c) =>       TanFn::eval(c, args),
+        }
+    }
+
+    pub fn ctx_eval(&self, ctx: &Context) -> Result<f64, EvalError> {
+        use Function::*;
+
+        match self {
+            Add(a, b) =>    AddFn::ctx_eval(a, b, ctx),
+            Sub(a, b) =>    SubFn::ctx_eval(a, b, ctx),
+            Mul(a, b) =>    MulFn::ctx_eval(a, b, ctx),
+            Div(a, b) =>    DivFn::ctx_eval(a, b, ctx),
+            Exp(a, b) =>    ExpFn::ctx_eval(a, b, ctx),
+            Log(a, b) =>    LogFn::ctx_eval(a, b, ctx),
+            Sin(c) =>       SinFn::ctx_eval(c, ctx),
+            Cos(c) =>       CosFn::ctx_eval(c, ctx),
+            Tan(c) =>       TanFn::ctx_eval(c, ctx),
         }
     }
 
