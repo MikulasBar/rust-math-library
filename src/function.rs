@@ -1,7 +1,7 @@
 use std::f64::EPSILON;
 
 use crate::{
-    child::Child, context::Context, functions::{
+    child::Child, _context::Context, functions::{
         advanced::*, basic::*, trigonometric::*
     }
 };
@@ -29,11 +29,13 @@ pub enum EvalError {
     ZeroBaseNonPositiveExponent,
 
     TanAtPiOverTwo,
-
-    /// Error that occurs when you try to evaluate parameter that doesn't exist
-    VariableNotDefined(Box<str>),
-
     ZeroToZero,
+    
+    /// Error that occurs when you try to evaluate parameter that doesn't exist
+    VariableNotDefined(String),
+
+    FunctionNotDefined(String),
+
 }
 
 

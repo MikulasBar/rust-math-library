@@ -20,41 +20,23 @@ use crate::{
 
 
 
-pub struct Parser {
-    visitor: *mut Visitor,
-}
+// facade for parsing the function from text format
+pub fn parse(input: &str) -> Result<Child, ParsingError> {
+    let lexer = mathLexer::new(InputStream::new(input.into()));
+    let token_source = CommonTokenStream::new(lexer);
+    let mut parser = mathParser::new(token_source);
 
-impl Parser {
-    pub fn new() -> Self {
-        Self {
-            visitor: Box::into_raw(Box::new(Visitor::new())),
-        }
+    let root = parser.root();
+    if root.is_err() {
+        return Err(ParsingError::Antlr)
     }
 
-    // facade for parsing the function from text format
-    pub fn parse(&self, input: &str) -> Result<Child, ParsingError> {
-        let lexer = mathLexer::new(InputStream::new(input.into()));
-        let token_source = CommonTokenStream::new(lexer);
-        let mut parser = mathParser::new(token_source);
+    let root = root.unwrap();
+    let mut visitor = Visitor::new();
 
-        let root = parser.root();
-        if root.is_err() {
-            return Err(ParsingError::Antlr)
-        }
+    let result = visitor.visit(&*root);
 
-        let root = root.unwrap();
-        let result = unsafe{&mut *self.visitor}.visit(&*root);
-
-        result.into()
-    }
-}
-
-impl Drop for Parser {
-    fn drop(&mut self) {
-        unsafe {
-            let _ = Box::from_raw(self.visitor);
-        }
-    }
+    result.into()
 }
 
 
@@ -63,17 +45,16 @@ mod test {
     use maplit::hashmap;
     use std::f64::consts::PI;
     
-    use crate::context::Context;
+    use crate::_context::Context;
 
-    use super::Parser;
+    use super::parse;
 
     // 2^(3 - 1) * (1 - cos(pi/x)) + log_5(y + ln(e))
     // not yet implemented
     #[should_panic]
     #[test]
     fn parser() {
-        let parser = Parser::new();
-        let fn_result = parser.parse("2^(3 - 1) * (1 - cos(pi/x)) + log_5(y + ln(e))");
+        let fn_result = parse("2^(3 - 1) * (1 - cos(pi/x)) + log_5(y + ln(e))");
 
         let func = fn_result.unwrap();
         let dfunc = func.derivative("x");

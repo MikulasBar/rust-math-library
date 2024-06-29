@@ -7,7 +7,7 @@ use crate::function::{Function, EvalError};
 use Function::*;
 
 use crate::binary_new;
-use crate::context::Context;
+use crate::_context::Context;
 
 
 pub struct AddFn;

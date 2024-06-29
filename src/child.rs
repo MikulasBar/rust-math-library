@@ -1,10 +1,17 @@
+use std::collections::HashMap;
+
 use crate::function::{
     Function,
     EvalError
 };
 
 use Child::*;
-use crate::context::Context;
+use crate::_context::{Context, Parametric};
+
+// use EvalError::{
+//     VariableNotDefined,
+//     FunctionNotDefined
+// };
 
 
 /// Type used for fields like `child` or `exponent` ... <br>
@@ -12,10 +19,10 @@ use crate::context::Context;
 #[derive(Debug, PartialEq, Clone)]
 pub enum Child {
     Fn(Box<Function>),
-    Var(Box<str>),
+    Var(String),
     Const(f64),
 
-    // NamedFn(String, Vec<Child>),
+    NamedFn(String, Vec<Child>),
 }
 
 impl Default for Child {
@@ -29,9 +36,24 @@ impl Child {
         match self {
             Fn(f) => f.eval(ctx),
             Const(c) => Ok(*c),
-            Var(v) => {
-                ctx.get_var(v.as_ref())
-                    .ok_or(EvalError::VariableNotDefined(v.clone()))
+            Var(v) => ctx.get_var(v),
+
+            NamedFn(name, args) => {
+                // from parsed string we get function name and arguments
+                // from context we get function body and parameters
+                let (params, body) = ctx.get_func(name)?;
+                
+                // we use the context to evaluate the argumencts
+                let values = args.into_iter()
+                    .map(|a| a.eval(ctx))
+                    .collect::<Result<Vec<f64>, EvalError>>()?;
+            
+                // then we create new context using the parameters and evaluated arguments
+                let arg_ctx = Context::from((params, values));
+                let full_ctx = ctx.merge(&arg_ctx);
+            
+                // then we evaluate the function body using both contexts by merging them
+                body.eval(&full_ctx)
             },
         }
     }
@@ -49,17 +71,18 @@ impl Child {
             Fn(f) => f.derivative(var),
             Const(_) => (0.0).into(),
             Var(v) => {
-                match v.as_ref() == var {
+                match v == var {
                     true => 1.0,
                     false => 0.0,
                 }.into()
             },
-            // NamedFn(name, args) => {
-            //     let args = args.iter()
-            //         .map(|a| a.derivative(variable))
-            //         .collect();
-            //     NamedFn(name.clone(), args)
-            // },
+            NamedFn(name, args) => {
+                // let args = args.iter()
+                //     .map(|a| a.derivative(var))
+                //     .collect();
+                // NamedFn(name.clone(), args)
+                todo!()
+            },
         }
     }
 
@@ -69,19 +92,17 @@ impl Child {
             Var(v) => v.to_string(),
             Fn(f) => f.to_string(),
             
-            // NamedFn(name, args) => {
-            //     let args = args.iter()
-            //         .map(|a| a.to_string())
-            //         .collect::<Vec<String>>()
-            //         .join(", ");
-            //     format!("{}({})", name, args)
-            // },
+            NamedFn(name, args) => {
+                // let args = args.iter()
+                //     .map(|a| a.to_string())
+                //     .collect::<Vec<String>>()
+                //     .join(", ");
+                // format!("{}({})", name, args)
+                todo!()
+            },
         }
     }
 }
-
-
-
 
 
 impl From<Function> for Child {
@@ -101,55 +122,13 @@ impl From<f64> for Child {
 impl From<&str> for Child {
     #[inline]
     fn from(v: &str) -> Self {
-        Child::Var(Box::from(v))
+        Child::Var(v.to_string())
     }
 }
 
 impl From<String> for Child {
     #[inline]
     fn from(v: String) -> Self {
-        Child::Var(v.into_boxed_str())
+        Child::Var(v)
     }
 }
-
-
-
-// pub trait ToChild {
-//     fn into(self) -> Child;
-// }
-
-// impl ToChild for Child {
-//     #[inline]
-//     fn into(self) -> Child {
-//         self
-//     }
-// }
-
-// impl ToChild for Function {
-//     #[inline]
-//     fn into(self) -> Child {
-//         Child::Fn(Box::new(self))
-//     }
-// }
-
-// impl ToChild for f64 {
-//     #[inline]
-//     fn into(self) -> Child {
-//         Child::Const(self)
-//     }
-// }
-
-// impl ToChild for &str {
-//     #[inline]
-//     fn into(self) -> Child {
-//         Child::Var(self.to_string())
-//     }
-// }
-
-// impl ToChild for String {
-//     #[inline]
-//     fn into(self) -> Child {
-//         Child::Var(self)
-//     }
-// }
-

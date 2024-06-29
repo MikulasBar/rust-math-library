@@ -4,7 +4,7 @@ use std::f64::consts::E;
 use crate::{
     function::*,
     child::*,
-    context::Context,
+    _context::Context,
 };
 
 use EvalError::*;
