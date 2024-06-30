@@ -1,5 +1,4 @@
 #![allow(dead_code)]
-use std::cell::RefCell;
 
 use antlr_rust::{
     common_token_stream::CommonTokenStream,
@@ -45,26 +44,29 @@ mod test {
     use maplit::hashmap;
     use std::f64::consts::PI;
     
-    use crate::_context::Context;
+    use crate::_context::{self, Context};
 
     use super::parse;
 
     // 2^(3 - 1) * (1 - cos(pi/x)) + log_5(y + ln(e))
     // not yet implemented
-    #[should_panic]
+    //#[should_panic]
     #[test]
     fn parser() {
-        let fn_result = parse("2^(3 - 1) * (1 - cos(pi/x)) + log_5(y + ln(e))");
+        std::env::set_var("RUST_BACKTRACE", "0");
 
-        let func = fn_result.unwrap();
-        let dfunc = func.derivative("x");
+        let func = parse("2^(3 - 1) * (1 - cos(pi/x)) + log_5(y + ln(e))").unwrap();
+        // let dfunc = func.derivative("x");
 
+        let elem_ctx = _context::elementary();
         let ctx: Context = hashmap!{
             "x" => 2.0,
             "y" => 4.0,
         }.into();
 
-        assert_eq!(func.eval(&ctx), Ok(5.0));
-        assert_eq!(dfunc.eval(&ctx), Ok(-PI));
+        let full_ctx = ctx.merge(&elem_ctx);
+
+        assert_eq!(func.eval(&full_ctx), Ok(5.0));
+        // assert_eq!(dfunc.eval(&full_ctx), Ok(-PI));
     }
 }

@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 
 use crate::function::{
     Function,
@@ -6,7 +5,7 @@ use crate::function::{
 };
 
 use Child::*;
-use crate::_context::{Context, Parametric};
+use crate::_context::Context;
 
 // use EvalError::{
 //     VariableNotDefined,
@@ -50,6 +49,9 @@ impl Child {
             
                 // then we create new context using the parameters and evaluated arguments
                 let arg_ctx = Context::from((params, values));
+
+                // note that this context shares same values as the original context
+                // that is because of the Rc type used in the Context struct
                 let full_ctx = ctx.merge(&arg_ctx);
             
                 // then we evaluate the function body using both contexts by merging them
@@ -76,7 +78,7 @@ impl Child {
                     false => 0.0,
                 }.into()
             },
-            NamedFn(name, args) => {
+            NamedFn(name, args) => {                                // TODO
                 // let args = args.iter()
                 //     .map(|a| a.derivative(var))
                 //     .collect();
@@ -92,7 +94,7 @@ impl Child {
             Var(v) => v.to_string(),
             Fn(f) => f.to_string(),
             
-            NamedFn(name, args) => {
+            NamedFn(name, args) => {                                // TODO
                 // let args = args.iter()
                 //     .map(|a| a.to_string())
                 //     .collect::<Vec<String>>()

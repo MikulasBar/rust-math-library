@@ -1,6 +1,5 @@
 // --> see visitor on https://github.com/rrevenantt/antlr4rust/blob/master/tests/visitors_tests.rs
 //#![cfg_attr(test, warn(unused_imports))]
-use std::cell::Cell;
 use antlr_rust::tree::{ParseTree, ParseTreeVisitorCompat};
 
 use crate::{
@@ -24,6 +23,22 @@ impl Visitor {
         Self {
             tmp: ParsingResult::default(),
         }  
+    }
+
+    fn visit_function_args(&mut self, ctx: &FunctionContext<'_>) -> Vec<Child> {
+        let mut result = vec![];
+
+        for expr in ctx.expr_all() {
+            let visited = self.visit(&*expr);
+
+            if visited.is_err() {
+                panic!("Error in parsing function arguments")
+            }
+
+            result.push(visited.unwrap())
+        }
+
+        result
     }
 }
 
@@ -154,22 +169,10 @@ impl mathVisitorCompat<'_> for Visitor {
     // Visit function with arguments (sin, tan, your custom function)
     // if there are errors then returns the first one
     fn visit_function(&mut self, ctx: &FunctionContext<'_>) -> Self::Return {
-        let name = ctx.ID().unwrap().get_text();
-        let mut args: Vec<Child> = vec![];
-        
-        for expr in ctx.expr_all() {
-            let visited = self.visit(&*expr);
+        let name = ctx.ID().unwrap().get_text();        
+        let args = self.visit_function_args(ctx);
 
-            if visited.is_err() {
-                return visited
-            }
-            args.push(visited.unwrap())
-        }
-
-        todo!();
-        // if let Some(result) = self.rules.get_function(&name, args) {
-        //     return ParsingResult::Ok(result)
-        // }
+        Child::NamedFn(name, args).into()
     }
 }
 

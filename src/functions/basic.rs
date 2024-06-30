@@ -1,6 +1,5 @@
 #![allow(dead_code)]
 
-use std::collections::HashMap;
 use crate::child::Child;
 use crate::function::{Function, EvalError};
 
